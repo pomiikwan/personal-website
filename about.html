@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于我 - 关威雄 | 资产架构师</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        card: 'hsl(var(--card))',
+                        border: 'hsl(var(--border))',
+                        'tech-cyan': 'hsl(var(--tech-cyan))',
+                        'finance-gold': 'hsl(var(--finance-gold))',
+                        'tactical-green': 'hsl(var(--tactical-green))',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --background: 150 20% 6%;
+            --foreground: 140 30% 92%;
+            --card: 150 18% 10%;
+            --border: 150 15% 18%;
+            --tech-cyan: 175 85% 45%;
+            --finance-gold: 45 95% 55%;
+            --tactical-green: 150 60% 40%;
+        }
+
+        body {
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            z-index: 1;
+        }
+
+        .corner-deco {
+            position: relative;
+        }
+
+        .corner-deco::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 16px;
+            height: 16px;
+            border-top: 2px solid hsl(var(--tech-cyan));
+            border-left: 2px solid hsl(var(--tech-cyan));
+        }
+
+        @media (min-width: 768px) {
+            .corner-deco::before,
+            .corner-deco::after {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        .corner-deco::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 16px;
+            height: 16px;
+            border-bottom: 2px solid hsl(var(--tech-cyan));
+            border-right: 2px solid hsl(var(--tech-cyan));
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, hsl(var(--tech-cyan)), hsl(var(--finance-gold)));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .container-custom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .container-custom {
+                padding: 0 2rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container-custom {
+                padding: 0 4rem;
+            }
+        }
+
+        .tech-glow {
+            box-shadow: 0 0 20px hsl(var(--tech-cyan) / 0.3);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="scanline"></div>
+
+    <!-- 桌面端导航 -->
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div class="container-custom">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-background"></i>
+                    </div>
+                    <span class="font-bold text-xl">关威雄</span>
+                    <span class="text-sm text-foreground/70 hidden sm:inline">| 资产架构师</span>
+                </div>
+                <div class="hidden lg:flex items-center gap-8">
+                    <a href="index.html" class="hover:text-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        首页
+                    </a>
+                    <a href="about.html" class="text-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4"></i>
+                        关于我
+                    </a>
+                    <a href="services.html" class="hover:text-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="grid-3x3" class="w-4 h-4"></i>
+                        服务市场
+                    </a>
+                    <a href="cases.html" class="hover:text-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="folder-open" class="w-4 h-4"></i>
+                        案例研究
+                    </a>
+                    <a href="blog.html" class="hover:text-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        博客
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 移动端顶部导航 -->
+    <nav class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center">
+                        <i data-lucide="zap" class="w-4 h-4 text-background"></i>
+                    </div>
+                    <span class="font-bold text-lg">关威雄</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="relative z-10 pt-16 lg:pt-16 pb-20">
+        <!-- 页面标题 -->
+        <section class="py-12 lg:py-20">
+            <div class="container-custom text-center">
+                <h1 class="text-4xl lg:text-6xl font-bold mb-4">
+                    <span class="gradient-text">关于我</span>
+                </h1>
+                <p class="text-lg text-foreground/70 max-w-2xl mx-auto">
+                    16年专注一件事：在极端市场环境下实现资产的保全与增值
+                </p>
+            </div>
+        </section>
+
+        <!-- 个人简介 -->
+        <section class="py-12 lg:py-20 bg-card/30">
+            <div class="container-custom">
+                <div class="grid lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <div class="bg-card border border-border rounded-lg p-8 corner-deco">
+                            <div class="w-32 h-32 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center mx-auto mb-6">
+                                <i data-lucide="user" class="w-16 h-16 text-background"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold mb-4 text-center">关威雄</h2>
+                            <p class="text-foreground/70 text-center mb-6">
+                                资产架构师 | 极端市场专家
+                            </p>
+                            <div class="space-y-3 text-foreground/80">
+                                <p>• 16年证券市场实战经验</p>
+                                <p>• SXA反身性交易模型创始人</p>
+                                <p>• 3只私募基金管理人</p>
+                                <p>• 极端市场环境资产保全专家</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <h3 class="text-2xl font-bold">个人简介</h3>
+                        <p class="text-foreground/70 leading-relaxed">
+                            从业16年，历经三轮完整牛熊周期，专注于极端市场环境下的资产保全与增值。
+                            2015年股灾期间，通过自研的SXA反身性交易模型，实现反向获利。
+                            擅长将索罗斯的反身性理论与中国市场实际相结合，为高净值客户提供专业资产架构服务。
+                        </p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-card border border-border rounded-lg p-4 corner-deco">
+                                <div class="text-3xl font-bold text-tech-cyan mb-1">16+</div>
+                                <div class="text-sm text-foreground/60">年从业经验</div>
+                            </div>
+                            <div class="bg-card border border-border rounded-lg p-4 corner-deco">
+                                <div class="text-3xl font-bold text-finance-gold mb-1">3</div>
+                                <div class="text-sm text-foreground/60">私募基金</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 专业时间线 -->
+        <section class="py-12 lg:py-20">
+            <div class="container-custom">
+                <h2 class="text-3xl font-bold mb-12 text-center flex items-center justify-center gap-3">
+                    <i data-lucide="clock" class="w-8 h-8 text-tech-cyan"></i>
+                    专业历程
+                </h2>
+                <div class="space-y-8">
+                    <div class="flex gap-6">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-full bg-tech-cyan/20 border-2 border-tech-cyan flex items-center justify-center flex-shrink-0">
+                                <span class="text-tech-cyan font-bold">2010</span>
+                            </div>
+                            <div class="w-0.5 h-full bg-tech-cyan/30"></div>
+                        </div>
+                        <div class="bg-card border border-border rounded-lg p-6 corner-deco flex-1">
+                            <h3 class="text-xl font-bold mb-2">进入证券行业</h3>
+                            <p class="text-foreground/70">开始职业生涯，专注二级市场投资研究</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-full bg-finance-gold/20 border-2 border-finance-gold flex items-center justify-center flex-shrink-0">
+                                <span class="text-finance-gold font-bold">2014</span>
+                            </div>
+                            <div class="w-0.5 h-full bg-finance-gold/30"></div>
+                        </div>
+                        <div class="bg-card border border-border rounded-lg p-6 corner-deco flex-1">
+                            <h3 class="text-xl font-bold mb-2">创立万有道1号基金</h3>
+                            <p class="text-foreground/70">首只私募产品，2年收益489%</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-full bg-tactical-green/20 border-2 border-tactical-green flex items-center justify-center flex-shrink-0">
+                                <span class="text-tactical-green font-bold">2015</span>
+                            </div>
+                            <div class="w-0.5 h-full bg-tactical-green/30"></div>
+                        </div>
+                        <div class="bg-card border border-border rounded-lg p-6 corner-deco flex-1">
+                            <h3 class="text-xl font-bold mb-2">股灾反向获利</h3>
+                            <p class="text-foreground/70">成功预测并应对股灾，所有账户实现正收益</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-full bg-tech-cyan/20 border-2 border-tech-cyan flex items-center justify-center flex-shrink-0">
+                                <span class="text-tech-cyan font-bold">2020</span>
+                            </div>
+                        </div>
+                        <div class="bg-card border border-border rounded-lg p-6 corner-deco flex-1">
+                            <h3 class="text-xl font-bold mb-2">SXA模型成熟</h3>
+                            <p class="text-foreground/70">反身性交易模型经过实战检验，逐渐成熟</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 核心能力 -->
+        <section class="py-12 lg:py-20 bg-card/30">
+            <div class="container-custom">
+                <h2 class="text-3xl font-bold mb-12 text-center flex items-center justify-center gap-3">
+                    <i data-lucide="star" class="w-8 h-8 text-finance-gold"></i>
+                    核心能力
+                </h2>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco card-hover">
+                        <div class="w-16 h-16 rounded-xl bg-tech-cyan/20 border border-tech-cyan/30 flex items-center justify-center mb-4">
+                            <i data-lucide="trending-up" class="w-8 h-8 text-tech-cyan"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">极端市场专家</h3>
+                        <p class="text-foreground/70">在市场极端情况下实现资产保全与增值</p>
+                    </div>
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco card-hover">
+                        <div class="w-16 h-16 rounded-xl bg-finance-gold/20 border border-finance-gold/30 flex items-center justify-center mb-4">
+                            <i data-lucide="brain" class="w-8 h-8 text-finance-gold"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">理论结合实践</h3>
+                        <p class="text-foreground/70">索罗斯反身性理论与中国市场实际结合</p>
+                    </div>
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco card-hover">
+                        <div class="w-16 h-16 rounded-xl bg-tactical-green/20 border border-tactical-green/30 flex items-center justify-center mb-4">
+                            <i data-lucide="shield" class="w-8 h-8 text-tactical-green"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">风险控制专家</h3>
+                        <p class="text-foreground/70">严格的风控体系，保护客户资产安全</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="py-12 lg:py-20">
+            <div class="container-custom">
+                <div class="bg-gradient-to-br from-tech-cyan/20 to-tactical-green/20 border border-tech-cyan/30 rounded-lg p-8 lg:p-12 text-center">
+                    <h2 class="text-2xl lg:text-3xl font-bold mb-4">期待与您合作</h2>
+                    <p class="text-foreground/70 mb-6 max-w-2xl mx-auto">
+                        如果您正在寻找专业的资产架构服务，欢迎与我深度交流
+                    </p>
+                    <a href="index.html#contact" class="inline-flex items-center gap-2 px-8 py-3 btn-primary font-semibold rounded-lg transition tech-glow">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                        联系我
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 移动端底部导航 -->
+    <div class="bottom-nav lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border py-2 px-4 z-50">
+        <div class="flex justify-around items-center">
+            <a href="index.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs hover:text-tech-cyan transition">
+                <i data-lucide="home" class="w-6 h-6"></i>
+                <span>首页</span>
+            </a>
+            <a href="about.html" class="flex flex-col items-center gap-1 text-tech-cyan text-xs hover:text-tech-cyan transition">
+                <i data-lucide="user" class="w-6 h-6"></i>
+                <span>我的</span>
+            </a>
+            <a href="services.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs hover:text-tech-cyan transition">
+                <i data-lucide="grid-3x3" class="w-6 h-6"></i>
+                <span>服务</span>
+            </a>
+            <a href="index.html#contact" class="flex flex-col items-center gap-1 text-foreground/60 text-xs hover:text-tech-cyan transition">
+                <i data-lucide="mail" class="w-6 h-6"></i>
+                <span>联系</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

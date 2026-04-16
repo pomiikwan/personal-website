@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客 - 关威雄 | 资产架构师</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        card: 'hsl(var(--card))',
+                        border: 'hsl(var(--border))',
+                        'tech-cyan': 'hsl(var(--tech-cyan))',
+                        'finance-gold': 'hsl(var(--finance-gold))',
+                        'tactical-green': 'hsl(var(--tactical-green))',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --background: 150 20% 6%;
+            --foreground: 140 30% 92%;
+            --card: 150 18% 10%;
+            --border: 150 15% 18%;
+            --tech-cyan: 175 85% 45%;
+            --finance-gold: 45 95% 55%;
+            --tactical-green: 150 60% 40%;
+        }
+        body { background: hsl(var(--background)); color: hsl(var(--foreground)); }
+        .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px); z-index: 1; }
+        .corner-deco::before { content: ''; position: absolute; top: 0; left: 0; width: 16px; height: 16px; border-top: 2px solid hsl(var(--tech-cyan)); border-left: 2px solid hsl(var(--tech-cyan)); }
+        .corner-deco::after { content: ''; position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; border-bottom: 2px solid hsl(var(--tech-cyan)); border-right: 2px solid hsl(var(--tech-cyan)); }
+        .gradient-text { background: linear-gradient(to right, hsl(var(--tech-cyan)), hsl(var(--finance-gold))); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .container-custom { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
+        @media (min-width: 640px) { .container-custom { padding: 0 2rem; } }
+        @media (min-width: 1024px) { .container-custom { padding: 0 4rem; } }
+        .tech-glow { box-shadow: 0 0 20px hsl(var(--tech-cyan) / 0.3); }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="scanline"></div>
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div class="container-custom"><div class="flex items-center justify-between h-16">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center"><i data-lucide="zap" class="w-5 h-5 text-background"></i></div>
+                <span class="font-bold text-xl">关威雄</span>
+            </div>
+            <div class="hidden lg:flex items-center gap-8">
+                <a href="index.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="home" class="w-4 h-4"></i>首页</a>
+                <a href="about.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i>关于我</a>
+                <a href="services.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="grid-3x3" class="w-4 h-4"></i>服务市场</a>
+                <a href="cases.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="folder-open" class="w-4 h-4"></i>案例研究</a>
+                <a href="blog.html" class="text-tech-cyan transition flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i>博客</a>
+                <a href="api-playground.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="code" class="w-4 h-4"></i>API</a>
+            </div>
+        </div></div>
+    </nav>
+    <nav class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div class="px-4 py-3"><div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center"><i data-lucide="zap" class="w-4 h-4 text-background"></i></div>
+                <span class="font-bold text-lg">关威雄</span>
+            </div>
+        </div></div>
+    </nav>
+    <main class="relative z-10 pt-16 lg:pt-16 pb-20">
+        <section class="py-12 lg:py-20">
+            <div class="container-custom text-center">
+                <h1 class="text-4xl lg:text-6xl font-bold mb-4"><span class="gradient-text">投资洞察</span></h1>
+                <p class="text-lg text-foreground/70 max-w-2xl mx-auto">分享16年实战经验与SXA反身性交易模型的应用心得</p>
+            </div>
+        </section>
+
+        <!-- 搜索和筛选 -->
+        <section class="py-8 lg:py-12 bg-card/30">
+            <div class="container-custom">
+                <div class="flex flex-col lg:flex-row gap-4 items-center justify-between mb-8">
+                    <div class="relative w-full lg:w-96">
+                        <input type="text" placeholder="搜索文章..." class="w-full bg-card border border-border rounded-lg px-4 py-3 pl-12 text-foreground focus:outline-none focus:border-tech-cyan">
+                        <i data-lucide="search" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-foreground/60"></i>
+                    </div>
+                    <div class="flex gap-2 flex-wrap justify-center">
+                        <button class="px-4 py-2 bg-tech-cyan text-background font-semibold rounded-lg transition tech-glow">全部</button>
+                        <button class="px-4 py-2 bg-card border border-border text-foreground/70 rounded-lg hover:border-tech-cyan hover:text-tech-cyan transition">投资洞察</button>
+                        <button class="px-4 py-2 bg-card border border-border text-foreground/70 rounded-lg hover:border-tech-cyan hover:text-tech-cyan transition">市场分析</button>
+                        <button class="px-4 py-2 bg-card border border-border text-foreground/70 rounded-lg hover:border-tech-cyan hover:text-tech-cyan transition">理论实践</button>
+                    </div>
+                </div>
+
+                <!-- 文章列表 -->
+                <div class="space-y-6">
+                    <!-- 文章1 -->
+                    <article class="bg-card border border-border rounded-lg p-6 corner-deco card-hover">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-2/3">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="px-3 py-1 bg-tech-cyan/20 border border-tech-cyan/30 rounded text-tech-cyan text-sm font-semibold">投资洞察</span>
+                                    <span class="text-sm text-foreground/60">2025-12-15</span>
+                                </div>
+                                <h2 class="text-2xl font-bold mb-3 hover:text-tech-cyan transition cursor-pointer">
+                                    <a href="blog-post.html">反身性理论在A股市场的实战应用</a>
+                                </h2>
+                                <p class="text-foreground/70 mb-4 leading-relaxed">
+                                    索罗斯的反身性理论如何与中国特色的市场环境相结合？本文详细阐述了SXA模型的核心理念，以及在2015年股灾、2018年市场大跌等极端环境下的实战应用经验。
+                                </p>
+                                <div class="flex items-center gap-4">
+                                    <a href="blog-post.html" class="inline-flex items-center gap-2 text-tech-cyan hover:text-tech-cyan/80 transition">
+                                        阅读全文 <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                    </a>
+                                    <span class="text-sm text-foreground/60"><i data-lucide="clock" class="w-4 h-4 inline mr-1"></i> 15分钟阅读</span>
+                                </div>
+                            </div>
+                            <div class="lg:w-1/3">
+                                <div class="bg-card/50 border border-border rounded-lg h-40 lg:h-full flex items-center justify-center">
+                                    <i data-lucide="bar-chart-2" class="w-16 h-16 text-foreground/20"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 文章2 -->
+                    <article class="bg-card border border-border rounded-lg p-6 corner-deco card-hover">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-2/3">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="px-3 py-1 bg-finance-gold/20 border border-finance-gold/30 rounded text-finance-gold text-sm font-semibold">市场分析</span>
+                                    <span class="text-sm text-foreground/60">2025-11-28</span>
+                                </div>
+                                <h2 class="text-2xl font-bold mb-3 hover:text-finance-gold transition cursor-pointer">
+                                    <a href="blog-post.html">极端市场环境的识别与应对策略</a>
+                                </h2>
+                                <p class="text-foreground/70 mb-4 leading-relaxed">
+                                    如何在市场极度恐慌或贪婪时保持理性？本文分享了我历经三轮牛熊周期的经验总结，包括识别市场反身性拐点的关键指标，以及不同市场环境下的应对策略。
+                                </p>
+                                <div class="flex items-center gap-4">
+                                    <a href="blog-post.html" class="inline-flex items-center gap-2 text-finance-gold hover:text-finance-gold/80 transition">
+                                        阅读全文 <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                    </a>
+                                    <span class="text-sm text-foreground/60"><i data-lucide="clock" class="w-4 h-4 inline mr-1"></i> 12分钟阅读</span>
+                                </div>
+                            </div>
+                            <div class="lg:w-1/3">
+                                <div class="bg-card/50 border border-border rounded-lg h-40 lg:h-full flex items-center justify-center">
+                                    <i data-lucide="alert-triangle" class="w-16 h-16 text-foreground/20"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 文章3 -->
+                    <article class="bg-card border border-border rounded-lg p-6 corner-deco card-hover">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-2/3">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="px-3 py-1 bg-tactical-green/20 border border-tactical-green/30 rounded text-tactical-green text-sm font-semibold">理论实践</span>
+                                    <span class="text-sm text-foreground/60">2025-10-10</span>
+                                </div>
+                                <h2 class="text-2xl font-bold mb-3 hover:text-tactical-green transition cursor-pointer">
+                                    <a href="blog-post.html">家族资产保全的战术性配置方案</a>
+                                </h2>
+                                <p class="text-foreground/70 mb-4 leading-relaxed">
+                                    高净值客户如何实现资产的跨代传承？本文从资产架构的角度，探讨了在当前经济环境下，如何通过战术性配置实现家族资产的长期保全与稳健增值。
+                                </p>
+                                <div class="flex items-center gap-4">
+                                    <a href="blog-post.html" class="inline-flex items-center gap-2 text-tactical-green hover:text-tactical-green/80 transition">
+                                        阅读全文 <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                    </a>
+                                    <span class="text-sm text-foreground/60"><i data-lucide="clock" class="w-4 h-4 inline mr-1"></i> 18分钟阅读</span>
+                                </div>
+                            </div>
+                            <div class="lg:w-1/3">
+                                <div class="bg-card/50 border border-border rounded-lg h-40 lg:h-full flex items-center justify-center">
+                                    <i data-lucide="shield" class="w-16 h-16 text-foreground/20"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 文章4 -->
+                    <article class="bg-card border border-border rounded-lg p-6 corner-deco card-hover">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-2/3">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="px-3 py-1 bg-tech-cyan/20 border border-tech-cyan/30 rounded text-tech-cyan text-sm font-semibold">投资洞察</span>
+                                    <span class="text-sm text-foreground/60">2025-09-05</span>
+                                </div>
+                                <h2 class="text-2xl font-bold mb-3 hover:text-tech-cyan transition cursor-pointer">
+                                    <a href="blog-post.html">舆情分析在投资决策中的应用</a>
+                                </h2>
+                                <p class="text-foreground/70 mb-4 leading-relaxed">
+                                    市场情绪是反身性循环的核心驱动力。本文详细介绍了如何通过舆情分析识别市场拐点，以及SXA模型如何量化市场情绪并转化为交易信号。
+                                </p>
+                                <div class="flex items-center gap-4">
+                                    <a href="blog-post.html" class="inline-flex items-center gap-2 text-tech-cyan hover:text-tech-cyan/80 transition">
+                                        阅读全文 <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                    </a>
+                                    <span class="text-sm text-foreground/60"><i data-lucide="clock" class="w-4 h-4 inline mr-1"></i> 10分钟阅读</span>
+                                </div>
+                            </div>
+                            <div class="lg:w-1/3">
+                                <div class="bg-card/50 border border-border rounded-lg h-40 lg:h-full flex items-center justify-center">
+                                    <i data-lucide="message-square" class="w-16 h-16 text-foreground/20"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 文章5 -->
+                    <article class="bg-card border border-border rounded-lg p-6 corner-deco card-hover">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-2/3">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="px-3 py-1 bg-finance-gold/20 border border-finance-gold/30 rounded text-finance-gold text-sm font-semibold">市场分析</span>
+                                    <span class="text-sm text-foreground/60">2025-08-20</span>
+                                </div>
+                                <h2 class="text-2xl font-bold mb-3 hover:text-finance-gold transition cursor-pointer">
+                                    <a href="blog-post.html">特殊机会投资：在恐慌中寻找价值</a>
+                                </h2>
+                                <p class="text-foreground/70 mb-4 leading-relaxed">
+                                    2018年市场大跌期间，我们如何发现被错杀的优质资产？特殊机会投资需要极强的逆向思维和耐心，本文分享了实战案例和选股策略。
+                                </p>
+                                <div class="flex items-center gap-4">
+                                    <a href="blog-post.html" class="inline-flex items-center gap-2 text-finance-gold hover:text-finance-gold/80 transition">
+                                        阅读全文 <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                    </a>
+                                    <span class="text-sm text-foreground/60"><i data-lucide="clock" class="w-4 h-4 inline mr-1"></i> 14分钟阅读</span>
+                                </div>
+                            </div>
+                            <div class="lg:w-1/3">
+                                <div class="bg-card/50 border border-border rounded-lg h-40 lg:h-full flex items-center justify-center">
+                                    <i data-lucide="target" class="w-16 h-16 text-foreground/20"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- 分页 -->
+                <div class="flex justify-center mt-12">
+                    <nav class="flex items-center gap-2">
+                        <button class="px-4 py-2 bg-card border border-border text-foreground/70 rounded-lg hover:border-tech-cyan hover:text-tech-cyan transition disabled:opacity-50" disabled>上一页</button>
+                        <button class="px-4 py-2 bg-tech-cyan text-background font-semibold rounded-lg">1</button>
+                        <button class="px-4 py-2 bg-card border border-border text-foreground/70 rounded-lg hover:border-tech-cyan hover:text-tech-cyan transition">2</button>
+                        <button class="px-4 py-2 bg-card border border-border text-foreground/70 rounded-lg hover:border-tech-cyan hover:text-tech-cyan transition">3</button>
+                        <span class="px-2 text-foreground/60">...</span>
+                        <button class="px-4 py-2 bg-card border border-border text-foreground/70 rounded-lg hover:border-tech-cyan hover:text-tech-cyan transition">下一页</button>
+                    </nav>
+                </div>
+            </div>
+        </section>
+
+        <!-- 订阅CTA -->
+        <section class="py-12 lg:py-20">
+            <div class="container-custom">
+                <div class="bg-gradient-to-br from-tech-cyan/20 to-tactical-green/20 border border-tech-cyan/30 rounded-lg p-8 lg:p-12 text-center">
+                    <div class="w-16 h-16 rounded-full bg-tech-cyan/20 border border-tech-cyan/30 flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="bell" class="w-8 h-8 text-tech-cyan"></i>
+                    </div>
+                    <h2 class="text-2xl lg:text-3xl font-bold mb-4">订阅投资洞察</h2>
+                    <p class="text-foreground/70 mb-6 max-w-2xl mx-auto">
+                        第一时间获取最新的投资分析和市场洞察，不错过任何重要机会
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                        <input type="email" placeholder="您的邮箱地址" class="flex-1 bg-card border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-tech-cyan">
+                        <button class="px-6 py-3 bg-tech-cyan text-background font-semibold rounded-lg transition tech-glow hover:bg-tech-cyan/90 whitespace-nowrap">
+                            立即订阅
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div class="bottom-nav lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border py-2 px-4 z-50">
+        <div class="flex justify-around items-center">
+            <a href="index.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="home" class="w-6 h-6"></i><span>首页</span></a>
+            <a href="about.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="user" class="w-6 h-6"></i><span>我的</span></a>
+            <a href="services.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="grid-3x3" class="w-6 h-6"></i><span>服务</span></a>
+            <a href="cases.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="folder-open" class="w-6 h-6"></i><span>案例</span></a>
+            <a href="blog.html" class="flex flex-col items-center gap-1 text-tech-cyan text-xs"><i data-lucide="file-text" class="w-6 h-6"></i><span>博客</span></a>
+                <a href="api-playground.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="code" class="w-4 h-4"></i>API</a>
+        </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

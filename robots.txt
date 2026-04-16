@@ -1,0 +1,10 @@
+# robots.txt for guanweixiong.com
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://guanweixiong.com/sitemap.xml
+
+# Disallow specific paths if any
+# Disallow: /private/

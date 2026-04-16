@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案例研究 - 关威雄 | 资产架构师</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        card: 'hsl(var(--card))',
+                        border: 'hsl(var(--border))',
+                        'tech-cyan': 'hsl(var(--tech-cyan))',
+                        'finance-gold': 'hsl(var(--finance-gold))',
+                        'tactical-green': 'hsl(var(--tactical-green))',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --background: 150 20% 6%;
+            --foreground: 140 30% 92%;
+            --card: 150 18% 10%;
+            --border: 150 15% 18%;
+            --tech-cyan: 175 85% 45%;
+            --finance-gold: 45 95% 55%;
+            --tactical-green: 150 60% 40%;
+        }
+        body { background: hsl(var(--background)); color: hsl(var(--foreground)); }
+        .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px); z-index: 1; }
+        .corner-deco::before { content: ''; position: absolute; top: 0; left: 0; width: 16px; height: 16px; border-top: 2px solid hsl(var(--tech-cyan)); border-left: 2px solid hsl(var(--tech-cyan)); }
+        .corner-deco::after { content: ''; position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; border-bottom: 2px solid hsl(var(--tech-cyan)); border-right: 2px solid hsl(var(--tech-cyan)); }
+        .gradient-text { background: linear-gradient(to right, hsl(var(--tech-cyan)), hsl(var(--finance-gold))); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .container-custom { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
+        @media (min-width: 640px) { .container-custom { padding: 0 2rem; } }
+        @media (min-width: 1024px) { .container-custom { padding: 0 4rem; } }
+        .tech-glow { box-shadow: 0 0 20px hsl(var(--tech-cyan) / 0.3); }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="scanline"></div>
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div class="container-custom"><div class="flex items-center justify-between h-16">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center"><i data-lucide="zap" class="w-5 h-5 text-background"></i></div>
+                <span class="font-bold text-xl">关威雄</span>
+            </div>
+            <div class="hidden lg:flex items-center gap-8">
+                <a href="index.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="home" class="w-4 h-4"></i>首页</a>
+                <a href="about.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i>关于我</a>
+                <a href="services.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="grid-3x3" class="w-4 h-4"></i>服务市场</a>
+                <a href="cases.html" class="text-tech-cyan transition flex items-center gap-2"><i data-lucide="folder-open" class="w-4 h-4"></i>案例研究</a>
+                <a href="blog.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i>博客</a>
+                <a href="api-playground.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="code" class="w-4 h-4"></i>API</a>
+            </div>
+        </div></div>
+    </nav>
+    <nav class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div class="px-4 py-3"><div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center"><i data-lucide="zap" class="w-4 h-4 text-background"></i></div>
+                <span class="font-bold text-lg">关威雄</span>
+            </div>
+        </div></div>
+    </nav>
+    <main class="relative z-10 pt-16 lg:pt-16 pb-20">
+        <section class="py-12 lg:py-20">
+            <div class="container-custom text-center">
+                <h1 class="text-4xl lg:text-6xl font-bold mb-4"><span class="gradient-text">案例研究</span></h1>
+                <p class="text-lg text-foreground/70 max-w-2xl mx-auto">用业绩说话：极端市场环境下的实战案例</p>
+            </div>
+        </section>
+
+        <!-- 万有道1号基金 -->
+        <section class="py-12 lg:py-20 bg-card/30">
+            <div class="container-custom">
+                <div class="bg-card border border-border rounded-lg p-8 corner-deco">
+                    <div class="flex flex-col lg:flex-row gap-8 items-start">
+                        <div class="lg:w-1/3">
+                            <div class="w-20 h-20 rounded-xl bg-tech-cyan/20 border border-tech-cyan/30 flex items-center justify-center mb-4">
+                                <i data-lucide="trending-up" class="w-10 h-10 text-tech-cyan"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold mb-2">万有道1号</h2>
+                            <p class="text-foreground/60 mb-4">2014-2016</p>
+                            <div class="inline-block px-4 py-2 bg-tech-cyan/20 border border-tech-cyan/30 rounded-lg">
+                                <span class="text-tech-cyan font-bold text-2xl">489%</span>
+                                <span class="text-sm text-foreground/60 ml-2">2年收益</span>
+                            </div>
+                        </div>
+                        <div class="lg:w-2/3 space-y-6">
+                            <div>
+                                <h3 class="text-xl font-bold mb-3 text-tech-cyan">投资策略</h3>
+                                <p class="text-foreground/70 leading-relaxed">基于反身性理论的早期应用，重点捕捉市场情绪与基本面之间的背离机会。在2014-2015年牛市中，准确识别市场泡沫化信号，提前布局逆向策略。</p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-3 text-tech-cyan">关键操作</h3>
+                                <ul class="space-y-2 text-foreground/70">
+                                    <li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-tech-cyan mt-0.5 flex-shrink-0"></i>2014年中识别市场反身性趋势启动</li>
+                                    <li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-tech-cyan mt-0.5 flex-shrink-0"></i>2015年5月提前清仓，成功规避股灾</li>
+                                    <li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-tech-cyan mt-0.5 flex-shrink-0"></i>股灾期间反向做空，实现反向获利</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-3 text-tech-cyan">经验总结</h3>
+                                <p class="text-foreground/70">这是SXA反身性交易模型的首次实战应用，验证了理论在A股市场的有效性。关键在于识别市场反身性循环的拐点。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2015股灾应对 -->
+        <section class="py-12 lg:py-20">
+            <div class="container-custom">
+                <div class="bg-card border border-border rounded-lg p-8 corner-deco">
+                    <div class="flex flex-col lg:flex-row gap-8 items-start">
+                        <div class="lg:w-1/3">
+                            <div class="w-20 h-20 rounded-xl bg-finance-gold/20 border border-finance-gold/30 flex items-center justify-center mb-4">
+                                <i data-lucide="shield" class="w-10 h-10 text-finance-gold"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold mb-2">2015股灾应对</h2>
+                            <p class="text-foreground/60 mb-4">2015年6-8月</p>
+                            <div class="inline-block px-4 py-2 bg-finance-gold/20 border border-finance-gold/30 rounded-lg">
+                                <span class="text-finance-gold font-bold text-2xl">+15%</span>
+                                <span class="text-sm text-foreground/60 ml-2">市场-40%时正收益</span>
+                            </div>
+                        </div>
+                        <div class="lg:w-2/3 space-y-6">
+                            <div>
+                                <h3 class="text-xl font-bold mb-3 text-finance-gold">市场背景</h3>
+                                <p class="text-foreground/70 leading-relaxed">2015年6月，A股经历历史性股灾，上证指数从5178点暴跌至3373点，跌幅超过34%。绝大多数投资者损失惨重，市场陷入极度恐慌。</p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-3 text-finance-gold">应对策略</h3>
+                                <ul class="space-y-2 text-foreground/70">
+                                    <li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-finance-gold mt-0.5 flex-shrink-0"></i>5月底识别反身性泡沫破裂信号</li>
+                                    <li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-finance-gold mt-0.5 flex-shrink-0"></i>所有账户提前清仓，持有现金</li>
+                                    <li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-finance-gold mt-0.5 flex-shrink-0"></i>市场反弹时参与股指期货做空</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-3 text-finance-gold">实战成果</h3>
+                                <p class="text-foreground/70">在市场暴跌40%的环境下，所有管理账户不仅成功保全资产，还通过做空获得15%正收益。这是SXA模型极端市场应对能力的经典案例。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 万有道2号基金 -->
+        <section class="py-12 lg:py-20 bg-card/30">
+            <div class="container-custom">
+                <div class="bg-card border border-border rounded-lg p-8 corner-deco">
+                    <div class="flex flex-col lg:flex-row gap-8 items-start">
+                        <div class="lg:w-1/3">
+                            <div class="w-20 h-20 rounded-xl bg-tactical-green/20 border border-tactical-green/30 flex items-center justify-center mb-4">
+                                <i data-lucide="target" class="w-10 h-10 text-tactical-green"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold mb-2">万有道2号</h2>
+                            <p class="text-foreground/60 mb-4">2017-2019</p>
+                            <div class="inline-block px-4 py-2 bg-tactical-green/20 border border-tactical-green/30 rounded-lg">
+                                <span class="text-tactical-green font-bold text-2xl">127%</span>
+                                <span class="text-sm text-foreground/60 ml-2">3年收益</span>
+                            </div>
+                        </div>
+                        <div class="lg:w-2/3 space-y-6">
+                            <div>
+                                <h3 class="text-xl font-bold mb-3 text-tactical-green">投资策略</h3>
+                                <p class="text-foreground/70 leading-relaxed">专注特殊机会投资，在市场恐慌时布局优质资产。2018年市场大跌期间，精准捕捉被错杀的优质标的，为2019年反弹奠定基础。</p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-3 text-tactical-green">关键操作</h3>
+                                <ul class="space-y-2 text-foreground/70">
+                                    <li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-tactical-green mt-0.5 flex-shrink-0"></i>2018年精准识别市场底部区域</li>
+                                    <li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-tactical-green mt-0.5 flex-shrink-0"></i>分批建仓被错杀的优质龙头股</li>
+                                    <li class="flex items-start gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-tactical-green mt-0.5 flex-shrink-0"></i>2019年牛市初期获得超额收益</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-3 text-tactical-green">经验总结</h3>
+                                <p class="text-foreground/70">特殊机会投资需要极强的逆向思维和耐心。在市场极度悲观时，往往是布局的最佳时机。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 客户见证 -->
+        <section class="py-12 lg:py-20">
+            <div class="container-custom">
+                <h2 class="text-3xl font-bold mb-12 text-center flex items-center justify-center gap-3">
+                    <i data-lucide="message-square" class="w-8 h-8 text-finance-gold"></i>
+                    客户见证
+                </h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center">
+                                <i data-lucide="user" class="w-6 h-6 text-background"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">高净值客户 张总</h4>
+                                <p class="text-sm text-foreground/60">制造业企业家</p>
+                            </div>
+                        </div>
+                        <p class="text-foreground/70 leading-relaxed">"2015年股灾时，我的其他投资都损失惨重，只有关总管理的账户不仅保住了本金，还获得了正收益。这种极端市场的风控能力让我非常放心。"</p>
+                    </div>
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-finance-gold to-tactical-green flex items-center justify-center">
+                                <i data-lucide="user" class="w-6 h-6 text-background"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">家族办公室 李女士</h4>
+                                <p class="text-sm text-foreground/60">家族资产管理人</p>
+                            </div>
+                        </div>
+                        <p class="text-foreground/70 leading-relaxed">"关总的SXA模型让我们家族资产在市场波动中保持了稳定增长。他不仅关注收益，更重视风险控制，这正是我们家族资产所需要的。"</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="py-12 lg:py-20 bg-card/30">
+            <div class="container-custom">
+                <div class="bg-gradient-to-br from-tech-cyan/20 to-tactical-green/20 border border-tech-cyan/30 rounded-lg p-8 lg:p-12 text-center">
+                    <h2 class="text-2xl lg:text-3xl font-bold mb-4">合作咨询</h2>
+                    <p class="text-foreground/70 mb-6 max-w-2xl mx-auto">
+                        如果您希望了解更详细的投资案例，或探讨资产架构合作
+                    </p>
+                    <a href="index.html#contact" class="inline-flex items-center gap-2 px-8 py-3 bg-tech-cyan text-background font-semibold rounded-lg transition tech-glow hover:bg-tech-cyan/90">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                        联系我
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div class="bottom-nav lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border py-2 px-4 z-50">
+        <div class="flex justify-around items-center">
+            <a href="index.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="home" class="w-6 h-6"></i><span>首页</span></a>
+            <a href="about.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="user" class="w-6 h-6"></i><span>我的</span></a>
+            <a href="services.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="grid-3x3" class="w-6 h-6"></i><span>服务</span></a>
+            <a href="cases.html" class="flex flex-col items-center gap-1 text-tech-cyan text-xs"><i data-lucide="folder-open" class="w-6 h-6"></i><span>案例</span></a>
+            <a href="index.html#contact" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="mail" class="w-6 h-6"></i><span>联系</span></a>
+        </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

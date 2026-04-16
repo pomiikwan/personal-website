@@ -1,0 +1,232 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 军事科技金融融合风格 - 从iteration_3_responsive_final.html迁移 */
+    --background: 150 20% 6%;      /* 深墨绿背景 hsl(150, 20%, 6%) */
+    --foreground: 140 30% 92%;     /* 主文字 hsl(140, 30%, 92%) */
+
+    --card: 150 18% 10%;           /* 卡片背景 hsl(150, 18%, 10%) */
+    --card-foreground: 140 30% 92%;
+
+    --popover: 150 18% 10%;
+    --popover-foreground: 140 30% 92%;
+
+    --border: 150 15% 18%;         /* 边框 hsl(150, 15%, 18%) */
+    --input: 150 15% 18%;
+
+    --primary: 175 85% 45%;        /* 科技青 hsl(175, 85%, 45%) */
+    --primary-foreground: 150 20% 6%;
+
+    --secondary: 150 60% 40%;      /* 军事绿 hsl(150, 60%, 40%) */
+    --secondary-foreground: 140 30% 92%;
+
+    --muted: 150 15% 18%;
+    --muted-foreground: 140 20% 60%;
+
+    --accent: 45 95% 55%;          /* 金融金 hsl(45, 95%, 55%) */
+    --accent-foreground: 150 20% 6%;
+
+    --tech-cyan: 175 85% 45%;      /* 科技青强调色 */
+    --finance-gold: 45 95% 55%;    /* 金融金标识色 */
+    --tactical-green: 150 60% 40%; /* 军事绿功能色 */
+    --military-olive: 150 25% 20%; /* 军事橄榄色 */
+
+    --radius: 0.5rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  /* 隐藏滚动条但保留功能 */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* 科技发光效果 */
+  .tech-glow {
+    box-shadow: 0 0 20px hsl(var(--tech-cyan) / 0.3);
+  }
+
+  .tech-glow-hover:hover {
+    box-shadow: 0 0 30px hsl(var(--tech-cyan) / 0.5);
+  }
+
+  /* 扫描线动画背景 */
+  .scan-line-bg {
+    background-image: linear-gradient(
+      to bottom,
+      transparent 50%,
+      hsl(var(--background) / 0.1) 50%
+    );
+    background-size: 100% 4px;
+    animation: scan 8s linear infinite;
+  }
+
+  /* 网格背景 */
+  .grid-bg {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  /* 角标装饰 - 完全按照设计规范 */
+  .corner-deco {
+    position: relative;
+  }
+
+  .corner-deco::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 16px;
+    height: 16px;
+    border-top: 2px solid hsl(var(--tech-cyan));
+    border-left: 2px solid hsl(var(--tech-cyan));
+  }
+
+  .corner-deco::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    border-bottom: 2px solid hsl(var(--tech-cyan));
+    border-right: 2px solid hsl(var(--tech-cyan));
+  }
+
+  @media (min-width: 768px) {
+    .corner-deco::before,
+    .corner-deco::after {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  /* 渐变文字效果 */
+  .gradient-text {
+    background: linear-gradient(to right, hsl(var(--tech-cyan)), hsl(var(--finance-gold)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* 按钮样式 - 按照设计规范 */
+  .btn-primary {
+    background: linear-gradient(to right, hsl(var(--tech-cyan)), hsl(var(--tactical-green)));
+    color: hsl(var(--background));
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+  }
+
+  .btn-secondary {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--tech-cyan) / 0.5);
+    color: hsl(var(--tech-cyan));
+  }
+
+  .btn-secondary:hover {
+    background: hsl(var(--tech-cyan) / 0.1);
+  }
+
+  /* 服务卡片样式 */
+  .service-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .service-card:hover {
+    border-color: hsl(var(--tech-cyan));
+    box-shadow: 0 0 20px hsl(var(--tech-cyan) / 0.2);
+  }
+
+  /* 卡片悬浮效果 */
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  /* 响应式容器 */
+  .container-custom {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .container-custom {
+      padding: 0 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-custom {
+      padding: 0 4rem;
+    }
+  }
+
+  /* 导航样式 - 桌面端和移动端自动切换 */
+  .desktop-nav {
+    display: none;
+  }
+
+  .bottom-nav {
+    display: flex;
+  }
+
+  @media (min-width: 1024px) {
+    .desktop-nav {
+      display: block;
+    }
+    .bottom-nav {
+      display: none;
+    }
+  }
+
+  /* 导航链接下划线动画 */
+  .nav-link {
+    position: relative;
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: hsl(var(--tech-cyan));
+    transition: width 0.3s ease;
+  }
+
+  .nav-link:hover::after {
+    width: 100%;
+  }
+}

@@ -1,0 +1,133 @@
+<!-- 联系表单模态框 -->
+<div id="contactModal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-background/80 backdrop-blur-sm" onclick="closeContactModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-card border border-border rounded-lg shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto corner-deco">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold gradient-text">联系我</h3>
+                    <button onclick="closeContactModal()" class="text-foreground/60 hover:text-foreground transition">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <form id="contactForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">您的姓名 *</label>
+                        <input type="text" name="name" required
+                            class="w-full bg-background border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-tech-cyan transition"
+                            placeholder="请输入您的姓名">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">电子邮箱 *</label>
+                        <input type="email" name="email" required
+                            class="w-full bg-background border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-tech-cyan transition"
+                            placeholder="your@email.com">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">合作意向 *</label>
+                        <select name="interest" required
+                            class="w-full bg-background border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-tech-cyan transition">
+                            <option value="">请选择合作意向</option>
+                            <option value="量化交易信号">量化交易信号服务</option>
+                            <option value="SXA模型授权">SXA模型授权</option>
+                            <option value="舆情分析">舆情分析服务</option>
+                            <option value="资产架构咨询">资产架构咨询</option>
+                            <option value="其他">其他合作</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">详细说明</label>
+                        <textarea name="message" rows="4"
+                            class="w-full bg-background border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-tech-cyan transition resize-none"
+                            placeholder="请简要描述您的需求..."></textarea>
+                    </div>
+
+                    <div id="formMessage" class="hidden rounded-lg p-3 text-sm"></div>
+
+                    <div class="flex gap-3">
+                        <button type="submit"
+                            class="flex-1 px-6 py-3 bg-tech-cyan text-background font-semibold rounded-lg transition tech-glow hover:bg-tech-cyan/90 flex items-center justify-center gap-2">
+                            <i data-lucide="send" class="w-5 h-5"></i>
+                            发送邮件
+                        </button>
+                        <button type="button" onclick="closeContactModal()"
+                            class="px-6 py-3 bg-card border border-border text-foreground font-semibold rounded-lg hover:border-tech-cyan hover:text-tech-cyan transition">
+                            取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 打开联系表单模态框
+function openContactModal() {
+    document.getElementById('contactModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+}
+
+// 关闭联系表单模态框
+function closeContactModal() {
+    document.getElementById('contactModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// 表单提交处理
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const form = this;
+    const formData = new FormData(form);
+    const formMessage = document.getElementById('formMessage');
+
+    // 构建mailto链接
+    const name = formData.get('name');
+    const email = formData.get('email');
+    const interest = formData.get('interest');
+    const message = formData.get('message');
+
+    const subject = encodeURIComponent('合作咨询：' + interest + ' - ' + name);
+    const body = encodeURIComponent(
+'姓名：' + name + '\n' +
+'邮箱：' + email + '\n' +
+'合作意向：' + interest + '\n' +
+'详细说明：\n' + (message || '无') + '\n\n' +
+'---\n' +
+'此邮件通过关威雄个人网站联系表单发送'
+    );
+
+    const mailtoLink = 'mailto:your-email@example.com?subject=' + subject + '&body=' + body;
+
+    // 显示成功消息
+    formMessage.classList.remove('hidden', 'bg-red-500/20', 'text-red-400', 'border-red-500/30');
+    formMessage.classList.add('bg-tech-cyan/20', 'text-tech-cyan', 'border-tech-cyan/30', 'border');
+    formMessage.textContent = '正在打开邮件客户端...';
+
+    // 打开邮件客户端
+    window.location.href = mailtoLink;
+
+    // 延迟关闭模态框
+    setTimeout(function() {
+        closeContactModal();
+        form.reset();
+        formMessage.classList.add('hidden');
+    }, 2000);
+});
+
+// 为所有"立即联系我"按钮添加点击事件
+document.addEventListener('DOMContentLoaded', function() {
+    const contactButtons = document.querySelectorAll('button');
+    contactButtons.forEach(function(btn) {
+        if (btn.textContent.includes('立即联系') || btn.textContent.includes('联系我')) {
+            btn.addEventListener('click', openContactModal);
+        }
+    });
+});
+</script>

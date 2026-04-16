@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Playground - 关威雄 | 资产架构师</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        card: 'hsl(var(--card))',
+                        border: 'hsl(var(--border))',
+                        'tech-cyan': 'hsl(var(--tech-cyan))',
+                        'finance-gold': 'hsl(var(--finance-gold))',
+                        'tactical-green': 'hsl(var(--tactical-green))',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --background: 150 20% 6%;
+            --foreground: 140 30% 92%;
+            --card: 150 18% 10%;
+            --border: 150 15% 18%;
+            --tech-cyan: 175 85% 45%;
+            --finance-gold: 45 95% 55%;
+            --tactical-green: 150 60% 40%;
+        }
+        body { background: hsl(var(--background)); color: hsl(var(--foreground)); }
+        .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px); z-index: 1; }
+        .corner-deco::before { content: ''; position: absolute; top: 0; left: 0; width: 16px; height: 16px; border-top: 2px solid hsl(var(--tech-cyan)); border-left: 2px solid hsl(var(--tech-cyan)); }
+        .corner-deco::after { content: ''; position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; border-bottom: 2px solid hsl(var(--tech-cyan)); border-right: 2px solid hsl(var(--tech-cyan)); }
+        .gradient-text { background: linear-gradient(to right, hsl(var(--tech-cyan)), hsl(var(--finance-gold))); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .container-custom { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
+        @media (min-width: 640px) { .container-custom { padding: 0 2rem; } }
+        @media (min-width: 1024px) { .container-custom { padding: 0 4rem; } }
+        .tech-glow { box-shadow: 0 0 20px hsl(var(--tech-cyan) / 0.3); }
+        .code-block { background: hsl(150 18% 8%); border: 1px solid hsl(var(--border)); border-radius: 0.5rem; padding: 1rem; font-family: 'Courier New', monospace; font-size: 0.875rem; overflow-x: auto; }
+        .method-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-weight: 600; font-size: 0.875rem; }
+        .method-get { background: hsl(var(--tech-cyan) / 0.2); color: hsl(var(--tech-cyan)); border: 1px solid hsl(var(--tech-cyan) / 0.3); }
+        .method-post { background: hsl(var(--finance-gold) / 0.2); color: hsl(var(--finance-gold)); border: 1px solid hsl(var(--finance-gold) / 0.3); }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="scanline"></div>
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div class="container-custom"><div class="flex items-center justify-between h-16">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center"><i data-lucide="zap" class="w-5 h-5 text-background"></i></div>
+                <span class="font-bold text-xl">关威雄</span>
+            </div>
+            <div class="hidden lg:flex items-center gap-8">
+                <a href="index.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="home" class="w-4 h-4"></i>首页</a>
+                <a href="about.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i>关于我</a>
+                <a href="services.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="grid-3x3" class="w-4 h-4"></i>服务市场</a>
+                <a href="cases.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="folder-open" class="w-4 h-4"></i>案例研究</a>
+                <a href="blog.html" class="hover:text-tech-cyan transition flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i>博客</a>
+                <a href="api-playground.html" class="text-tech-cyan transition flex items-center gap-2"><i data-lucide="code" class="w-4 h-4"></i>API</a>
+            </div>
+        </div></div>
+    </nav>
+    <nav class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div class="px-4 py-3"><div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center"><i data-lucide="zap" class="w-4 h-4 text-background"></i></div>
+                <span class="font-bold text-lg">关威雄</span>
+            </div>
+        </div></div>
+    </nav>
+    <main class="relative z-10 pt-16 lg:pt-16 pb-20">
+        <!-- 页面标题 -->
+        <section class="py-12 lg:py-20">
+            <div class="container-custom text-center">
+                <div class="w-20 h-20 rounded-full bg-tech-cyan/20 border border-tech-cyan/30 flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="code-2" class="w-10 h-10 text-tech-cyan"></i>
+                </div>
+                <h1 class="text-4xl lg:text-6xl font-bold mb-4"><span class="gradient-text">API Playground</span></h1>
+                <p class="text-lg text-foreground/70 max-w-2xl mx-auto">探索SXA反身性交易模型的强大API接口</p>
+            </div>
+        </section>
+
+        <!-- API列表 -->
+        <section class="py-12 lg:py-20 bg-card/30">
+            <div class="container-custom">
+                <h2 class="text-3xl font-bold mb-8 text-center">可用接口</h2>
+                <div class="space-y-6">
+
+                    <!-- API 1: 量化交易信号 -->
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-1/3">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <h3 class="text-xl font-bold">量化交易信号</h3>
+                                </div>
+                                <p class="text-foreground/60 font-mono text-sm mb-3">/api/v1/trading-signal</p>
+                                <p class="text-foreground/70 text-sm mb-4">基于SXA模型的实时交易信号推送，支持多市场、多策略</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-2 py-1 bg-tech-cyan/20 border border-tech-cyan/30 rounded text-tech-cyan text-xs">实时信号</span>
+                                    <span class="px-2 py-1 bg-finance-gold/20 border border-finance-gold/30 rounded text-finance-gold text-xs">风险评估</span>
+                                    <span class="px-2 py-1 bg-tactical-green/20 border border-tactical-green/30 rounded text-tactical-green text-xs">多市场</span>
+                                </div>
+                            </div>
+                            <div class="lg:w-2/3">
+                                <h4 class="font-semibold mb-3 text-tech-cyan">请求示例</h4>
+                                <div class="code-block mb-4">
+<pre>{
+  "market": "A股",
+  "symbol": "000001.SZ",
+  "strategy": "sxa_standard",
+  "timeframe": "日线"
+}</pre>
+                                </div>
+                                <h4 class="font-semibold mb-3 text-finance-gold">响应示例</h4>
+                                <div class="code-block">
+<pre>{
+  "code": 200,
+  "signal": {
+    "action": "BUY",
+    "confidence": 0.85,
+    "price": 12.50,
+    "stop_loss": 11.88,
+    "target": 14.50,
+    "reason": "反身性启动信号，市场情绪与基本面背离"
+  },
+  "risk_level": "MEDIUM",
+  "timestamp": "2025-12-16T10:30:00Z"
+}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API 2: 研报分析 -->
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-1/3">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <h3 class="text-xl font-bold">研报分析</h3>
+                                </div>
+                                <p class="text-foreground/60 font-mono text-sm mb-3">/api/v1/report-analysis</p>
+                                <p class="text-foreground/70 text-sm mb-4">智能研报摘要提取，关键信息结构化，情感倾向分析</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-2 py-1 bg-tech-cyan/20 border border-tech-cyan/30 rounded text-tech-cyan text-xs">AI提取</span>
+                                    <span class="px-2 py-1 bg-finance-gold/20 border border-finance-gold/30 rounded text-finance-gold text-xs">结构化</span>
+                                </div>
+                            </div>
+                            <div class="lg:w-2/3">
+                                <h4 class="font-semibold mb-3 text-tech-cyan">请求示例</h4>
+                                <div class="code-block mb-4">
+<pre>{
+  "report_url": "https://example.com/report.pdf",
+  "analysis_type": ["summary", "sentiment", "key_points"]
+}</pre>
+                                </div>
+                                <h4 class="font-semibold mb-3 text-finance-gold">响应示例</h4>
+                                <div class="code-block">
+<pre>{
+  "code": 200,
+  "summary": "本研报分析了XX行业的投资机会...",
+  "sentiment": "POSITIVE",
+  "sentiment_score": 0.78,
+  "key_points": [
+    "行业景气度提升",
+    "政策支持力度加大",
+    "龙头企业业绩增长"
+  ],
+  "recommendation": "OVERWEIGHT"
+}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API 3: 舆情分析 -->
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-1/3">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="method-badge method-get">GET</span>
+                                    <h3 class="text-xl font-bold">舆情分析</h3>
+                                </div>
+                                <p class="text-foreground/60 font-mono text-sm mb-3">/api/v1/sentiment-analysis</p>
+                                <p class="text-foreground/70 text-sm mb-4">实时市场舆情监控，情绪倾向追踪，风险预警推送</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-2 py-1 bg-tech-cyan/20 border border-tech-cyan/30 rounded text-tech-cyan text-xs">实时监控</span>
+                                    <span class="px-2 py-1 bg-tactical-green/20 border border-tactical-green/30 rounded text-tactical-green text-xs">风险预警</span>
+                                </div>
+                            </div>
+                            <div class="lg:w-2/3">
+                                <h4 class="font-semibold mb-3 text-tech-cyan">请求示例</h4>
+                                <div class="code-block mb-4">
+<pre>GET /api/v1/sentiment-analysis?symbol=000001.SZ&timeframe=7d</pre>
+                                </div>
+                                <h4 class="font-semibold mb-3 text-finance-gold">响应示例</h4>
+                                <div class="code-block">
+<pre>{
+  "code": 200,
+  "symbol": "000001.SZ",
+  "overall_sentiment": "BULLISH",
+  "sentiment_score": 0.72,
+  "trend": "RISING",
+  "sources": {
+    "news": 152,
+    "social_media": 1243,
+    "analyst": 23
+  },
+  "topics": [
+    {"topic": "业绩增长", "mentions": 456},
+    {"topic": "行业政策", "mentions": 312}
+  ],
+  "alerts": [
+    {
+      "level": "INFO",
+      "message": "舆情关注度显著提升",
+      "timestamp": "2025-12-16T09:00:00Z"
+    }
+  ]
+}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API 4: AI大模型接口 -->
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-1/3">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <h3 class="text-xl font-bold">AI大模型对话</h3>
+                                </div>
+                                <p class="text-foreground/60 font-mono text-sm mb-3">/api/v1/llm/chat</p>
+                                <p class="text-foreground/70 text-sm mb-4">专业金融大模型，智能问答，投资建议生成</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-2 py-1 bg-tech-cyan/20 border border-tech-cyan/30 rounded text-tech-cyan text-xs">GPT-4</span>
+                                    <span class="px-2 py-1 bg-finance-gold/20 border border-finance-gold/30 rounded text-finance-gold text-xs">金融专业</span>
+                                </div>
+                            </div>
+                            <div class="lg:w-2/3">
+                                <h4 class="font-semibold mb-3 text-tech-cyan">请求示例</h4>
+                                <div class="code-block mb-4">
+<pre>{
+  "messages": [
+    {"role": "user", "content": "分析当前A股市场趋势"}
+  ],
+  "model": "financial-gpt-4",
+  "temperature": 0.7
+}</pre>
+                                </div>
+                                <h4 class="font-semibold mb-3 text-finance-gold">响应示例</h4>
+                                <div class="code-block">
+<pre>{
+  "code": 200,
+  "message": {
+    "role": "assistant",
+    "content": "基于当前市场数据分析，A股呈现以下特征..."
+  },
+  "usage": {
+    "prompt_tokens": 25,
+    "completion_tokens": 150,
+    "total_tokens": 175
+  }
+}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API 5: Agent任务接口 -->
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-1/3">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="method-badge method-post">POST</span>
+                                    <h3 class="text-xl font-bold">Agent团队任务</h3>
+                                </div>
+                                <p class="text-foreground/60 font-mono text-sm mb-3">/api/v1/agent/task</p>
+                                <p class="text-foreground/70 text-sm mb-4">多Agent协作任务，复杂投资决策，深度研究报告</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-2 py-1 bg-tech-cyan/20 border border-tech-cyan/30 rounded text-tech-cyan text-xs">多Agent</span>
+                                    <span class="px-2 py-1 bg-finance-gold/20 border border-finance-gold/30 rounded text-finance-gold text-xs">协作</span>
+                                </div>
+                            </div>
+                            <div class="lg:w-2/3">
+                                <h4 class="font-semibold mb-3 text-tech-cyan">请求示例</h4>
+                                <div class="code-block mb-4">
+<pre>{
+  "task_type": "investment_research",
+  "target": "XX行业深度分析",
+  "agents": ["analyst", "researcher", "risk_manager"],
+  "deadline": "2025-12-20T18:00:00Z"
+}</pre>
+                                </div>
+                                <h4 class="font-semibold mb-3 text-finance-gold">响应示例</h4>
+                                <div class="code-block">
+<pre>{
+  "code": 200,
+  "task_id": "task_20251216_001",
+  "status": "PROCESSING",
+  "estimated_completion": "2025-12-16T14:00:00Z",
+  "agent_status": [
+    {"agent": "analyst", "status": "WORKING", "progress": 0.3},
+    {"agent": "researcher", "status": "PENDING", "progress": 0.0},
+    {"agent": "risk_manager", "status": "PENDING", "progress": 0.0}
+  ]
+}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- 集成指南 -->
+        <section class="py-12 lg:py-20">
+            <div class="container-custom">
+                <h2 class="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
+                    <i data-lucide="book" class="w-8 h-8 text-finance-gold"></i>
+                    快速开始
+                </h2>
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <h3 class="text-xl font-bold mb-4 text-tech-cyan">1. 获取API密钥</h3>
+                        <p class="text-foreground/70 mb-4">联系客服获取API访问密钥，每个密钥有调用次数限制</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-2 bg-tech-cyan/20 border border-tech-cyan/30 rounded text-tech-cyan text-sm font-semibold">免费版：100次/天</span>
+                            <span class="px-3 py-2 bg-finance-gold/20 border border-finance-gold/30 rounded text-finance-gold text-sm font-semibold">专业版：1000次/天</span>
+                        </div>
+                    </div>
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <h3 class="text-xl font-bold mb-4 text-finance-gold">2. 发起API调用</h3>
+                        <p class="text-foreground/70 mb-4">在请求头中携带API密钥，使用标准HTTP客户端调用</p>
+                        <div class="code-block text-sm">
+<pre>Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json</pre>
+                        </div>
+                    </div>
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <h3 class="text-xl font-bold mb-4 text-tactical-green">3. 处理响应数据</h3>
+                        <p class="text-foreground/70 mb-4">所有接口返回统一JSON格式，包含code、message、data字段</p>
+                        <div class="code-block text-sm">
+<pre>{
+  "code": 200,
+  "message": "success",
+  "data": { ... }
+}</pre>
+                        </div>
+                    </div>
+                    <div class="bg-card border border-border rounded-lg p-6 corner-deco">
+                        <h3 class="text-xl font-bold mb-4 text-finance-gold">4. 错误处理</h3>
+                        <p class="text-foreground/70 mb-4">遇到错误时检查code字段，参考文档获取详细说明</p>
+                        <div class="code-block text-sm">
+<pre>{
+  "code": 401,
+  "message": "Invalid API key",
+  "data": null
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="py-12 lg:py-20 bg-card/30">
+            <div class="container-custom">
+                <div class="bg-gradient-to-br from-tech-cyan/20 to-tactical-green/20 border border-tech-cyan/30 rounded-lg p-8 lg:p-12 text-center">
+                    <div class="w-16 h-16 rounded-full bg-tech-cyan/20 border border-tech-cyan/30 flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="key" class="w-8 h-8 text-tech-cyan"></i>
+                    </div>
+                    <h2 class="text-2xl lg:text-3xl font-bold mb-4">获取API访问权限</h2>
+                    <p class="text-foreground/70 mb-6 max-w-2xl mx-auto">
+                        准备好开始了吗？联系我们获取API密钥，开启量化交易之旅
+                    </p>
+                    <a href="index.html#contact" class="inline-flex items-center gap-2 px-8 py-3 bg-tech-cyan text-background font-semibold rounded-lg transition tech-glow hover:bg-tech-cyan/90">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                        联系我们
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div class="bottom-nav lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border py-2 px-4 z-50">
+        <div class="flex justify-around items-center">
+            <a href="index.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="home" class="w-6 h-6"></i><span>首页</span></a>
+            <a href="about.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="user" class="w-6 h-6"></i><span>我的</span></a>
+            <a href="services.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="grid-3x3" class="w-6 h-6"></i><span>服务</span></a>
+            <a href="cases.html" class="flex flex-col items-center gap-1 text-foreground/60 text-xs"><i data-lucide="folder-open" class="w-6 h-6"></i><span>案例</span></a>
+            <a href="api-playground.html" class="flex flex-col items-center gap-1 text-tech-cyan text-xs"><i data-lucide="code" class="w-6 h-6"></i><span>API</span></a>
+        </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

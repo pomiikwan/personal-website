@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关威雄个人网站 - 多端响应式版本（专业图标版）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        card: 'hsl(var(--card))',
+                        border: 'hsl(var(--border))',
+                        'tech-cyan': 'hsl(var(--tech-cyan))',
+                        'finance-gold': 'hsl(var(--finance-gold))',
+                        'tactical-green': 'hsl(var(--tactical-green))',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 军事科技金融风格 - 深色主题 */
+        :root {
+            --background: 150 20% 6%;
+            --foreground: 140 30% 92%;
+            --card: 150 18% 10%;
+            --border: 150 15% 18%;
+            --tech-cyan: 175 85% 45%;
+            --finance-gold: 45 95% 55%;
+            --military-olive: 80 40% 30%;
+            --tactical-green: 150 60% 40%;
+        }
+
+        body {
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        /* 扫描线动画 */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            animation: scanline 8s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100px); }
+        }
+
+        /* 科技发光效果 */
+        .tech-glow {
+            box-shadow: 0 0 20px hsl(var(--tech-cyan) / 0.3);
+        }
+
+        /* 角标装饰 */
+        .corner-deco {
+            position: relative;
+        }
+
+        .corner-deco::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 16px;
+            height: 16px;
+            border-top: 2px solid hsl(var(--tech-cyan));
+            border-left: 2px solid hsl(var(--tech-cyan));
+        }
+
+        .corner-deco::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 16px;
+            height: 16px;
+            border-bottom: 2px solid hsl(var(--tech-cyan));
+            border-right: 2px solid hsl(var(--tech-cyan));
+        }
+
+        @media (min-width: 768px) {
+            .corner-deco::before,
+            .corner-deco::after {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        /* 导航样式 */
+        .desktop-nav {
+            display: none;
+        }
+
+        .bottom-nav {
+            display: flex;
+        }
+
+        @media (min-width: 1024px) {
+            .desktop-nav {
+                display: block;
+            }
+            .bottom-nav {
+                display: none;
+            }
+        }
+
+        /* 卡片悬浮效果 */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 隐藏滚动条 */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 渐变文字 */
+        .gradient-text {
+            background: linear-gradient(to right, hsl(var(--tech-cyan)), hsl(var(--finance-gold)));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* 按钮样式 */
+        .btn-primary {
+            background: linear-gradient(to right, hsl(var(--tech-cyan)), hsl(var(--tactical-green)));
+            color: hsl(var(--background));
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--tech-cyan) / 0.5);
+            color: hsl(var(--tech-cyan));
+        }
+
+        .btn-secondary:hover {
+            background: hsl(var(--tech-cyan) / 0.1);
+        }
+
+        /* 服务卡片 */
+        .service-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .service-card:hover {
+            border-color: hsl(var(--tech-cyan));
+            box-shadow: 0 0 20px hsl(var(--tech-cyan) / 0.2);
+        }
+
+        /* 响应式容器 */
+        .container-custom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .container-custom {
+                padding: 0 2rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container-custom {
+                padding: 0 4rem;
+            }
+        }
+
+        /* 图标容器 */
+        .icon-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 767px) {
+            .mobile-full-width {
+                padding-left: 0;
+                padding-right: 0;
+            }
+
+            .mobile-card {
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+        }
+
+        /* 图标动画 */
+        .icon-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="scanline"></div>
+
+    <!-- 桌面端导航 -->
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div class="container-custom">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center">
+                        <i data-lucide="zap" class="w-5 h-5 text-background"></i>
+                    </div>
+                    <span class="font-bold text-xl">关威雄</span>
+                    <span class="text-sm text-foreground/70 hidden sm:inline">| 资产架构师</span>
+                </div>
+                <div class="hidden lg:flex items-center gap-8">
+                    <a href="#home" class="nav-link hover:text-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        首页
+                    </a>
+                    <a href="#capabilities" class="nav-link hover:text-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                        能力矩阵
+                    </a>
+                    <a href="#services" class="nav-link hover:text-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="grid-3x3" class="w-4 h-4"></i>
+                        服务市场
+                    </a>
+                    <a href="#about" class="nav-link hover:text-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4"></i>
+                        关于我
+                    </a>
+                    <a href="#contact" class="nav-link hover:text-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="mail" class="w-4 h-4"></i>
+                        联系我
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center gap-4">
+                    <button class="px-4 py-2 text-sm font-medium text-tech-cyan hover:text-tech-cyan/80 transition flex items-center gap-2">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        登录
+                    </button>
+                    <button class="px-4 py-2 bg-tech-cyan text-background text-sm font-medium rounded-lg hover:opacity-90 transition flex items-center gap-2 tech-glow">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        注册
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 移动端顶部导航 -->
+    <nav class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-tech-cyan to-tactical-green flex items-center justify-center">
+                        <i data-lucide="zap" class="w-4 h-4 text-background"></i>
+                    </div>
+                    <span class="font-bold text-lg">关威雄</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="p-2 hover:bg-card/50 rounded-lg transition">
+                        <i data-lucide="search" class="w-5 h-5"></i>
+                    </button>
+                    <button class="p-2 hover:bg-card/50 rounded-lg transition">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <main class="relative z-10">
+        <!-- Hero Section -->
+        <section id="home" class="min-h-screen flex items-center pt-16 lg:pt-16 pb-20">
+            <div class="container-custom py-12 lg:py-20">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <!-- 左侧：文字内容 -->
+                    <div class="text-center lg:text-left">
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4">
+                            <span class="gradient-text">关威雄</span>
+                        </h1>
+                        <h2 class="text-xl sm:text-2xl lg:text-3xl text-foreground/80 mb-6">
+                            资产架构师
+                        </h2>
+                        <p class="text-base sm:text-lg lg:text-xl text-foreground/70 mb-8 leading-relaxed">
+                            极端市场环境下的资产保全与增值专家<br class="hidden sm:block"/>
+                            16年专注一件事：<span class="text-tech-cyan">在极端市场环境下实现资产的保全与增值</span>
+                        </p>
+
+                        <!-- 核心数据 - 响应式布局 -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8">
+                            <div class="bg-card border border-border rounded-lg p-3 lg:p-4 corner-deco">
+                                <div class="text-2xl lg:text-3xl font-bold text-tech-cyan flex items-center justify-center gap-2">
+                                    <i data-lucide="trending-up" class="w-5 h-5 lg:w-6 lg:h-6"></i>
+                                    <span>16+</span>
+                                </div>
+                                <div class="text-xs lg:text-sm text-foreground/60 mt-1">年实战经验</div>
+                            </div>
+                            <div class="bg-card border border-border rounded-lg p-3 lg:p-4 corner-deco">
+                                <div class="text-2xl lg:text-3xl font-bold text-finance-gold flex items-center justify-center gap-2">
+                                    <i data-lucide="line-chart" class="w-5 h-5 lg:w-6 lg:h-6"></i>
+                                    <span>489%</span>
+                                </div>
+                                <div class="text-xs lg:text-sm text-foreground/60 mt-1">最佳基金收益</div>
+                            </div>
+                            <div class="bg-card border border-border rounded-lg p-3 lg:p-4 corner-deco">
+                                <div class="text-2xl lg:text-3xl font-bold text-tactical-green flex items-center justify-center gap-2">
+                                    <i data-lucide="check-circle-2" class="w-5 h-5 lg:w-6 lg:h-6"></i>
+                                    <span>100%</span>
+                                </div>
+                                <div class="text-xs lg:text-sm text-foreground/60 mt-1">账户正收益</div>
+                            </div>
+                            <div class="bg-card border border-border rounded-lg p-3 lg:p-4 corner-deco col-span-2 lg:col-span-1">
+                                <div class="text-2xl lg:text-3xl font-bold text-tech-cyan flex items-center justify-center gap-2">
+                                    <i data-lucide="building-2" class="w-5 h-5 lg:w-6 lg:h-6"></i>
+                                    <span>3</span>
+                                </div>
+                                <div class="text-xs lg:text-sm text-foreground/60 mt-1">私募基金主体</div>
+                            </div>
+                        </div>
+
+                        <!-- CTA按钮 -->
+                        <div class="flex flex-col sm:flex-row gap-3 lg:gap-4">
+                            <button class="px-8 py-3 btn-primary font-semibold rounded-lg transition tech-glow flex items-center justify-center gap-2">
+                                <i data-lucide="target" class="w-5 h-5"></i>
+                                了解我的能力
+                            </button>
+                            <button class="px-8 py-3 btn-secondary font-semibold rounded-lg transition flex items-center justify-center gap-2">
+                                <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                                查看服务接口
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：SXA模型 -->
+                    <div class="bg-card border border-border rounded-lg p-6 lg:p-8 corner-deco">
+                        <div class="text-center mb-4">
+                            <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-xl bg-tech-cyan/20 border-2 border-tech-cyan flex items-center justify-center mx-auto mb-3">
+                                <i data-lucide="zap" class="w-8 h-8 lg:w-10 lg:h-10 text-tech-cyan icon-pulse"></i>
+                            </div>
+                            <h3 class="text-xl lg:text-2xl font-bold">SXA反身性交易模型</h3>
+                            <p class="text-xs sm:text-sm text-foreground/60 mt-2">
+                                基于索罗斯理论的量化+主观混合策略
+                            </p>
+                        </div>
+
+                        <!-- 流程图 -->
+                        <div class="flex items-center justify-between mb-4 lg:mb-6">
+                            <div class="flex flex-col items-center gap-2 lg:gap-3">
+                                <div class="w-14 h-14 lg:w-20 lg:h-20 rounded-full bg-tech-cyan/20 border-2 border-tech-cyan flex items-center justify-center">
+                                    <i data-lucide="search" class="w-6 h-6 lg:w-8 lg:h-8 text-tech-cyan"></i>
+                                </div>
+                                <span class="text-xs font-semibold">研判</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-6 h-6 lg:w-8 lg:h-8 text-tech-cyan/50 flex-shrink-0"></i>
+                            <div class="flex flex-col items-center gap-2 lg:gap-3">
+                                <div class="w-14 h-14 lg:w-20 lg:h-20 rounded-full bg-finance-gold/20 border-2 border-finance-gold flex items-center justify-center">
+                                    <i data-lucide="lightbulb" class="w-6 h-6 lg:w-8 lg:h-8 text-finance-gold"></i>
+                                </div>
+                                <span class="text-xs font-semibold">发掘</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-6 h-6 lg:w-8 lg:h-8 text-finance-gold/50 flex-shrink-0"></i>
+                            <div class="flex flex-col items-center gap-2 lg:gap-3">
+                                <div class="w-14 h-14 lg:w-20 lg:h-20 rounded-full bg-tactical-green/20 border-2 border-tactical-green flex items-center justify-center">
+                                    <i data-lucide="play-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-tactical-green"></i>
+                                </div>
+                                <span class="text-xs font-semibold">决策</span>
+                            </div>
+                        </div>
+
+                        <!-- 反身性循环指示 -->
+                        <div class="text-center mb-4 lg:mb-6">
+                            <i data-lucide="refresh-cw" class="w-8 h-8 mx-auto text-tech-cyan/50 animate-spin" style="animation-duration: 3s;"></i>
+                            <span class="text-xs text-tech-cyan block mt-2">反身性增强循环</span>
+                        </div>
+
+                        <!-- 实战业绩 -->
+                        <div class="bg-background/50 rounded-lg p-3 lg:p-4 mb-4 lg:mb-6">
+                            <div class="text-xs sm:text-sm text-foreground/60 mb-2 lg:mb-3 flex items-center gap-2">
+                                <i data-lucide="trophy" class="w-4 h-4"></i>
+                                实战业绩（全部实盘）
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 lg:gap-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs lg:text-sm text-foreground/60">万有道1号</span>
+                                    <span class="text-base lg:text-lg font-bold text-finance-gold flex items-center gap-1">
+                                        <i data-lucide="trending-up" class="w-4 h-4"></i>
+                                        489%
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs lg:text-sm text-foreground/60">万有道2号</span>
+                                    <span class="text-base lg:text-lg font-bold text-finance-gold flex items-center gap-1">
+                                        <i data-lucide="trending-up" class="w-4 h-4"></i>
+                                        234%
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs lg:text-sm text-foreground/60">万有道3号</span>
+                                    <span class="text-base lg:text-lg font-bold text-finance-gold flex items-center gap-1">
+                                        <i data-lucide="trending-up" class="w-4 h-4"></i>
+                                        252%
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs lg:text-sm text-foreground/60">私人账户</span>
+                                    <span class="text-base lg:text-lg font-bold text-finance-gold flex items-center gap-1">
+                                        <i data-lucide="trending-up" class="w-4 h-4"></i>
+                                        464%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="w-full py-2.5 lg:py-3 btn-primary font-semibold rounded-lg transition flex items-center justify-center gap-2">
+                            <i data-lucide="key" class="w-5 h-5"></i>
+                            申请模型授权
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 核心优势 -->
+        <section id="capabilities" class="py-12 lg:py-20 bg-card/30">
+            <div class="container-custom">
+                <h2 class="text-2xl lg:text-3xl font-bold mb-8 lg:mb-12 text-center flex items-center justify-center gap-3">
+                    <i data-lucide="star" class="w-8 h-8 text-tech-cyan"></i>
+                    核心优势
+                </h2>
+                <div class="grid md:grid-cols-3 gap-4 lg:gap-6">
+                    <!-- 优势卡片1：极端市场专家 -->
+                    <div class="bg-card border border-border rounded-lg p-4 lg:p-6 corner-deco card-hover">
+                        <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-xl bg-tech-cyan/20 border border-tech-cyan/30 flex items-center justify-center mb-4">
+                            <i data-lucide="zap" class="w-8 h-8 lg:w-10 lg:h-10 text-tech-cyan"></i>
+                        </div>
+                        <h3 class="text-lg lg:text-xl font-bold mb-3 lg:mb-4">极端市场专家</h3>
+                        <ul class="space-y-2 lg:space-y-3 text-sm lg:text-base text-foreground/70">
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-tech-cyan mt-0.5 flex-shrink-0"></i>
+                                2015股灾反向获利
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-tech-cyan mt-0.5 flex-shrink-0"></i>
+                                所有账户正收益
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-tech-cyan mt-0.5 flex-shrink-0"></i>
+                                严格风控体系
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-tech-cyan mt-0.5 flex-shrink-0"></i>
+                                SXA反身性交易模型
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 优势卡片2：收并购全流程专家 -->
+                    <div class="bg-card border border-border rounded-lg p-4 lg:p-6 corner-deco card-hover">
+                        <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-xl bg-finance-gold/20 border border-finance-gold/30 flex items-center justify-center mb-4">
+                            <i data-lucide="link" class="w-8 h-8 lg:w-10 lg:h-10 text-finance-gold"></i>
+                        </div>
+                        <h3 class="text-lg lg:text-xl font-bold mb-3 lg:mb-4">收并购全流程专家</h3>
+                        <ul class="space-y-2 lg:space-y-3 text-sm lg:text-base text-foreground/70">
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-finance-gold mt-0.5 flex-shrink-0"></i>
+                                品牌价值梳理
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-finance-gold mt-0.5 flex-shrink-0"></i>
+                                成本重构优化
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-finance-gold mt-0.5 flex-shrink-0"></i>
+                                渠道策划整合
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-finance-gold mt-0.5 flex-shrink-0"></i>
+                                定价谈判撮合
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 优势卡片3：产业资源网络 -->
+                    <div class="bg-card border border-border rounded-lg p-4 lg:p-6 corner-deco card-hover">
+                        <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-xl bg-tactical-green/20 border border-tactical-green/30 flex items-center justify-center mb-4">
+                            <i data-lucide="globe" class="w-8 h-8 lg:w-10 lg:h-10 text-tactical-green"></i>
+                        </div>
+                        <h3 class="text-lg lg:text-xl font-bold mb-3 lg:mb-4">产业资源网络</h3>
+                        <ul class="space-y-2 lg:space-y-3 text-sm lg:text-base text-foreground/70">
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-tactical-green mt-0.5 flex-shrink-0"></i>
+                                华为生态合作
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-tactical-green mt-0.5 flex-shrink-0"></i>
+                                半导体产业链
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-tactical-green mt-0.5 flex-shrink-0"></i>
+                                国企资金200亿授信
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-tactical-green mt-0.5 flex-shrink-0"></i>
+                                私募基金主体
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 服务市场 -->
+        <section id="services" class="py-12 lg:py-20">
+            <div class="container-custom">
+                <h2 class="text-2xl lg:text-3xl font-bold mb-6 lg:mb-8 text-center flex items-center justify-center gap-3">
+                    <i data-lucide="layout-grid" class="w-8 h-8 text-finance-gold"></i>
+                    服务接口
+                </h2>
+
+                <!-- 分类标签 - 移动端横向滚动 -->
+                <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-4 mb-6 lg:mb-8 -mx-4 px-4 lg:mx-0 lg:px-0">
+                    <button class="flex-shrink-0 px-4 lg:px-6 py-2 rounded-full bg-tech-cyan text-background text-sm font-medium flex items-center gap-2">
+                        <i data-lucide="layers" class="w-4 h-4"></i>
+                        全部服务
+                    </button>
+                    <button class="flex-shrink-0 px-4 lg:px-6 py-2 rounded-full bg-card border border-border text-sm font-medium hover:border-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                        量化交易
+                    </button>
+                    <button class="flex-shrink-0 px-4 lg:px-6 py-2 rounded-full bg-card border border-border text-sm font-medium hover:border-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="cpu" class="w-4 h-4"></i>
+                        AI服务
+                    </button>
+                    <button class="flex-shrink-0 px-4 lg:px-6 py-2 rounded-full bg-card border border-border text-sm font-medium hover:border-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                        咨询服务
+                    </button>
+                    <button class="flex-shrink-0 px-4 lg:px-6 py-2 rounded-full bg-card border border-border text-sm font-medium hover:border-tech-cyan transition flex items-center gap-2">
+                        <i data-lucide="network" class="w-4 h-4"></i>
+                        资源对接
+                    </button>
+                </div>
+
+                <!-- 服务卡片网格 -->
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                    <!-- 服务1：量化交易信号 -->
+                    <div class="service-card p-4 lg:p-6 corner-deco">
+                        <div class="flex items-center gap-3 mb-3 lg:mb-4">
+                            <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-tech-cyan/20 border border-tech-cyan/30 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="bar-chart-3" class="w-6 h-6 lg:w-7 lg:h-7 text-tech-cyan"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm lg:text-base">量化交易信号</h3>
+                                <p class="text-xs text-foreground/60">基于SXA模型</p>
+                            </div>
+                        </div>
+                        <div class="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4 text-xs lg:text-sm text-foreground/70">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tech-cyan"></i>
+                                实时信号推送
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tech-cyan"></i>
+                                多市场覆盖
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tech-cyan"></i>
+                                风险等级评估
+                            </div>
+                        </div>
+                        <div class="border-t border-border pt-3 lg:pt-4">
+                            <div class="flex justify-between items-center mb-2 lg:mb-3">
+                                <span class="text-xs lg:text-sm text-foreground/60 flex items-center gap-1">
+                                    <i data-lucide="tag" class="w-4 h-4"></i>
+                                    起售价
+                                </span>
+                                <span class="text-base lg:text-lg font-bold text-finance-gold">¥XXX/月</span>
+                            </div>
+                            <button class="w-full py-2 btn-primary text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 服务2：研报分析接口 -->
+                    <div class="service-card p-4 lg:p-6 corner-deco">
+                        <div class="flex items-center gap-3 mb-3 lg:mb-4">
+                            <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-finance-gold/20 border border-finance-gold/30 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="file-text" class="w-6 h-6 lg:w-7 lg:h-7 text-finance-gold"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm lg:text-base">研报分析接口</h3>
+                                <p class="text-xs text-foreground/60">AI智能分析</p>
+                            </div>
+                        </div>
+                        <div class="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4 text-xs lg:text-sm text-foreground/70">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-finance-gold"></i>
+                                核心观点提取
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-finance-gold"></i>
+                                数据可视化
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-finance-gold"></i>
+                                情绪倾向分析
+                            </div>
+                        </div>
+                        <div class="border-t border-border pt-3 lg:pt-4">
+                            <div class="flex justify-between items-center mb-2 lg:mb-3">
+                                <span class="text-xs lg:text-sm text-foreground/60 flex items-center gap-1">
+                                    <i data-lucide="tag" class="w-4 h-4"></i>
+                                    起售价
+                                </span>
+                                <span class="text-base lg:text-lg font-bold text-finance-gold">¥X/份</span>
+                            </div>
+                            <button class="w-full py-2 btn-primary text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 服务3：自研大模型接口 -->
+                    <div class="service-card p-4 lg:p-6 corner-deco">
+                        <div class="flex items-center gap-3 mb-3 lg:mb-4">
+                            <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-tactical-green/20 border border-tactical-green/30 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="cpu" class="w-6 h-6 lg:w-7 lg:h-7 text-tactical-green"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm lg:text-base">自研大模型接口</h3>
+                                <p class="text-xs text-foreground/60">金融场景优化</p>
+                            </div>
+                        </div>
+                        <div class="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4 text-xs lg:text-sm text-foreground/70">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tactical-green"></i>
+                                金融领域微调
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tactical-green"></i>
+                                多轮对话支持
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tactical-green"></i>
+                                32K上下文
+                            </div>
+                        </div>
+                        <div class="border-t border-border pt-3 lg:pt-4">
+                            <div class="flex justify-between items-center mb-2 lg:mb-3">
+                                <span class="text-xs lg:text-sm text-foreground/60 flex items-center gap-1">
+                                    <i data-lucide="tag" class="w-4 h-4"></i>
+                                    起售价
+                                </span>
+                                <span class="text-base lg:text-lg font-bold text-finance-gold">¥X/1K tokens</span>
+                            </div>
+                            <button class="w-full py-2 btn-primary text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 服务4：自研Agent团队 -->
+                    <div class="service-card p-4 lg:p-6 corner-deco">
+                        <div class="flex items-center gap-3 mb-3 lg:mb-4">
+                            <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-tech-cyan/20 border border-tech-cyan/30 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="bot" class="w-6 h-6 lg:w-7 lg:h-7 text-tech-cyan"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm lg:text-base">Agent团队接口</h3>
+                                <p class="text-xs text-foreground/60">多Agent协同</p>
+                            </div>
+                        </div>
+                        <div class="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4 text-xs lg:text-sm text-foreground/70">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tech-cyan"></i>
+                                研究分析Agent
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tech-cyan"></i>
+                                交易执行Agent
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tech-cyan"></i>
+                                风险监控Agent
+                            </div>
+                        </div>
+                        <div class="border-t border-border pt-3 lg:pt-4">
+                            <div class="flex justify-between items-center mb-2 lg:mb-3">
+                                <span class="text-xs lg:text-sm text-foreground/60 flex items-center gap-1">
+                                    <i data-lucide="tag" class="w-4 h-4"></i>
+                                    起售价
+                                </span>
+                                <span class="text-base lg:text-lg font-bold text-finance-gold">¥X/任务</span>
+                            </div>
+                            <button class="w-full py-2 btn-primary text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 服务5：SXA模型授权 -->
+                    <div class="service-card p-4 lg:p-6 corner-deco">
+                        <div class="flex items-center gap-3 mb-3 lg:mb-4">
+                            <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-finance-gold/20 border border-finance-gold/30 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="zap" class="w-6 h-6 lg:w-7 lg:h-7 text-finance-gold"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm lg:text-base">SXA模型授权</h3>
+                                <p class="text-xs text-foreground/60">反身性交易模型</p>
+                            </div>
+                        </div>
+                        <div class="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4 text-xs lg:text-sm text-foreground/70">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-finance-gold"></i>
+                                家族账户管理
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-finance-gold"></i>
+                                特殊机会投资
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-finance-gold"></i>
+                                极端市场资产保全
+                            </div>
+                        </div>
+                        <div class="border-t border-border pt-3 lg:pt-4">
+                            <div class="flex justify-between items-center mb-2 lg:mb-3">
+                                <span class="text-xs lg:text-sm text-foreground/60 flex items-center gap-1">
+                                    <i data-lucide="tag" class="w-4 h-4"></i>
+                                    授权费
+                                </span>
+                                <span class="text-base lg:text-lg font-bold text-finance-gold">¥XXX/年</span>
+                            </div>
+                            <button class="w-full py-2 btn-primary text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                申请授权
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 服务6：舆情分析 -->
+                    <div class="service-card p-4 lg:p-6 corner-deco">
+                        <div class="flex items-center gap-3 mb-3 lg:mb-4">
+                            <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-tactical-green/20 border border-tactical-green/30 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="megaphone" class="w-6 h-6 lg:w-7 lg:h-7 text-tactical-green"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm lg:text-base">舆情分析服务</h3>
+                                <p class="text-xs text-foreground/60">市场舆情监控</p>
+                            </div>
+                        </div>
+                        <div class="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4 text-xs lg:text-sm text-foreground/70">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tactical-green"></i>
+                                实时舆情监控
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tactical-green"></i>
+                                情绪倾向分析
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-tactical-green"></i>
+                                风险预警推送
+                            </div>
+                        </div>
+                        <div class="border-t border-border pt-3 lg:pt-4">
+                            <div class="flex justify-between items-center mb-2 lg:mb-3">
+                                <span class="text-xs lg:text-sm text-foreground/60 flex items-center gap-1">
+                                    <i data-lucide="tag" class="w-4 h-4"></i>
+                                    起售价
+                                </span>
+                                <span class="text-base lg:text-lg font-bold text-finance-gold">¥XXX/月</span>
+                            </div>
+                            <button class="w-full py-2 btn-primary text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA区域 -->
+        <section id="contact" class="py-12 lg:py-20">
+            <div class="container-custom">
+                <div class="bg-gradient-to-br from-tech-cyan/20 to-tactical-green/20 border border-tech-cyan/30 rounded-lg p-6 lg:p-12 text-center">
+                    <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-tech-cyan/20 border-2 border-tech-cyan flex items-center justify-center mx-auto mb-4 lg:mb-6">
+                        <i data-lucide="handshake" class="w-8 h-8 lg:w-10 lg:h-10 text-tech-cyan"></i>
+                    </div>
+                    <h2 class="text-2xl lg:text-3xl font-bold mb-3 lg:mb-4">寻找创新者型资产架构师？</h2>
+                    <p class="text-base lg:text-lg text-foreground/70 mb-6 lg:mb-8 max-w-2xl mx-auto">
+                        我不是在找工作，而是在找合作。<br class="hidden sm:block"/>
+                        如果您需要创新者型资产架构师，而非执行型螺丝钉，欢迎深度交流。
+                    </p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-3 lg:gap-4">
+                        <button class="px-6 lg:px-8 py-2.5 lg:py-3 btn-primary font-semibold rounded-lg transition tech-glow flex items-center justify-center gap-2">
+                            <i data-lucide="mail" class="w-5 h-5"></i>
+                            立即联系我
+                        </button>
+                        <button class="px-6 lg:px-8 py-2.5 lg:py-3 btn-secondary font-semibold rounded-lg transition flex items-center justify-center gap-2">
+                            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                            查看服务接口
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部导航 - 移动端 -->
+    <div class="bottom-nav fixed bottom-0 left-0 right-0 bg-card border-t border-border py-2 px-4 z-50">
+        <div class="flex justify-around items-center">
+            <a href="#home" class="flex flex-col items-center gap-1 text-foreground/60 text-xs hover:text-tech-cyan transition">
+                <i data-lucide="home" class="w-6 h-6"></i>
+                <span>首页</span>
+            </a>
+            <a href="#capabilities" class="flex flex-col items-center gap-1 text-foreground/60 text-xs hover:text-tech-cyan transition">
+                <i data-lucide="shield" class="w-6 h-6"></i>
+                <span>能力</span>
+            </a>
+            <a href="#services" class="flex flex-col items-center gap-1 text-foreground/60 text-xs hover:text-tech-cyan transition">
+                <i data-lucide="grid-3x3" class="w-6 h-6"></i>
+                <span>服务</span>
+            </a>
+            <a href="#contact" class="flex flex-col items-center gap-1 text-foreground/60 text-xs hover:text-tech-cyan transition">
+                <i data-lucide="user" class="w-6 h-6"></i>
+                <span>我的</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // 初始化Lucide图标
+        lucide.createIcons();
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // 底部导航高亮
+        document.querySelectorAll('.bottom-nav a').forEach(link => {
+            link.addEventListener('click', function() {
+                document.querySelectorAll('.bottom-nav a').forEach(l => l.classList.remove('text-tech-cyan'));
+                document.querySelectorAll('.bottom-nav a').forEach(l => l.classList.add('text-foreground/60'));
+                this.classList.remove('text-foreground/60');
+                this.classList.add('text-tech-cyan');
+            });
+        });
+
+        // 数字滚动动画
+        document.querySelectorAll('.counter').forEach(counter => {
+            const text = counter.textContent;
+            const number = parseInt(text);
+            let current = 0;
+            const increment = number / 50;
+            const suffix = text.replace(/[0-9]/g, '');
+
+            const updateCounter = () => {
+                if (current < number) {
+                    current += increment;
+                    counter.textContent = Math.ceil(current) + suffix;
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    counter.textContent = text;
+                }
+            };
+            updateCounter();
+        });
+    </script>
+<!-- 联系表单模态框 -->
+<div id="contactModal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-background/80 backdrop-blur-sm" onclick="closeContactModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-card border border-border rounded-lg shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto corner-deco">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold gradient-text">联系我</h3>
+                    <button onclick="closeContactModal()" class="text-foreground/60 hover:text-foreground transition">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <form id="contactForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">您的姓名 *</label>
+                        <input type="text" name="name" required
+                            class="w-full bg-background border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-tech-cyan transition"
+                            placeholder="请输入您的姓名">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">电子邮箱 *</label>
+                        <input type="email" name="email" required
+                            class="w-full bg-background border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-tech-cyan transition"
+                            placeholder="your@email.com">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">合作意向 *</label>
+                        <select name="interest" required
+                            class="w-full bg-background border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-tech-cyan transition">
+                            <option value="">请选择合作意向</option>
+                            <option value="量化交易信号">量化交易信号服务</option>
+                            <option value="SXA模型授权">SXA模型授权</option>
+                            <option value="舆情分析">舆情分析服务</option>
+                            <option value="资产架构咨询">资产架构咨询</option>
+                            <option value="其他">其他合作</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">详细说明</label>
+                        <textarea name="message" rows="4"
+                            class="w-full bg-background border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-tech-cyan transition resize-none"
+                            placeholder="请简要描述您的需求..."></textarea>
+                    </div>
+
+                    <div id="formMessage" class="hidden rounded-lg p-3 text-sm"></div>
+
+                    <div class="flex gap-3">
+                        <button type="submit"
+                            class="flex-1 px-6 py-3 bg-tech-cyan text-background font-semibold rounded-lg transition tech-glow hover:bg-tech-cyan/90 flex items-center justify-center gap-2">
+                            <i data-lucide="send" class="w-5 h-5"></i>
+                            发送邮件
+                        </button>
+                        <button type="button" onclick="closeContactModal()"
+                            class="px-6 py-3 bg-card border border-border text-foreground font-semibold rounded-lg hover:border-tech-cyan hover:text-tech-cyan transition">
+                            取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 打开联系表单模态框
+function openContactModal() {
+    document.getElementById('contactModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+}
+
+// 关闭联系表单模态框
+function closeContactModal() {
+    document.getElementById('contactModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// 表单提交处理
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const form = this;
+    const formData = new FormData(form);
+    const formMessage = document.getElementById('formMessage');
+
+    // 构建mailto链接
+    const name = formData.get('name');
+    const email = formData.get('email');
+    const interest = formData.get('interest');
+    const message = formData.get('message');
+
+    const subject = encodeURIComponent('合作咨询：' + interest + ' - ' + name);
+    const body = encodeURIComponent(
+'姓名：' + name + '\n' +
+'邮箱：' + email + '\n' +
+'合作意向：' + interest + '\n' +
+'详细说明：\n' + (message || '无') + '\n\n' +
+'---\n' +
+'此邮件通过关威雄个人网站联系表单发送'
+    );
+
+    const mailtoLink = 'mailto:your-email@example.com?subject=' + subject + '&body=' + body;
+
+    // 显示成功消息
+    formMessage.classList.remove('hidden', 'bg-red-500/20', 'text-red-400', 'border-red-500/30');
+    formMessage.classList.add('bg-tech-cyan/20', 'text-tech-cyan', 'border-tech-cyan/30', 'border');
+    formMessage.textContent = '正在打开邮件客户端...';
+
+    // 打开邮件客户端
+    window.location.href = mailtoLink;
+
+    // 延迟关闭模态框
+    setTimeout(function() {
+        closeContactModal();
+        form.reset();
+        formMessage.classList.add('hidden');
+    }, 2000);
+});
+
+// 为所有"立即联系我"按钮添加点击事件
+document.addEventListener('DOMContentLoaded', function() {
+    const contactButtons = document.querySelectorAll('button');
+    contactButtons.forEach(function(btn) {
+        if (btn.textContent.includes('立即联系') || btn.textContent.includes('联系我')) {
+            btn.addEventListener('click', openContactModal);
+        }
+    });
+});
+</script>
+</body>
+</html>
