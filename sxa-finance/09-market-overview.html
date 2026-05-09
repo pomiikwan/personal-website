@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 市场概览 | Market Overview</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#38d3d7',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+      },
+      fontFamily: {
+        'mono': ['JetBrains Mono', 'monospace'],
+        'sans': ['Noto Sans SC', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0d1117; color:#c9d1d9; font-family:'Noto Sans SC','JetBrains Mono',monospace; overflow:hidden; height:100vh; }
+
+  .terminal-frame { border:1px solid #30363d; border-radius:8px; overflow:hidden; height:100vh; display:flex; flex-direction:column; }
+  .terminal-titlebar { background:#161b22; border-bottom:1px solid #30363d; padding:8px 16px; display:flex; align-items:center; gap:8px; }
+  .terminal-dots { display:flex; gap:6px; }
+  .terminal-dots span { width:12px; height:12px; border-radius:50%; }
+  .dot-red { background:#f85149; }
+  .dot-yellow { background:#d29922; }
+  .dot-green { background:#3fb950; }
+  .terminal-title { color:#c9d1d9; font-family:'JetBrains Mono',monospace; font-size:13px; margin-left:12px; }
+
+  .tui-box { background:#0d1117; border:1px solid #30363d; border-radius:6px; overflow:hidden; display:flex; flex-direction:column; }
+  .tui-box.focused { border-color:#388bfd; box-shadow:0 0 0 1px #388bfd; }
+  .tui-box-title { background:#161b22; border-bottom:1px solid #30363d; padding:6px 12px; font-family:'JetBrains Mono',monospace; font-size:12px; color:#c9d1d9; display:flex; align-items:center; gap:8px; }
+  .tui-box-title .box-number { color:#388bfd; font-weight:600; }
+
+  .key { display:inline-block; background:#21262d; border:1px solid #30363d; border-radius:3px; padding:1px 6px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#c9d1d9; }
+  .tag { display:inline-block; padding:2px 8px; border-radius:3px; font-size:11px; font-family:'JetBrains Mono',monospace; }
+  .tag-green { background:rgba(63,185,80,0.15); color:#3fb950; }
+  .tag-red { background:rgba(248,81,73,0.15); color:#f85149; }
+  .tag-yellow { background:rgba(210,153,34,0.15); color:#d29922; }
+  .tag-blue { background:rgba(56,139,253,0.15); color:#388bfd; }
+  .tag-purple { background:rgba(188,140,255,0.15); color:#bc8cff; }
+  .tag-cyan { background:rgba(56,211,215,0.15); color:#38d3d7; }
+
+  .filter-btn { background:#21262d; border:1px solid #30363d; color:#c9d1d9; padding:4px 12px; border-radius:4px; font-size:12px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all 0.15s; }
+  .filter-btn:hover { background:#30363d; }
+  .filter-btn.active { background:rgba(56,139,253,0.2); border-color:#388bfd; color:#388bfd; }
+
+  .cmd-btn { background:#21262d; border:1px solid #30363d; color:#c9d1d9; padding:6px 14px; border-radius:4px; font-size:12px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all 0.15s; text-decoration:none; display:inline-block; }
+  .cmd-btn:hover { background:#30363d; border-color:#484f58; }
+
+  .scrollbar-thin::-webkit-scrollbar { width:4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background:#0d1117; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background:#30363d; border-radius:2px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background:#484f58; }
+
+  .list-item { padding:6px 12px; border-bottom:1px solid #21262d; cursor:pointer; transition:background 0.1s; }
+  .list-item:hover { background:#1c2128; }
+
+  .chat-agent { background:#161b22; border-left:2px solid #388bfd; padding:8px 12px; margin:4px 8px; border-radius:0 6px 6px 0; font-size:12px; }
+  .chat-user { background:#1c2128; border-left:2px solid #bc8cff; padding:8px 12px; margin:4px 8px; border-radius:0 6px 6px 0; font-size:12px; }
+
+  .glow-green { text-shadow:0 0 8px rgba(63,185,80,0.5); }
+  .glow-red { text-shadow:0 0 8px rgba(248,81,73,0.5); }
+  .glow-blue { text-shadow:0 0 8px rgba(56,139,253,0.5); }
+  .glow-yellow { text-shadow:0 0 8px rgba(210,153,34,0.5); }
+
+  .status-bar { background:#161b22; border-top:1px solid #30363d; padding:4px 16px; display:flex; align-items:center; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:11px; color:#484f58; }
+
+  .chain-indicator { display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:11px; }
+  .chain-step { padding:3px 10px; border-radius:3px; background:#21262d; border:1px solid #30363d; color:#484f58; }
+  .chain-step.active { background:rgba(56,139,253,0.2); border-color:#388bfd; color:#388bfd; }
+  .chain-arrow { color:#30363d; }
+
+  .quote-row { display:grid; grid-template-columns:80px 100px 90px 80px 90px 100px; padding:5px 12px; border-bottom:1px solid #21262d; font-size:12px; align-items:center; }
+  .quote-row:hover { background:#1c2128; }
+  .quote-header { color:#484f58; font-weight:500; border-bottom:1px solid #30363d; }
+
+  .heatmap-cell { width:100%; aspect-ratio:1.6; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:10px; font-family:'JetBrains Mono',monospace; color:#fff; cursor:pointer; }
+
+  .card { background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; }
+
+  @keyframes pulse-slow { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .pulse-slow { animation: pulse-slow 2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div class="terminal-frame">
+  <!-- Title Bar -->
+  <div class="terminal-titlebar">
+    <div class="terminal-dots">
+      <a href="00-home.html" style="text-decoration:none"><span class="dot-red"></span></a>
+      <span class="dot-yellow"></span>
+      <span class="dot-green"></span>
+    </div>
+    <span class="terminal-title">SXA v2.1.0 | 市场概览 Market Overview</span>
+    <div style="flex:1"></div>
+    <span style="color:#484f58; font-size:11px; font-family:'JetBrains Mono',monospace;">
+      <span class="key">ESC</span> Home &nbsp;
+      <span class="key">1-4</span> Focus &nbsp;
+      <span class="key">Tab</span> Cycle &nbsp;
+      <span class="key">/</span> Command
+    </span>
+  </div>
+
+  <!-- Analysis Chain Indicator -->
+  <div style="background:#161b22; border-bottom:1px solid #30363d; padding:6px 16px; display:flex; align-items:center; justify-content:space-between;">
+    <div class="chain-indicator">
+      <span style="color:#484f58; margin-right:8px;">分析链路 Pipeline:</span>
+      <span class="chain-step active">Step 1: 市场接入 ●</span>
+      <span class="chain-arrow">→</span>
+      <a href="14-macro-analysis.html" style="text-decoration:none"><span class="chain-step">Step 2: 宏观分析</span></a>
+      <span class="chain-arrow">→</span>
+      <a href="12-sentiment-analysis.html" style="text-decoration:none"><span class="chain-step">Step 3: 情绪分析</span></a>
+      <span class="chain-arrow">→</span>
+      <a href="13-signal-aggregation.html" style="text-decoration:none"><span class="chain-step">Step 4: 信号聚合</span></a>
+    </div>
+    <a href="14-macro-analysis.html" class="cmd-btn" style="border-color:#3fb950; color:#3fb950;">
+      下一步: 宏观分析 →
+    </a>
+  </div>
+
+  <!-- Main Content -->
+  <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+    <!-- Box 1: MarketFilterBox -->
+    <div class="tui-box focused" style="margin:8px 8px 4px 8px; flex-shrink:0;">
+      <div class="tui-box-title">
+        <span class="box-number">[1]</span>
+        <span>MarketFilterBox | 市场筛选</span>
+        <span class="tag tag-blue" style="margin-left:4px;">LIVE</span>
+        <span class="pulse-slow" style="width:6px;height:6px;background:#3fb950;border-radius:50%;display:inline-block;"></span>
+      </div>
+      <div style="padding:8px 12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="color:#484f58; font-size:11px;">市场 Market:</span>
+          <button class="filter-btn active">A股</button>
+          <button class="filter-btn">港股 HK</button>
+          <button class="filter-btn">美股 US</button>
+        </div>
+        <div style="width:1px; height:20px; background:#30363d;"></div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="color:#484f58; font-size:11px;">板块 Sector:</span>
+          <button class="filter-btn active">全部</button>
+          <button class="filter-btn">科技</button>
+          <button class="filter-btn">金融</button>
+          <button class="filter-btn">消费</button>
+          <button class="filter-btn">医药</button>
+          <button class="filter-btn">能源</button>
+          <button class="filter-btn">新能源</button>
+        </div>
+        <div style="width:1px; height:20px; background:#30363d;"></div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="color:#484f58; font-size:11px;">周期 Period:</span>
+          <button class="filter-btn">1D</button>
+          <button class="filter-btn active">1W</button>
+          <button class="filter-btn">1M</button>
+          <button class="filter-btn">3M</button>
+          <button class="filter-btn">1Y</button>
+        </div>
+        <div style="width:1px; height:20px; background:#30363d;"></div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="color:#484f58; font-size:11px;">排序 Sort:</span>
+          <button class="filter-btn active">涨跌幅</button>
+          <button class="filter-btn">成交额</button>
+          <button class="filter-btn">换手率</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body: Three columns -->
+    <div style="flex:1; display:flex; gap:4px; padding:0 8px; overflow:hidden;">
+      <!-- Box 2: QuoteListBox (60%) -->
+      <div class="tui-box" style="flex:1; margin-right:4px;">
+        <div class="tui-box-title">
+          <span class="box-number">[2]</span>
+          <span>QuoteListBox | 实时行情</span>
+          <span class="tag tag-green">15 Symbols</span>
+          <div style="flex:1"></div>
+          <span style="color:#484f58; font-size:11px;">刷新: 3s &nbsp; 09:42:18 CST</span>
+        </div>
+        <div class="quote-row quote-header" style="background:#161b22;">
+          <span>代码 Code</span>
+          <span>名称 Name</span>
+          <span style="text-align:right;">最新价 Price</span>
+          <span style="text-align:right;">涨跌幅 Chg%</span>
+          <span style="text-align:right;">成交量 Vol</span>
+          <span style="text-align:right;">成交额 Amt</span>
+        </div>
+        <div class="scrollbar-thin" style="flex:1; overflow-y:auto;">
+          <div class="quote-row">
+            <span style="color:#388bfd;">688981</span>
+            <span>中芯国际</span>
+            <span style="text-align:right; color:#3fb950;">78.52</span>
+            <span style="text-align:right; color:#3fb950;" class="glow-green">+6.83%</span>
+            <span style="text-align:right; color:#8b949e;">2.34M</span>
+            <span style="text-align:right; color:#8b949e;">18.4亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">300750</span>
+            <span>宁德时代</span>
+            <span style="text-align:right; color:#3fb950;">218.60</span>
+            <span style="text-align:right; color:#3fb950;" class="glow-green">+5.21%</span>
+            <span style="text-align:right; color:#8b949e;">1.87M</span>
+            <span style="text-align:right; color:#8b949e;">40.9亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">002594</span>
+            <span>比亚迪</span>
+            <span style="text-align:right; color:#3fb950;">267.30</span>
+            <span style="text-align:right; color:#3fb950;" class="glow-green">+4.57%</span>
+            <span style="text-align:right; color:#8b949e;">3.12M</span>
+            <span style="text-align:right; color:#8b949e;">83.3亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">601012</span>
+            <span>隆基绿能</span>
+            <span style="text-align:right; color:#3fb950;">24.18</span>
+            <span style="text-align:right; color:#3fb950;">+3.95%</span>
+            <span style="text-align:right; color:#8b949e;">4.56M</span>
+            <span style="text-align:right; color:#8b949e;">11.0亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">000858</span>
+            <span>五粮液</span>
+            <span style="text-align:right; color:#3fb950;">152.70</span>
+            <span style="text-align:right; color:#3fb950;">+2.68%</span>
+            <span style="text-align:right; color:#8b949e;">1.23M</span>
+            <span style="text-align:right; color:#8b949e;">18.8亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">600519</span>
+            <span>贵州茅台</span>
+            <span style="text-align:right; color:#3fb950;">1688.00</span>
+            <span style="text-align:right; color:#3fb950;">+1.85%</span>
+            <span style="text-align:right; color:#8b949e;">0.89M</span>
+            <span style="text-align:right; color:#8b949e;">150.2亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">601318</span>
+            <span>中国平安</span>
+            <span style="text-align:right; color:#3fb950;">48.62</span>
+            <span style="text-align:right; color:#3fb950;">+1.32%</span>
+            <span style="text-align:right; color:#8b949e;">5.67M</span>
+            <span style="text-align:right; color:#8b949e;">27.5亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">600036</span>
+            <span>招商银行</span>
+            <span style="text-align:right; color:#d29922;">35.40</span>
+            <span style="text-align:right; color:#d29922;">+0.28%</span>
+            <span style="text-align:right; color:#8b949e;">3.21M</span>
+            <span style="text-align:right; color:#8b949e;">11.4亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">000001</span>
+            <span>平安银行</span>
+            <span style="text-align:right; color:#d29922;">11.28</span>
+            <span style="text-align:right; color:#d29922;">+0.18%</span>
+            <span style="text-align:right; color:#8b949e;">6.78M</span>
+            <span style="text-align:right; color:#8b949e;">7.6亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">600900</span>
+            <span>长江电力</span>
+            <span style="text-align:right; color:#d29922;">28.15</span>
+            <span style="text-align:right; color:#d29922;">+0.14%</span>
+            <span style="text-align:right; color:#8b949e;">2.34M</span>
+            <span style="text-align:right; color:#8b949e;">6.6亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">601899</span>
+            <span>紫金矿业</span>
+            <span style="text-align:right; color:#f85149;">16.82</span>
+            <span style="text-align:right; color:#f85149;">-0.47%</span>
+            <span style="text-align:right; color:#8b949e;">8.91M</span>
+            <span style="text-align:right; color:#8b949e;">15.0亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">000568</span>
+            <span>泸州老窖</span>
+            <span style="text-align:right; color:#f85149;">168.90</span>
+            <span style="text-align:right; color:#f85149;">-1.12%</span>
+            <span style="text-align:right; color:#8b949e;">0.67M</span>
+            <span style="text-align:right; color:#8b949e;">11.3亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">300059</span>
+            <span>东方财富</span>
+            <span style="text-align:right; color:#f85149;">17.56</span>
+            <span style="text-align:right; color:#f85149;">-1.46%</span>
+            <span style="text-align:right; color:#8b949e;">9.23M</span>
+            <span style="text-align:right; color:#8b949e;">16.2亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">603259</span>
+            <span>药明康德</span>
+            <span style="text-align:right; color:#f85149;">52.30</span>
+            <span style="text-align:right; color:#f85149;">-2.38%</span>
+            <span style="text-align:right; color:#8b949e;">1.45M</span>
+            <span style="text-align:right; color:#8b949e;">7.6亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">688111</span>
+            <span>金山办公</span>
+            <span style="text-align:right; color:#f85149;" class="glow-red">308.40</span>
+            <span style="text-align:right; color:#f85149;" class="glow-red">-3.72%</span>
+            <span style="text-align:right; color:#8b949e;">0.34M</span>
+            <span style="text-align:right; color:#8b949e;">10.5亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">601127</span>
+            <span>赛力斯</span>
+            <span style="text-align:right; color:#3fb950;">98.76</span>
+            <span style="text-align:right; color:#3fb950;">+7.56%</span>
+            <span style="text-align:right; color:#8b949e;">5.12M</span>
+            <span style="text-align:right; color:#8b949e;">50.6亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">002475</span>
+            <span>立讯精密</span>
+            <span style="text-align:right; color:#3fb950;">36.82</span>
+            <span style="text-align:right; color:#3fb950;">+2.14%</span>
+            <span style="text-align:right; color:#8b949e;">4.56M</span>
+            <span style="text-align:right; color:#8b949e;">16.8亿</span>
+          </div>
+          <div class="quote-row">
+            <span style="color:#388bfd;">000725</span>
+            <span>京东方A</span>
+            <span style="text-align:right; color:#f85149;">4.38</span>
+            <span style="text-align:right; color:#f85149;">-0.91%</span>
+            <span style="text-align:right; color:#8b949e;">12.34M</span>
+            <span style="text-align:right; color:#8b949e;">5.4亿</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 3: StatisticsBox -->
+      <div class="tui-box" style="width:320px; flex-shrink:0;">
+        <div class="tui-box-title">
+          <span class="box-number">[3]</span>
+          <span>StatisticsBox | 市场统计</span>
+        </div>
+        <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:8px;">
+          <!-- 涨跌家数 -->
+          <div class="card" style="margin-bottom:8px;">
+            <div style="font-size:11px; color:#484f58; margin-bottom:6px;">涨跌家数 Advance/Decline</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="text-align:center;">
+                <div style="font-size:20px; color:#3fb950; font-weight:700;" class="glow-green">3,247</div>
+                <div style="font-size:10px; color:#3fb950;">上涨 Adv</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:20px; color:#484f58; font-weight:700;">186</div>
+                <div style="font-size:10px; color:#484f58;">平盘 Flat</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:20px; color:#f85149; font-weight:700;" class="glow-red">1,891</div>
+                <div style="font-size:10px; color:#f85149;">下跌 Dec</div>
+              </div>
+            </div>
+            <!-- 比例条 -->
+            <div style="margin-top:8px; height:6px; border-radius:3px; background:#f85149; overflow:hidden;">
+              <div style="width:61%; height:100%; background:#3fb950; border-radius:3px 0 0 3px;"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:10px; color:#484f58; margin-top:2px;">
+              <span>涨 61.0%</span>
+              <span>跌 35.5%</span>
+            </div>
+          </div>
+
+          <!-- 板块热力图 -->
+          <div class="card" style="margin-bottom:8px;">
+            <div style="font-size:11px; color:#484f58; margin-bottom:6px;">板块热力图 Sector Heatmap</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:3px;">
+              <div class="heatmap-cell" style="background:rgba(63,185,80,0.7);">半导体 +3.2%</div>
+              <div class="heatmap-cell" style="background:rgba(63,185,80,0.55);">新能源 +2.4%</div>
+              <div class="heatmap-cell" style="background:rgba(63,185,80,0.4);">汽车 +1.8%</div>
+              <div class="heatmap-cell" style="background:rgba(63,185,80,0.35);">白酒 +1.5%</div>
+              <div class="heatmap-cell" style="background:rgba(210,153,34,0.3);">银行 +0.3%</div>
+              <div class="heatmap-cell" style="background:rgba(210,153,34,0.25);">电力 +0.1%</div>
+              <div class="heatmap-cell" style="background:rgba(248,81,73,0.25);">医药 -0.8%</div>
+              <div class="heatmap-cell" style="background:rgba(248,81,73,0.4);">地产 -1.6%</div>
+              <div class="heatmap-cell" style="background:rgba(248,81,73,0.55);">传媒 -2.3%</div>
+            </div>
+          </div>
+
+          <!-- 资金流向 -->
+          <div class="card" style="margin-bottom:8px;">
+            <div style="font-size:11px; color:#484f58; margin-bottom:6px;">资金流向 Capital Flow</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;">
+                  <span style="color:#c9d1d9;">北向资金 Northbound</span>
+                  <span style="color:#3fb950;">+42.3亿</span>
+                </div>
+                <div style="height:4px; background:#21262d; border-radius:2px;">
+                  <div style="width:72%; height:100%; background:#3fb950; border-radius:2px;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;">
+                  <span style="color:#c9d1d9;">主力资金 Main</span>
+                  <span style="color:#f85149;">-18.7亿</span>
+                </div>
+                <div style="height:4px; background:#21262d; border-radius:2px;">
+                  <div style="width:38%; height:100%; background:#f85149; border-radius:2px;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;">
+                  <span style="color:#c9d1d9;">散户资金 Retail</span>
+                  <span style="color:#f85149;">-23.6亿</span>
+                </div>
+                <div style="height:4px; background:#21262d; border-radius:2px;">
+                  <div style="width:28%; height:100%; background:#f85149; border-radius:2px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 指数概览 -->
+          <div class="card">
+            <div style="font-size:11px; color:#484f58; margin-bottom:6px;">主要指数 Major Indices</div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0; border-bottom:1px solid #21262d;">
+                <span style="color:#c9d1d9;">上证指数</span>
+                <span style="color:#3fb950;">3,287.54</span>
+                <span style="color:#3fb950; font-size:11px;">+1.23%</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0; border-bottom:1px solid #21262d;">
+                <span style="color:#c9d1d9;">深证成指</span>
+                <span style="color:#3fb950;">10,856.72</span>
+                <span style="color:#3fb950; font-size:11px;">+1.67%</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0; border-bottom:1px solid #21262d;">
+                <span style="color:#c9d1d9;">创业板指</span>
+                <span style="color:#3fb950;">2,178.33</span>
+                <span style="color:#3fb950; font-size:11px;">+2.15%</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0; border-bottom:1px solid #21262d;">
+                <span style="color:#c9d1d9;">科创50</span>
+                <span style="color:#3fb950;">982.16</span>
+                <span style="color:#3fb950; font-size:11px;">+2.83%</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0;">
+                <span style="color:#c9d1d9;">恒生指数</span>
+                <span style="color:#f85149;">18,432.10</span>
+                <span style="color:#f85149; font-size:11px;">-0.45%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 4: AgentChatBox -->
+      <div class="tui-box" style="width:310px; flex-shrink:0;">
+        <div class="tui-box-title">
+          <span class="box-number">[4]</span>
+          <span>AgentChatBox | Market Agent</span>
+          <span class="tag tag-cyan">ONLINE</span>
+        </div>
+        <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:4px 0;">
+          <div class="chat-agent">
+            <div style="color:#388bfd; font-size:10px; margin-bottom:4px;">Market Agent | 09:40</div>
+            <div>今日A股市场整体偏强，半导体和新能源板块领涨。北向资金持续净流入+42.3亿，显示外资对A股信心增强。</div>
+          </div>
+          <div class="chat-user">
+            <div style="color:#bc8cff; font-size:10px; margin-bottom:4px;">You | 09:41</div>
+            <div>半导体板块的持续性如何？</div>
+          </div>
+          <div class="chat-agent">
+            <div style="color:#388bfd; font-size:10px; margin-bottom:4px;">Market Agent | 09:41</div>
+            <div>半导体板块已连续3日上涨，今日成交额较昨日放大38%。中芯国际领涨+6.83%，突破60日均线。<br><br>需关注：<br>1. 美国芯片出口政策变化<br>2. 国产替代逻辑强化<br>3. 成交量能否持续放大</div>
+          </div>
+          <div class="chat-user">
+            <div style="color:#bc8cff; font-size:10px; margin-bottom:4px;">You | 09:42</div>
+            <div>有哪些风险信号需要关注？</div>
+          </div>
+          <div class="chat-agent">
+            <div style="color:#388bfd; font-size:10px; margin-bottom:4px;">Market Agent | 09:42</div>
+            <div>当前市场风险点：<br><br><span style="color:#f85149;">1. 主力资金净流出-18.7亿</span>，与北向资金形成背离<br><br><span style="color:#d29922;">2. 地产和传媒板块持续弱势</span>，市场分化加剧<br><br><span style="color:#d29922;">3. 上证指数临近3,300点阻力位</span><br><br>建议进入宏观分析进一步确认经济周期位置。</div>
+          </div>
+        </div>
+        <!-- Chat Input -->
+        <div style="border-top:1px solid #30363d; padding:8px;">
+          <div style="display:flex; gap:6px;">
+            <input type="text" placeholder="输入消息或命令... (Enter发送)" style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:4px; padding:6px 10px; color:#c9d1d9; font-size:12px; font-family:'JetBrains Mono',monospace; outline:none;">
+            <button class="cmd-btn" style="padding:6px 10px; background:rgba(56,139,253,0.2); border-color:#388bfd; color:#388bfd;">Send</button>
+          </div>
+          <div style="display:flex; gap:4px; margin-top:4px;">
+            <button class="cmd-btn" style="font-size:10px; padding:2px 8px;">分析半导体</button>
+            <button class="cmd-btn" style="font-size:10px; padding:2px 8px;">资金监控</button>
+            <button class="cmd-btn" style="font-size:10px; padding:2px 8px;">涨跌统计</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div style="display:flex; gap:12px; align-items:center;">
+      <span><span class="key">1</span> 筛选</span>
+      <span><span class="key">2</span> 行情</span>
+      <span><span class="key">3</span> 统计</span>
+      <span><span class="key">4</span> Agent</span>
+      <span style="color:#30363d;">|</span>
+      <span><span class="key">Tab</span> 切换</span>
+      <span><span class="key">/</span> 命令</span>
+      <span><span class="key">q</span> <a href="00-home.html" style="color:#484f58; text-decoration:none;">首页</a></span>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <span style="color:#3fb950;">A-Share Live</span>
+      <span>Vol: 4,892亿</span>
+      <span>09:42:18 CST</span>
+      <span style="color:#484f58;">SXA v2.1.0</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

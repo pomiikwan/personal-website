@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 分类工作流面板 | Categorized Workflows Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#38d3d7',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family: 'JetBrains Mono', 'Noto Sans SC', monospace; }
+  body { background: #0d1117; color: #c9d1d9; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  .terminal-frame { border: 1px solid #30363d; border-radius: 8px; overflow: hidden; background: #0d1117; }
+  .terminal-titlebar { background: #161b22; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #30363d; }
+  .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .terminal-dot.red { background: #f85149; }
+  .terminal-dot.yellow { background: #d29922; }
+  .terminal-dot.green { background: #3fb950; }
+
+  .tui-box { border: 1px solid #30363d; border-radius: 6px; background: #0d1117; position: relative; }
+  .tui-box.focused { border-color: #388bfd; box-shadow: 0 0 0 1px #388bfd, 0 0 12px rgba(56,139,253,0.15); }
+  .tui-box-title { background: #161b22; padding: 6px 12px; border-bottom: 1px solid #30363d; font-size: 12px; font-weight: 600; color: #c9d1d9; display: flex; align-items: center; gap: 8px; }
+  .box-number { background: #388bfd; color: #0d1117; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .key { background: #21262d; border: 1px solid #30363d; padding: 1px 6px; border-radius: 3px; font-size: 10px; color: #c9d1d9; }
+  .tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+  .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .tag-yellow { background: rgba(210,153,34,0.15); color: #d29922; }
+  .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+  .tag-blue { background: rgba(56,139,253,0.15); color: #388bfd; }
+  .tag-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+  .tag-cyan { background: rgba(56,211,215,0.15); color: #38d3d7; }
+
+  .filter-btn { background: #21262d; border: 1px solid #30363d; padding: 4px 12px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { background: #388bfd; color: #0d1117; border-color: #388bfd; }
+  .cmd-btn { background: #21262d; border: 1px solid #30363d; padding: 3px 10px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; }
+  .cmd-btn:hover { background: #30363d; }
+  .list-item { padding: 8px 10px; border-bottom: 1px solid rgba(48,54,61,0.5); cursor: pointer; transition: background 0.1s; }
+  .list-item:hover { background: #1c2128; }
+  .list-item.selected { background: rgba(56,139,253,0.1); border-left: 2px solid #388bfd; }
+
+  .chat-agent { background: rgba(56,139,253,0.08); border: 1px solid rgba(56,139,253,0.2); border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.5; }
+  .chat-user { background: rgba(188,140,255,0.08); border: 1px solid rgba(188,140,255,0.2); border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.5; }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+
+  .glow-green { text-shadow: 0 0 8px rgba(63,185,80,0.5); }
+  .glow-red { text-shadow: 0 0 8px rgba(248,81,73,0.5); }
+  .glow-blue { text-shadow: 0 0 8px rgba(56,139,253,0.5); }
+  .glow-yellow { text-shadow: 0 0 8px rgba(210,153,34,0.5); }
+
+  .nav-item { padding: 2px 8px; font-size: 10px; color: #484f58; text-decoration: none; transition: color 0.15s; }
+  .nav-item:hover { color: #c9d1d9; }
+  .nav-section { border-right: 1px solid #30363d; padding: 0 8px; }
+
+  .progress-bar { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+
+  .gate-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 90px;
+  }
+  .gate-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    border: 2px solid;
+  }
+  .gate-circle.pass { border-color: #3fb950; background: rgba(63,185,80,0.15); color: #3fb950; }
+  .gate-circle.active { border-color: #388bfd; background: rgba(56,139,253,0.15); color: #388bfd; }
+  .gate-circle.pending { border-color: #484f58; background: rgba(72,79,88,0.15); color: #484f58; }
+  .gate-connector { height: 2px; flex: 1; min-width: 20px; background: #30363d; margin-top: 20px; }
+  .gate-connector.pass { background: #3fb950; }
+
+  .workflow-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 12px;
+  }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .animate-pulse-slow { animation: pulse 2s infinite; }
+</style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+<div class="terminal-frame flex flex-col h-full">
+  <!-- Title Bar -->
+  <div class="terminal-titlebar">
+    <span class="terminal-dot red"></span>
+    <span class="terminal-dot yellow"></span>
+    <span class="terminal-dot green"></span>
+    <span class="text-tui-muted text-xs ml-2"><a href="00-home.html" class="nav-item hover:text-tui-text">ESC</a></span>
+    <span class="text-tui-text text-xs font-semibold ml-2">SXA Categorized Workflows</span>
+    <span class="text-tui-muted text-xs">/</span>
+    <span class="text-tui-cyan text-xs">分类工作流面板</span>
+    <span class="flex-1"></span>
+    <span class="text-tui-muted text-xs">2026-05-10 09:31:42 CST</span>
+    <span class="tag tag-blue ml-2">5 Categories</span>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Left Column -->
+    <div class="flex flex-col flex-1 overflow-hidden">
+
+      <!-- Box 1: WorkflowCategoryBox -->
+      <div class="tui-box focused rounded-none border-0 border-b border-tui-border">
+        <div class="tui-box-title">
+          <span class="box-number">1</span>
+          <span>Category / 工作流分类</span>
+          <span class="flex-1"></span>
+          <span class="key">Tab</span>
+          <span class="text-tui-muted text-xs">focus</span>
+        </div>
+        <div class="p-3 flex items-center gap-2">
+          <button class="filter-btn active" id="cat-strategy" onclick="switchCategory('strategy')">策略类 Strategy</button>
+          <button class="filter-btn" id="cat-risk" onclick="switchCategory('risk')">风控类 Risk</button>
+          <button class="filter-btn" id="cat-compliance" onclick="switchCategory('compliance')">合规类 Compliance</button>
+          <button class="filter-btn" id="cat-audit" onclick="switchCategory('audit')">审计类 Audit</button>
+          <button class="filter-btn" id="cat-analysis" onclick="switchCategory('analysis')">分析类 Analysis</button>
+          <div class="flex-1"></div>
+          <span class="text-tui-muted text-xs">5 categories | 18 workflows</span>
+        </div>
+      </div>
+
+      <!-- Middle Section -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- Box 2: WorkflowListBox -->
+        <div class="flex flex-col overflow-hidden" style="width:300px;min-width:300px;border-right:1px solid #30363d;">
+          <div class="tui-box-title border-t-0">
+            <span class="box-number">2</span>
+            <span>Workflows / 实例列表</span>
+            <span class="flex-1"></span>
+            <span class="tag tag-green">4 active</span>
+          </div>
+          <div class="flex-1 overflow-auto scrollbar-thin">
+            <!-- Strategy Category Items -->
+            <div id="list-strategy">
+              <div class="list-item selected">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-tui-blue text-xs font-semibold">WF-S-001</span>
+                  <span class="tag tag-green">Active</span>
+                </div>
+                <div class="text-tui-text text-xs">VolBreakout V2 参数优化</div>
+                <div class="text-tui-muted text-xs mt-1">Phase C 回测中 | G2 PASS</div>
+                <div class="progress-bar mt-1"><div class="progress-fill bg-tui-blue" style="width:30%"></div></div>
+              </div>
+              <div class="list-item">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-tui-blue text-xs font-semibold">WF-S-002</span>
+                  <span class="tag tag-yellow">Pending</span>
+                </div>
+                <div class="text-tui-text text-xs">ESG-Alpha 新策略上线</div>
+                <div class="text-tui-muted text-xs mt-1">Phase D 审批中 | G3 Pending</div>
+                <div class="progress-bar mt-1"><div class="progress-fill bg-tui-yellow" style="width:55%"></div></div>
+              </div>
+              <div class="list-item">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-tui-blue text-xs font-semibold">WF-S-003</span>
+                  <span class="tag tag-green">Active</span>
+                </div>
+                <div class="text-tui-text text-xs">MacroRotation 策略升级</div>
+                <div class="text-tui-muted text-xs mt-1">Phase A 构思中 | G1 PASS</div>
+                <div class="progress-bar mt-1"><div class="progress-fill bg-tui-green" style="width:15%"></div></div>
+              </div>
+              <div class="list-item">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-tui-blue text-xs font-semibold">WF-S-004</span>
+                  <span class="tag tag-green">Done</span>
+                </div>
+                <div class="text-tui-text text-xs">AlphaMomentum V3 上线</div>
+                <div class="text-tui-muted text-xs mt-1">Phase F 评估完成 | 全部 PASS</div>
+                <div class="progress-bar mt-1"><div class="progress-fill bg-tui-green" style="width:100%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Box 3: WorkflowDetailBox -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <div class="tui-box-title border-t-0">
+            <span class="box-number">3</span>
+            <span>Workflow Detail / 工作流详情</span>
+            <span class="flex-1"></span>
+            <span class="text-tui-muted text-xs">WF-S-001 VolBreakout V2</span>
+          </div>
+          <div class="flex-1 overflow-auto p-4 scrollbar-thin">
+
+            <!-- Workflow Header -->
+            <div class="workflow-card mb-4">
+              <div class="flex items-center gap-3 mb-3">
+                <span class="text-tui-blue text-sm font-bold">WF-S-001</span>
+                <span class="text-tui-text text-sm font-semibold">VolBreakout V2 参数优化工作流</span>
+                <span class="tag tag-green">Active</span>
+                <span class="flex-1"></span>
+                <span class="text-tui-muted text-xs">创建: 2026-05-06</span>
+              </div>
+              <div class="grid grid-cols-4 gap-3 text-xs">
+                <div><span class="text-tui-muted">类型:</span> <span class="text-tui-cyan">策略类 Strategy</span></div>
+                <div><span class="text-tui-muted">发起人:</span> <span class="text-tui-text">Strategy Agent</span></div>
+                <div><span class="text-tui-muted">优先级:</span> <span class="text-tui-yellow">High</span></div>
+                <div><span class="text-tui-muted">预计完成:</span> <span class="text-tui-text">2026-05-12</span></div>
+              </div>
+            </div>
+
+            <!-- Gate Progression - Strategy -->
+            <div class="workflow-card mb-4">
+              <div class="text-xs font-semibold text-tui-muted mb-3">Gate Progression / 关卡进度 - 策略类</div>
+              <div class="flex items-start justify-center gap-0">
+                <!-- G1 -->
+                <div class="gate-node">
+                  <div class="gate-circle pass">G1</div>
+                  <div class="text-xs text-center">
+                    <div class="text-tui-green font-semibold">需求审查</div>
+                    <div class="text-tui-muted">Requirement</div>
+                    <div class="text-tui-green text-xs mt-1">PASS</div>
+                    <div class="text-tui-muted text-xs">05/06 14:30</div>
+                  </div>
+                </div>
+                <div class="gate-connector pass"></div>
+                <!-- G2 -->
+                <div class="gate-node">
+                  <div class="gate-circle pass">G2</div>
+                  <div class="text-xs text-center">
+                    <div class="text-tui-green font-semibold">模型审批</div>
+                    <div class="text-tui-muted">Model Review</div>
+                    <div class="text-tui-green text-xs mt-1">PASS</div>
+                    <div class="text-tui-muted text-xs">05/07 10:15</div>
+                  </div>
+                </div>
+                <div class="gate-connector pass"></div>
+                <!-- G3 -->
+                <div class="gate-node">
+                  <div class="gate-circle active">G3</div>
+                  <div class="text-xs text-center">
+                    <div class="text-tui-blue font-semibold">参数确认</div>
+                    <div class="text-tui-muted">Param Confirm</div>
+                    <div class="text-tui-blue text-xs mt-1 animate-pulse-slow">IN PROGRESS</div>
+                    <div class="text-tui-muted text-xs">进行中...</div>
+                  </div>
+                </div>
+                <div class="gate-connector"></div>
+                <!-- G4 -->
+                <div class="gate-node">
+                  <div class="gate-circle pending">G4</div>
+                  <div class="text-xs text-center">
+                    <div class="text-tui-muted font-semibold">上线联合审批</div>
+                    <div class="text-tui-muted">Joint Approval</div>
+                    <div class="text-tui-muted text-xs mt-1">BLOCKED</div>
+                    <div class="text-tui-muted text-xs">--</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gate Details for Each Category -->
+            <div class="workflow-card mb-4">
+              <div class="text-xs font-semibold text-tui-muted mb-3">All Category Gates / 所有分类关卡定义</div>
+              <div class="space-y-3">
+                <!-- Strategy -->
+                <div class="p-2 rounded" style="background:rgba(63,185,80,0.05);border:1px solid rgba(63,185,80,0.15);">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-tui-green text-xs font-semibold">策略类 Strategy</span>
+                    <span class="flex-1"></span>
+                    <span class="tag tag-green">4 workflows</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-xs">
+                    <span class="text-tui-green">G1需求审查</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-green">G2模型审批</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-blue">G3参数确认</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-muted">G4上线联合审批</span>
+                  </div>
+                </div>
+                <!-- Risk -->
+                <div class="p-2 rounded" style="background:rgba(248,81,73,0.05);border:1px solid rgba(248,81,73,0.15);">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-tui-red text-xs font-semibold">风控类 Risk</span>
+                    <span class="flex-1"></span>
+                    <span class="tag tag-red">3 workflows</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-xs">
+                    <span class="text-tui-green">G1参数合理性</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-green">G2压力测试</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-green">G3规则确认</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-yellow">G4运行时生效</span>
+                  </div>
+                </div>
+                <!-- Compliance -->
+                <div class="p-2 rounded" style="background:rgba(188,140,255,0.05);border:1px solid rgba(188,140,255,0.15);">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-tui-purple text-xs font-semibold">合规类 Compliance</span>
+                    <span class="flex-1"></span>
+                    <span class="tag tag-purple">4 workflows</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-xs">
+                    <span class="text-tui-green">G1来源验证</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-green">G2可执行性</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-blue">G3合规官审批</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-muted">G4自动化部署</span>
+                  </div>
+                </div>
+                <!-- Audit -->
+                <div class="p-2 rounded" style="background:rgba(210,153,34,0.05);border:1px solid rgba(210,153,34,0.15);">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-tui-yellow text-xs font-semibold">审计类 Audit</span>
+                    <span class="flex-1"></span>
+                    <span class="tag tag-yellow">4 workflows</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-xs">
+                    <span class="text-tui-green">G1模板确认</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-blue">G2数据完整性</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-muted">G3报告生成</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-muted">G4报告审批</span>
+                  </div>
+                </div>
+                <!-- Analysis -->
+                <div class="p-2 rounded" style="background:rgba(56,211,215,0.05);border:1px solid rgba(56,211,215,0.15);">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-tui-cyan text-xs font-semibold">分析类 Analysis</span>
+                    <span class="flex-1"></span>
+                    <span class="tag tag-cyan">3 workflows</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-xs">
+                    <span class="text-tui-green">G1数据源验证</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-green">G2宏观趋势确认</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-blue">G3标的筛选通过</span>
+                    <span class="text-tui-muted">-></span>
+                    <span class="text-tui-muted">G4信号质量评估</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Current Gate Detail -->
+            <div class="workflow-card">
+              <div class="text-xs font-semibold text-tui-muted mb-3">G3 Detail / 当前关卡详情</div>
+              <div class="space-y-2 text-xs">
+                <div class="flex gap-4">
+                  <div class="text-tui-muted w-24">关卡名称:</div>
+                  <div class="text-tui-text">G3 参数确认 Param Confirmation</div>
+                </div>
+                <div class="flex gap-4">
+                  <div class="text-tui-muted w-24">状态:</div>
+                  <div class="text-tui-blue animate-pulse-slow">IN PROGRESS 进行中</div>
+                </div>
+                <div class="flex gap-4">
+                  <div class="text-tui-muted w-24">审核人:</div>
+                  <div class="text-tui-text">Risk Agent + Compliance Agent (联合审批)</div>
+                </div>
+                <div class="flex gap-4">
+                  <div class="text-tui-muted w-24">审核内容:</div>
+                  <div class="text-tui-text">止损线 -10%->-8%, 仓位上限 15%->12%, 品种范围扩展至创业板</div>
+                </div>
+                <div class="flex gap-4">
+                  <div class="text-tui-muted w-24">预计完成:</div>
+                  <div class="text-tui-text">2026-05-10 10:00 (ETA 28min)</div>
+                </div>
+                <div class="flex gap-4">
+                  <div class="text-tui-muted w-24">前置条件:</div>
+                  <div class="text-tui-green">G1 PASS, G2 PASS</div>
+                </div>
+                <div class="flex gap-4">
+                  <div class="text-tui-muted w-24">后置动作:</div>
+                  <div class="text-tui-muted">G3 PASS -> 触发 G4 上线联合审批</div>
+                </div>
+              </div>
+              <div class="flex gap-2 mt-3 pt-3 border-t border-tui-border">
+                <a href="01-approval-center.html" class="cmd-btn text-tui-blue">View in Approval</a>
+                <a href="11-risk-management.html" class="cmd-btn text-tui-red">Risk Panel</a>
+                <a href="05-e2e-workflow-overview.html" class="cmd-btn text-tui-purple">E2E Overview</a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Box 4: AgentChatBox - Right -->
+    <div class="flex flex-col overflow-hidden" style="width:320px;min-width:320px;border-left:1px solid #30363d;">
+      <div class="tui-box-title border-t-0">
+        <span class="box-number">4</span>
+        <span>Workflow Agent / 工作流助手</span>
+        <span class="flex-1"></span>
+        <span class="w-2 h-2 rounded-full bg-tui-green animate-pulse-slow"></span>
+        <span class="text-tui-green text-xs">Online</span>
+      </div>
+      <div class="flex-1 overflow-auto p-3 space-y-3 scrollbar-thin">
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">Workflow Agent</div>
+          <div>当前查看策略类工作流。共 <span class="text-tui-green">4</span> 个实例，其中 <span class="text-tui-blue">2</span> 个活跃、<span class="text-tui-yellow">1</span> 个待审、<span class="text-tui-green">1</span> 个已完成。</div>
+          <div class="text-tui-muted text-xs mt-1">09:00:00</div>
+        </div>
+        <div class="chat-user">
+          <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+          <div>WF-S-001 当前阻塞点是什么？</div>
+          <div class="text-tui-muted text-xs mt-1">09:25:00</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">Workflow Agent</div>
+          <div>WF-S-001 (VolBreakout V2) 当前在 <span class="text-tui-blue">G3 参数确认</span> 阶段。该关卡需要 Risk Agent 和 Compliance Agent 联合审批。当前状态：</div>
+          <div class="mt-1 text-xs">
+            - Risk Agent: <span class="text-tui-yellow">审核中</span>（评估止损线调整影响）<br>
+            - Compliance Agent: <span class="text-tui-muted">等待</span>（排队中）<br>
+            - 预计通过时间: 今日 10:00
+          </div>
+          <div class="text-tui-muted text-xs mt-1">09:25:03</div>
+        </div>
+        <div class="chat-user">
+          <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+          <div>各分类的完成情况？</div>
+          <div class="text-tui-muted text-xs mt-1">09:28:00</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">Workflow Agent</div>
+          <div>本周各分类工作流统计：</div>
+          <div class="mt-1 text-xs">
+            <span class="text-tui-green">策略类</span>: 4/6 PASS (66.7%)<br>
+            <span class="text-tui-red">风控类</span>: 3/3 PASS (100%)<br>
+            <span class="text-tui-purple">合规类</span>: 4/5 PASS (80%)<br>
+            <span class="text-tui-yellow">审计类</span>: 2/4 PASS (50%)<br>
+            <span class="text-tui-cyan">分析类</span>: 3/3 PASS (100%)
+          </div>
+          <div class="text-tui-yellow text-xs mt-1">瓶颈: 策略类 G3 (参数确认) 平均耗时 2.1 天，建议优化审批流程。</div>
+          <div class="text-tui-muted text-xs mt-1">09:28:05</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">Workflow Agent</div>
+          <div>审计类工作流 WF-A-002 (季度报告审计) 已在 G2 数据完整性阶段停留超过 48 小时。原因：Wind 数据接口异常导致数据校验失败。</div>
+          <div class="text-tui-muted text-xs mt-1">09:15:00</div>
+        </div>
+      </div>
+      <div class="p-3 border-t border-tui-border" style="background:#161b22;">
+        <div class="flex items-center gap-2">
+          <input type="text" placeholder="输入工作流查询... (Enter)" class="flex-1 bg-tui-bg border border-tui-border rounded px-3 py-1.5 text-xs text-tui-text focus:outline-none focus:border-tui-blue">
+          <button class="cmd-btn text-tui-blue">Send</button>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button class="cmd-btn text-xs">/gates</button>
+          <button class="cmd-btn text-xs">/blocked</button>
+          <button class="cmd-btn text-xs">/stats</button>
+          <button class="cmd-btn text-xs">/create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="flex items-center px-3 py-1 text-xs border-t border-tui-border" style="background:#161b22;">
+    <span class="text-tui-cyan font-semibold">WORKFLOWS</span>
+    <span class="mx-2 text-tui-border">|</span>
+    <span class="nav-section flex items-center gap-1">
+      <span class="key">1</span><span class="text-tui-muted">Category</span>
+      <span class="key">2</span><span class="text-tui-muted">List</span>
+      <span class="key">3</span><span class="text-tui-muted">Detail</span>
+      <span class="key">4</span><span class="text-tui-muted">Agent</span>
+    </span>
+    <span class="nav-section flex items-center gap-1 px-2">
+      <span class="key">Tab</span><span class="text-tui-muted">Cycle</span>
+      <span class="key">/</span><span class="text-tui-muted">Command</span>
+    </span>
+    <span class="flex-1"></span>
+    <span class="nav-section flex items-center gap-2 px-2 flex-wrap">
+      <a href="00-home.html" class="nav-item hover:text-tui-text">q Home</a>
+      <a href="05-e2e-workflow-overview.html" class="nav-item hover:text-tui-text">E2E</a>
+      <a href="01-approval-center.html" class="nav-item hover:text-tui-text">Approval</a>
+      <a href="02-agent-collaboration.html" class="nav-item hover:text-tui-text">Agents</a>
+      <a href="03-compliance-dashboard.html" class="nav-item hover:text-tui-text">Compliance</a>
+      <a href="08-strategy-management.html" class="nav-item hover:text-tui-text">Strategy</a>
+      <a href="16-workflow-panel.html" class="nav-item hover:text-tui-text">WF Panel</a>
+    </span>
+  </div>
+</div>
+
+<script>
+function switchCategory(cat) {
+  // Reset all buttons
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('cat-' + cat).classList.add('active');
+}
+</script>
+
+</body>
+</html>

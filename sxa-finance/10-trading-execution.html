@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 交易执行面板 | Trading Execution Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#38d3d7',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family: 'JetBrains Mono', 'Noto Sans SC', monospace; }
+  body { background: #0d1117; color: #c9d1d9; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  .terminal-frame {
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0d1117;
+  }
+  .terminal-titlebar {
+    background: #161b22;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #30363d;
+  }
+  .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .terminal-dot.red { background: #f85149; }
+  .terminal-dot.yellow { background: #d29922; }
+  .terminal-dot.green { background: #3fb950; }
+
+  .tui-box {
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    background: #0d1117;
+    position: relative;
+  }
+  .tui-box.focused {
+    border-color: #388bfd;
+    box-shadow: 0 0 0 1px #388bfd, 0 0 12px rgba(56,139,253,0.15);
+  }
+  .tui-box-title {
+    background: #161b22;
+    padding: 6px 12px;
+    border-bottom: 1px solid #30363d;
+    font-size: 12px;
+    font-weight: 600;
+    color: #c9d1d9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .box-number {
+    background: #388bfd;
+    color: #0d1117;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .key {
+    background: #21262d;
+    border: 1px solid #30363d;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    color: #c9d1d9;
+  }
+  .tag {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .tag-yellow { background: rgba(210,153,34,0.15); color: #d29922; }
+  .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+  .tag-blue { background: rgba(56,139,253,0.15); color: #388bfd; }
+  .tag-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+  .tag-cyan { background: rgba(56,211,215,0.15); color: #38d3d7; }
+
+  .filter-btn {
+    background: #21262d;
+    border: 1px solid #30363d;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #c9d1d9;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: #388bfd;
+    color: #0d1117;
+    border-color: #388bfd;
+  }
+  .cmd-btn {
+    background: #21262d;
+    border: 1px solid #30363d;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #c9d1d9;
+    cursor: pointer;
+  }
+  .cmd-btn:hover { background: #30363d; }
+  .list-item {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(48,54,61,0.5);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .list-item:hover { background: #1c2128; }
+  .list-item.selected { background: rgba(56,139,253,0.1); border-left: 2px solid #388bfd; }
+
+  .chat-agent {
+    background: rgba(56,139,253,0.08);
+    border: 1px solid rgba(56,139,253,0.2);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .chat-user {
+    background: rgba(188,140,255,0.08);
+    border: 1px solid rgba(188,140,255,0.2);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+
+  .glow-green { text-shadow: 0 0 8px rgba(63,185,80,0.5); }
+  .glow-red { text-shadow: 0 0 8px rgba(248,81,73,0.5); }
+  .glow-blue { text-shadow: 0 0 8px rgba(56,139,253,0.5); }
+  .glow-yellow { text-shadow: 0 0 8px rgba(210,153,34,0.5); }
+
+  .nav-item {
+    padding: 2px 8px;
+    font-size: 10px;
+    color: #484f58;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .nav-item:hover { color: #c9d1d9; }
+  .nav-section {
+    border-right: 1px solid #30363d;
+    padding: 0 8px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: #161b22;
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: #484f58;
+    border-bottom: 1px solid #30363d;
+    position: sticky;
+    top: 0;
+  }
+  td {
+    padding: 5px 10px;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(48,54,61,0.3);
+  }
+  tr:hover td { background: #1c2128; }
+
+  .progress-bar {
+    height: 6px;
+    background: #21262d;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+  .stat-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px;
+  }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .animate-pulse-slow { animation: pulse 2s infinite; }
+</style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+<!-- Terminal Frame -->
+<div class="terminal-frame flex flex-col h-full">
+  <!-- Title Bar -->
+  <div class="terminal-titlebar">
+    <span class="terminal-dot red"></span>
+    <span class="terminal-dot yellow"></span>
+    <span class="terminal-dot green"></span>
+    <span class="text-tui-muted text-xs ml-2">
+      <a href="00-home.html" class="nav-item hover:text-tui-text">ESC</a>
+    </span>
+    <span class="text-tui-text text-xs font-semibold ml-2">SXA Trading Execution</span>
+    <span class="text-tui-muted text-xs">/</span>
+    <span class="text-tui-cyan text-xs">交易执行面板</span>
+    <span class="flex-1"></span>
+    <span class="text-tui-muted text-xs">2026-05-10 09:31:42 CST</span>
+    <span class="tag tag-green ml-2">LIVE</span>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Left Column -->
+    <div class="flex flex-col flex-1 border-r border-tui-border overflow-hidden">
+
+      <!-- Box 1: OrderFilterBox -->
+      <div class="tui-box focused m-0 rounded-none border-0 border-b border-tui-border">
+        <div class="tui-box-title">
+          <span class="box-number">1</span>
+          <span>OrderFilter / 订单筛选</span>
+          <span class="flex-1"></span>
+          <span class="key">Tab</span>
+          <span class="text-tui-muted text-xs">focus</span>
+        </div>
+        <div class="p-3 flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span class="text-tui-muted text-xs">类型 Type:</span>
+            <button class="filter-btn active">全部 All</button>
+            <button class="filter-btn">限价 Limit</button>
+            <button class="filter-btn">市价 Market</button>
+            <button class="filter-btn">止损 StopLoss</button>
+          </div>
+          <div class="w-px h-5 bg-tui-border"></div>
+          <div class="flex items-center gap-2">
+            <span class="text-tui-muted text-xs">状态 Status:</span>
+            <button class="filter-btn active">全部</button>
+            <button class="filter-btn">待执行</button>
+            <button class="filter-btn">执行中</button>
+            <button class="filter-btn">已完成</button>
+            <button class="filter-btn">已取消</button>
+          </div>
+          <div class="w-px h-5 bg-tui-border"></div>
+          <div class="flex items-center gap-2">
+            <span class="text-tui-muted text-xs">标的 Symbol:</span>
+            <input type="text" value="" placeholder="搜索 Search..." class="bg-tui-header border border-tui-border rounded px-2 py-1 text-xs text-tui-text w-32 focus:outline-none focus:border-tui-blue">
+          </div>
+          <div class="flex-1"></div>
+          <button class="cmd-btn text-tui-green">+ New Order</button>
+        </div>
+      </div>
+
+      <!-- Box 2: OrderListBox -->
+      <div class="flex-1 overflow-hidden flex flex-col">
+        <div class="tui-box-title border-t-0">
+          <span class="box-number">2</span>
+          <span>OrderBook / 订单簿</span>
+          <span class="flex-1"></span>
+          <span class="text-tui-muted text-xs">14 orders</span>
+          <span class="tag tag-green ml-1">3 active</span>
+        </div>
+        <div class="flex-1 overflow-auto scrollbar-thin">
+          <table>
+            <thead>
+              <tr>
+                <th>订单ID</th>
+                <th>策略 Strategy</th>
+                <th>标的 Symbol</th>
+                <th>方向 Dir</th>
+                <th>价格 Price</th>
+                <th>数量 Qty</th>
+                <th>已成交 Filled</th>
+                <th>状态 Status</th>
+                <th>时间 Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-001</td>
+                <td>AlphaMomentum</td>
+                <td class="text-tui-cyan">600519.SH</td>
+                <td><span class="tag tag-red">卖出 SELL</span></td>
+                <td class="text-tui-yellow">1,856.30</td>
+                <td>2,000</td>
+                <td>1,500</td>
+                <td><span class="tag tag-yellow">执行中</span></td>
+                <td class="text-tui-muted">09:28:15</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-002</td>
+                <td>MeanRevertV3</td>
+                <td class="text-tui-cyan">000858.SZ</td>
+                <td><span class="tag tag-green">买入 BUY</span></td>
+                <td class="text-tui-yellow">68.45</td>
+                <td>5,000</td>
+                <td>5,000</td>
+                <td><span class="tag tag-green">已完成</span></td>
+                <td class="text-tui-muted">09:25:33</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-003</td>
+                <td>PairTrade-I</td>
+                <td class="text-tui-cyan">601318.SH</td>
+                <td><span class="tag tag-green">买入 BUY</span></td>
+                <td class="text-tui-yellow">52.18</td>
+                <td>8,000</td>
+                <td>3,200</td>
+                <td><span class="tag tag-yellow">执行中</span></td>
+                <td class="text-tui-muted">09:29:01</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-004</td>
+                <td>AlphaMomentum</td>
+                <td class="text-tui-cyan">AAPL US</td>
+                <td><span class="tag tag-red">卖出 SELL</span></td>
+                <td class="text-tui-yellow">213.85</td>
+                <td>300</td>
+                <td>0</td>
+                <td><span class="tag tag-blue">待执行</span></td>
+                <td class="text-tui-muted">09:30:12</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-005</td>
+                <td>MacroRotation</td>
+                <td class="text-tui-cyan">SPY US</td>
+                <td><span class="tag tag-green">买入 BUY</span></td>
+                <td class="text-tui-yellow">528.40</td>
+                <td>500</td>
+                <td>500</td>
+                <td><span class="tag tag-green">已完成</span></td>
+                <td class="text-tui-muted">09:15:08</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-006</td>
+                <td>VolBreakout</td>
+                <td class="text-tui-cyan">300750.SZ</td>
+                <td><span class="tag tag-green">买入 BUY</span></td>
+                <td class="text-tui-yellow">238.70</td>
+                <td>1,500</td>
+                <td>0</td>
+                <td><span class="tag tag-blue">待执行</span></td>
+                <td class="text-tui-muted">09:30:45</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-007</td>
+                <td>StatArb-FX</td>
+                <td class="text-tui-cyan">EUR/USD</td>
+                <td><span class="tag tag-green">买入 BUY</span></td>
+                <td class="text-tui-yellow">1.1085</td>
+                <td>2,000,000</td>
+                <td>2,000,000</td>
+                <td><span class="tag tag-green">已完成</span></td>
+                <td class="text-tui-muted">09:20:55</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-008</td>
+                <td>MeanRevertV3</td>
+                <td class="text-tui-cyan">002415.SZ</td>
+                <td><span class="tag tag-red">卖出 SELL</span></td>
+                <td class="text-tui-yellow">42.15</td>
+                <td>10,000</td>
+                <td>6,800</td>
+                <td><span class="tag tag-yellow">执行中</span></td>
+                <td class="text-tui-muted">09:27:18</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-009</td>
+                <td>DivCapture</td>
+                <td class="text-tui-cyan">601398.SH</td>
+                <td><span class="tag tag-green">买入 BUY</span></td>
+                <td class="text-tui-yellow">5.82</td>
+                <td>50,000</td>
+                <td>50,000</td>
+                <td><span class="tag tag-green">已完成</span></td>
+                <td class="text-tui-muted">09:05:30</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-010</td>
+                <td>AlphaMomentum</td>
+                <td class="text-tui-cyan">NVDA US</td>
+                <td><span class="tag tag-green">买入 BUY</span></td>
+                <td class="text-tui-yellow">128.50</td>
+                <td>800</td>
+                <td>800</td>
+                <td><span class="tag tag-green">已完成</span></td>
+                <td class="text-tui-muted">09:12:44</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-011</td>
+                <td>PairTrade-I</td>
+                <td class="text-tui-cyan">600036.SH</td>
+                <td><span class="tag tag-red">卖出 SELL</span></td>
+                <td class="text-tui-yellow">38.90</td>
+                <td>12,000</td>
+                <td>12,000</td>
+                <td><span class="tag tag-green">已完成</span></td>
+                <td class="text-tui-muted">09:18:22</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-012</td>
+                <td>StatArb-FX</td>
+                <td class="text-tui-cyan">USD/JPY</td>
+                <td><span class="tag tag-red">卖出 SELL</span></td>
+                <td class="text-tui-yellow">155.72</td>
+                <td>1,500,000</td>
+                <td>750,000</td>
+                <td><span class="tag tag-yellow">执行中</span></td>
+                <td class="text-tui-muted">09:29:50</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-013</td>
+                <td>VolBreakout</td>
+                <td class="text-tui-cyan">000001.SZ</td>
+                <td><span class="tag tag-green">买入 BUY</span></td>
+                <td class="text-tui-yellow">16.35</td>
+                <td>20,000</td>
+                <td>0</td>
+                <td><span class="text-tui-muted">已取消</span></td>
+                <td class="text-tui-muted">09:22:10</td>
+              </tr>
+              <tr>
+                <td class="text-tui-blue">ORD-20260510-014</td>
+                <td>MacroRotation</td>
+                <td class="text-tui-cyan">TLT US</td>
+                <td><span class="tag tag-green">买入 BUY</span></td>
+                <td class="text-tui-yellow">92.15</td>
+                <td>2,000</td>
+                <td>0</td>
+                <td><span class="tag tag-blue">待执行</span></td>
+                <td class="text-tui-muted">09:31:02</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Box 3: ExecutionStatsBox -->
+      <div class="border-t border-tui-border p-3" style="background:#0d1117;">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="box-number">3</span>
+          <span class="text-xs font-semibold">ExecutionStats / 执行统计</span>
+          <span class="flex-1"></span>
+          <span class="text-tui-muted text-xs">Session 2026-05-10</span>
+        </div>
+        <div class="grid grid-cols-5 gap-3">
+          <div class="stat-card">
+            <div class="text-tui-muted text-xs mb-1">执行率 Exec Rate</div>
+            <div class="text-tui-green text-lg font-bold glow-green">94.3%</div>
+            <div class="progress-bar mt-1">
+              <div class="progress-fill bg-tui-green" style="width:94.3%"></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="text-tui-muted text-xs mb-1">平均滑点 Avg Slippage</div>
+            <div class="text-tui-yellow text-lg font-bold glow-yellow">0.032%</div>
+            <div class="progress-bar mt-1">
+              <div class="progress-fill bg-tui-yellow" style="width:32%"></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="text-tui-muted text-xs mb-1">成交金额 Turnover</div>
+            <div class="text-tui-cyan text-lg font-bold glow-blue">¥12.86M</div>
+            <div class="text-tui-muted text-xs mt-1">目标 ¥15M (85.7%)</div>
+          </div>
+          <div class="stat-card">
+            <div class="text-tui-muted text-xs mb-1">活跃策略 Active</div>
+            <div class="text-tui-blue text-lg font-bold">6 / 8</div>
+            <div class="progress-bar mt-1">
+              <div class="progress-fill bg-tui-blue" style="width:75%"></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="text-tui-muted text-xs mb-1">P&L 今日盈亏</div>
+            <div class="text-tui-green text-lg font-bold glow-green">+¥186,420</div>
+            <div class="text-tui-green text-xs mt-1">+1.45% vs 基准</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: AgentChatBox -->
+    <div class="w-80 flex flex-col border-l border-tui-border" style="min-width:320px;">
+      <div class="tui-box-title">
+        <span class="box-number">4</span>
+        <span>Trader Agent / 交易助手</span>
+        <span class="flex-1"></span>
+        <span class="w-2 h-2 rounded-full bg-tui-green animate-pulse-slow"></span>
+        <span class="text-tui-green text-xs">Online</span>
+      </div>
+      <div class="flex-1 overflow-auto p-3 space-y-3 scrollbar-thin">
+        <!-- Agent Message -->
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">Trader Agent</div>
+          <div>上午交易时段开始。当前有 <span class="text-tui-yellow">3</span> 笔订单正在执行中。</div>
+          <div class="text-tui-muted text-xs mt-1">09:30:00</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">Trader Agent</div>
+          <div>AlphaMomentum 策略的 <span class="text-tui-cyan">600519.SH</span> 卖出订单已完成 75%（1,500/2,000），均价 ¥1,856.80，滑点 +0.027%。</div>
+          <div class="text-tui-muted text-xs mt-1">09:29:15</div>
+        </div>
+        <div class="chat-user">
+          <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+          <div>检查 EUR/USD 头寸的止损设置。</div>
+          <div class="text-tui-muted text-xs mt-1">09:25:00</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">Trader Agent</div>
+          <div>EUR/USD 当前仓位: Long 2M @ 1.1085。止损设在 1.1035（50 pips），止盈 1.1150。风险敞口 ¥63,200，在限额内。</div>
+          <div class="text-tui-muted text-xs mt-1">09:25:02</div>
+        </div>
+        <div class="chat-user">
+          <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+          <div>VolBreakout 策略的宁德时代订单状态？</div>
+          <div class="text-tui-muted text-xs mt-1">09:31:00</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">Trader Agent</div>
+          <div>ORD-20260510-006（<span class="text-tui-cyan">300750.SZ</span> 宁德时代）买入 1,500 股 @ ¥238.70，状态：<span class="text-tui-blue">待执行</span>。等待触发条件：突破 20 日高点 ¥239.20。当前价 ¥238.85，接近触发。</div>
+          <div class="text-tui-muted text-xs mt-1">09:31:05</div>
+        </div>
+      </div>
+      <!-- Chat Input -->
+      <div class="p-3 border-t border-tui-border" style="background:#161b22;">
+        <div class="flex items-center gap-2">
+          <input type="text" placeholder="输入指令或问题... (Enter)" class="flex-1 bg-tui-bg border border-tui-border rounded px-3 py-1.5 text-xs text-tui-text focus:outline-none focus:border-tui-blue">
+          <button class="cmd-btn text-tui-blue">Send</button>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button class="cmd-btn text-xs">/status</button>
+          <button class="cmd-btn text-xs">/cancel</button>
+          <button class="cmd-btn text-xs">/modify</button>
+          <button class="cmd-btn text-xs">/risk</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="flex items-center px-3 py-1 text-xs border-t border-tui-border" style="background:#161b22;">
+    <span class="text-tui-muted">NORMAL</span>
+    <span class="mx-2 text-tui-border">|</span>
+    <span class="nav-section flex items-center gap-1">
+      <span class="key">1</span><span class="text-tui-muted">Filter</span>
+      <span class="key">2</span><span class="text-tui-muted">Orders</span>
+      <span class="key">3</span><span class="text-tui-muted">Stats</span>
+      <span class="key">4</span><span class="text-tui-muted">Agent</span>
+    </span>
+    <span class="nav-section flex items-center gap-1 px-2">
+      <span class="key">Tab</span><span class="text-tui-muted">Cycle</span>
+      <span class="key">/</span><span class="text-tui-muted">Command</span>
+    </span>
+    <span class="flex-1"></span>
+    <span class="nav-section flex items-center gap-2 px-2">
+      <a href="00-home.html" class="nav-item hover:text-tui-text">q Home</a>
+      <a href="11-risk-management.html" class="nav-item hover:text-tui-text">Risk Mgmt</a>
+      <a href="08-strategy-management.html" class="nav-item hover:text-tui-text">Strategy</a>
+      <a href="01-approval-center.html" class="nav-item hover:text-tui-text">Approval</a>
+      <a href="02-agent-collaboration.html" class="nav-item hover:text-tui-text">Agents</a>
+      <a href="16-workflow-panel.html" class="nav-item hover:text-tui-text">Workflow</a>
+    </span>
+    <span class="text-tui-green ml-2">12 orders | ¥12.86M</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 系统监控面板 | System Monitor Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#38d3d7',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family: 'JetBrains Mono', 'Noto Sans SC', monospace; }
+  body { background: #0d1117; color: #c9d1d9; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  .terminal-frame { border: 1px solid #30363d; border-radius: 8px; overflow: hidden; background: #0d1117; }
+  .terminal-titlebar { background: #161b22; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #30363d; }
+  .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .terminal-dot.red { background: #f85149; }
+  .terminal-dot.yellow { background: #d29922; }
+  .terminal-dot.green { background: #3fb950; }
+
+  .tui-box { border: 1px solid #30363d; border-radius: 6px; background: #0d1117; position: relative; }
+  .tui-box.focused { border-color: #388bfd; box-shadow: 0 0 0 1px #388bfd, 0 0 12px rgba(56,139,253,0.15); }
+  .tui-box-title { background: #161b22; padding: 6px 12px; border-bottom: 1px solid #30363d; font-size: 12px; font-weight: 600; color: #c9d1d9; display: flex; align-items: center; gap: 8px; }
+  .box-number { background: #388bfd; color: #0d1117; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .key { background: #21262d; border: 1px solid #30363d; padding: 1px 6px; border-radius: 3px; font-size: 10px; color: #c9d1d9; }
+  .tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+  .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .tag-yellow { background: rgba(210,153,34,0.15); color: #d29922; }
+  .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+  .tag-blue { background: rgba(56,139,253,0.15); color: #388bfd; }
+  .tag-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+  .tag-cyan { background: rgba(56,211,215,0.15); color: #38d3d7; }
+
+  .filter-btn { background: #21262d; border: 1px solid #30363d; padding: 4px 12px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { background: #388bfd; color: #0d1117; border-color: #388bfd; }
+  .cmd-btn { background: #21262d; border: 1px solid #30363d; padding: 3px 10px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; }
+  .cmd-btn:hover { background: #30363d; }
+
+  .chat-agent { background: rgba(56,139,253,0.08); border: 1px solid rgba(56,139,253,0.2); border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.5; }
+  .chat-user { background: rgba(188,140,255,0.08); border: 1px solid rgba(188,140,255,0.2); border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.5; }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+
+  .glow-green { text-shadow: 0 0 8px rgba(63,185,80,0.5); }
+  .glow-red { text-shadow: 0 0 8px rgba(248,81,73,0.5); }
+  .glow-blue { text-shadow: 0 0 8px rgba(56,139,253,0.5); }
+  .glow-yellow { text-shadow: 0 0 8px rgba(210,153,34,0.5); }
+
+  .nav-item { padding: 2px 8px; font-size: 10px; color: #484f58; text-decoration: none; transition: color 0.15s; }
+  .nav-item:hover { color: #c9d1d9; }
+  .nav-section { border-right: 1px solid #30363d; padding: 0 8px; }
+
+  .progress-bar { height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+
+  .agent-status-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .agent-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .agent-dot.online { background: #3fb950; box-shadow: 0 0 6px rgba(63,185,80,0.5); }
+  .agent-dot.offline { background: #484f58; }
+  .agent-dot.error { background: #f85149; box-shadow: 0 0 6px rgba(248,81,73,0.5); }
+
+  .service-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+  }
+  .service-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .log-entry {
+    padding: 4px 8px;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(48,54,61,0.3);
+    line-height: 1.5;
+  }
+  .log-entry:hover { background: #1c2128; }
+  .log-time { color: #484f58; }
+  .log-level-info { color: #388bfd; }
+  .log-level-warn { color: #d29922; }
+  .log-level-error { color: #f85149; }
+  .log-level-debug { color: #484f58; }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .animate-pulse-slow { animation: pulse 2s infinite; }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+  .animate-blink { animation: blink 1s infinite; }
+</style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+<div class="terminal-frame flex flex-col h-full">
+  <!-- Title Bar -->
+  <div class="terminal-titlebar">
+    <span class="terminal-dot red"></span>
+    <span class="terminal-dot yellow"></span>
+    <span class="terminal-dot green"></span>
+    <span class="text-tui-muted text-xs ml-2"><a href="00-home.html" class="nav-item hover:text-tui-text">ESC</a></span>
+    <span class="text-tui-text text-xs font-semibold ml-2">SXA System Monitor</span>
+    <span class="text-tui-muted text-xs">/</span>
+    <span class="text-tui-cyan text-xs">系统监控面板</span>
+    <span class="flex-1"></span>
+    <span class="text-tui-muted text-xs">2026-05-10 09:31:42 CST</span>
+    <span class="tag tag-green ml-2">HEALTHY</span>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Left Column -->
+    <div class="flex flex-col flex-1 overflow-hidden">
+
+      <!-- Box 1: MonitorFilterBox -->
+      <div class="tui-box focused rounded-none border-0 border-b border-tui-border">
+        <div class="tui-box-title">
+          <span class="box-number">1</span>
+          <span>Monitor Filter / 监控筛选</span>
+          <span class="flex-1"></span>
+          <span class="key">Tab</span>
+          <span class="text-tui-muted text-xs">focus</span>
+        </div>
+        <div class="p-3 flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span class="text-tui-muted text-xs">组件 Component:</span>
+            <button class="filter-btn active">全部 All</button>
+            <button class="filter-btn">Agent</button>
+            <button class="filter-btn">Service</button>
+            <button class="filter-btn">Database</button>
+            <button class="filter-btn">Network</button>
+          </div>
+          <div class="w-px h-5 bg-tui-border"></div>
+          <div class="flex items-center gap-2">
+            <span class="text-tui-muted text-xs">状态 Status:</span>
+            <button class="filter-btn active">全部</button>
+            <button class="filter-btn">Healthy</button>
+            <button class="filter-btn">Warning</button>
+            <button class="filter-btn">Error</button>
+          </div>
+          <div class="flex-1"></div>
+          <button class="cmd-btn text-tui-red">Restart All</button>
+        </div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- Box 2: SystemHealthBox - Left -->
+        <div class="flex flex-col overflow-y-auto scrollbar-thin" style="width:250px;min-width:250px;border-right:1px solid #30363d;">
+          <div class="tui-box-title border-t-0">
+            <span class="box-number">2</span>
+            <span>System Health / 系统健康</span>
+          </div>
+          <div class="p-3 space-y-4">
+            <!-- Agent Status Grid -->
+            <div>
+              <div class="text-tui-muted text-xs font-semibold mb-2">Agent Status / 智能体状态</div>
+              <div class="space-y-2">
+                <div class="agent-status-card">
+                  <div class="agent-dot online animate-pulse-slow"></div>
+                  <div class="flex-1">
+                    <div class="text-tui-text text-xs font-semibold">Strategy Agent</div>
+                    <div class="text-tui-muted text-xs">策略助手 | v2.4.1</div>
+                  </div>
+                  <span class="tag tag-green">Online</span>
+                </div>
+                <div class="agent-status-card">
+                  <div class="agent-dot online animate-pulse-slow"></div>
+                  <div class="flex-1">
+                    <div class="text-tui-text text-xs font-semibold">Trader Agent</div>
+                    <div class="text-tui-muted text-xs">交易助手 | v2.4.1</div>
+                  </div>
+                  <span class="tag tag-green">Online</span>
+                </div>
+                <div class="agent-status-card">
+                  <div class="agent-dot online animate-pulse-slow"></div>
+                  <div class="flex-1">
+                    <div class="text-tui-text text-xs font-semibold">Risk Agent</div>
+                    <div class="text-tui-muted text-xs">风险助手 | v2.4.1</div>
+                  </div>
+                  <span class="tag tag-green">Online</span>
+                </div>
+                <div class="agent-status-card">
+                  <div class="agent-dot online animate-pulse-slow"></div>
+                  <div class="flex-1">
+                    <div class="text-tui-text text-xs font-semibold">Compliance Agent</div>
+                    <div class="text-tui-muted text-xs">合规助手 | v2.3.8</div>
+                  </div>
+                  <span class="tag tag-green">Online</span>
+                </div>
+                <div class="agent-status-card">
+                  <div class="agent-dot online animate-pulse-slow"></div>
+                  <div class="flex-1">
+                    <div class="text-tui-text text-xs font-semibold">Monitor Agent</div>
+                    <div class="text-tui-muted text-xs">监控助手 | v2.4.0</div>
+                  </div>
+                  <span class="tag tag-green">Online</span>
+                </div>
+                <div class="agent-status-card">
+                  <div class="agent-dot error animate-blink"></div>
+                  <div class="flex-1">
+                    <div class="text-tui-text text-xs font-semibold">Analytics Agent</div>
+                    <div class="text-tui-muted text-xs">分析助手 | v2.4.1</div>
+                  </div>
+                  <span class="tag tag-red">Error</span>
+                </div>
+                <div class="agent-status-card">
+                  <div class="agent-dot online animate-pulse-slow"></div>
+                  <div class="flex-1">
+                    <div class="text-tui-text text-xs font-semibold">Audit Agent</div>
+                    <div class="text-tui-muted text-xs">审计助手 | v2.3.5</div>
+                  </div>
+                  <span class="tag tag-green">Online</span>
+                </div>
+                <div class="agent-status-card">
+                  <div class="agent-dot online animate-pulse-slow"></div>
+                  <div class="flex-1">
+                    <div class="text-tui-text text-xs font-semibold">Workflow Agent</div>
+                    <div class="text-tui-muted text-xs">工作流助手 | v2.4.1</div>
+                  </div>
+                  <span class="tag tag-green">Online</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- System Resources -->
+            <div>
+              <div class="text-tui-muted text-xs font-semibold mb-2">Resources / 系统资源</div>
+              <div class="space-y-3">
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="text-tui-text">CPU</span>
+                    <span class="text-tui-yellow">42.3%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill bg-tui-yellow" style="width:42.3%"></div>
+                  </div>
+                  <div class="text-tui-muted text-xs mt-0.5">8 Core / 3.4GHz avg</div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="text-tui-text">Memory</span>
+                    <span class="text-tui-yellow">68.7%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill bg-tui-yellow" style="width:68.7%"></div>
+                  </div>
+                  <div class="text-tui-muted text-xs mt-0.5">11.0GB / 16.0GB</div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="text-tui-text">Disk</span>
+                    <span class="text-tui-green">35.2%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill bg-tui-green" style="width:35.2%"></div>
+                  </div>
+                  <div class="text-tui-muted text-xs mt-0.5">176GB / 500GB SSD</div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="text-tui-text">Network</span>
+                    <span class="text-tui-green">12.4 Mbps</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill bg-tui-green" style="width:12.4%"></div>
+                  </div>
+                  <div class="text-tui-muted text-xs mt-0.5">Up: 5.2 / Down: 7.2 Mbps</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Service Health -->
+            <div>
+              <div class="text-tui-muted text-xs font-semibold mb-2">Services / 服务状态</div>
+              <div class="space-y-1">
+                <div class="service-indicator">
+                  <div class="service-dot" style="background:#3fb950;"></div>
+                  <span class="text-tui-text text-xs flex-1">Market Data Feed</span>
+                  <span class="text-tui-green text-xs">OK</span>
+                </div>
+                <div class="service-indicator">
+                  <div class="service-dot" style="background:#3fb950;"></div>
+                  <span class="text-tui-text text-xs flex-1">Order Gateway</span>
+                  <span class="text-tui-green text-xs">OK</span>
+                </div>
+                <div class="service-indicator">
+                  <div class="service-dot" style="background:#3fb950;"></div>
+                  <span class="text-tui-text text-xs flex-1">Risk Engine</span>
+                  <span class="text-tui-green text-xs">OK</span>
+                </div>
+                <div class="service-indicator">
+                  <div class="service-dot" style="background:#3fb950;"></div>
+                  <span class="text-tui-text text-xs flex-1">PostgreSQL</span>
+                  <span class="text-tui-green text-xs">OK</span>
+                </div>
+                <div class="service-indicator">
+                  <div class="service-dot" style="background:#3fb950;"></div>
+                  <span class="text-tui-text text-xs flex-1">Redis Cache</span>
+                  <span class="text-tui-green text-xs">OK</span>
+                </div>
+                <div class="service-indicator">
+                  <div class="service-dot" style="background:#d29922;"></div>
+                  <span class="text-tui-text text-xs flex-1">Wind Data API</span>
+                  <span class="text-tui-yellow text-xs">Slow</span>
+                </div>
+                <div class="service-indicator">
+                  <div class="service-dot" style="background:#f85149;"></div>
+                  <span class="text-tui-text text-xs flex-1">Analytics Pipeline</span>
+                  <span class="text-tui-red text-xs">Down</span>
+                </div>
+                <div class="service-indicator">
+                  <div class="service-dot" style="background:#3fb950;"></div>
+                  <span class="text-tui-text text-xs flex-1">Notification Service</span>
+                  <span class="text-tui-green text-xs">OK</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Uptime -->
+            <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;">
+              <div class="text-tui-muted text-xs font-semibold mb-2">System Info / 系统信息</div>
+              <div class="space-y-1 text-xs">
+                <div class="flex justify-between">
+                  <span class="text-tui-muted">Uptime</span>
+                  <span class="text-tui-green">42d 7h 23m</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-muted">Version</span>
+                  <span class="text-tui-text">v2.4.1-beta</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-muted">Last Deploy</span>
+                  <span class="text-tui-text">05/08 14:30</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-muted">Active Users</span>
+                  <span class="text-tui-text">6 / 10</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Box 3: MonitorLogBox - Center -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <div class="tui-box-title border-t-0">
+            <span class="box-number">3</span>
+            <span>Monitor Logs / 系统日志</span>
+            <span class="flex-1"></span>
+            <button class="cmd-btn text-xs">Pause</button>
+            <button class="cmd-btn text-xs">Clear</button>
+            <span class="tag tag-red ml-2">1 Error</span>
+            <span class="tag tag-yellow">1 Warning</span>
+          </div>
+
+          <!-- Performance Metrics Bar -->
+          <div class="p-2 border-b border-tui-border flex items-center gap-4" style="background:#161b22;">
+            <div class="flex items-center gap-2">
+              <span class="text-tui-muted text-xs">Latency:</span>
+              <span class="text-tui-green text-xs font-semibold">12ms avg</span>
+            </div>
+            <div class="w-px h-4 bg-tui-border"></div>
+            <div class="flex items-center gap-2">
+              <span class="text-tui-muted text-xs">Throughput:</span>
+              <span class="text-tui-cyan text-xs font-semibold">1,247 req/s</span>
+            </div>
+            <div class="w-px h-4 bg-tui-border"></div>
+            <div class="flex items-center gap-2">
+              <span class="text-tui-muted text-xs">Error Rate:</span>
+              <span class="text-tui-red text-xs font-semibold">0.02%</span>
+            </div>
+            <div class="w-px h-4 bg-tui-border"></div>
+            <div class="flex items-center gap-2">
+              <span class="text-tui-muted text-xs">Uptime:</span>
+              <span class="text-tui-green text-xs font-semibold">99.98%</span>
+            </div>
+            <div class="flex-1"></div>
+            <span class="text-tui-muted text-xs">[Live] Streaming...</span>
+          </div>
+
+          <!-- Log Entries -->
+          <div class="flex-1 overflow-auto scrollbar-thin">
+            <!-- Error Entry -->
+            <div class="log-entry" style="border-left:3px solid #f85149;">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:31:38</span>
+                <span class="log-level-error font-semibold">ERROR</span>
+                <span class="text-tui-text">[AnalyticsAgent]</span>
+              </div>
+              <div class="text-tui-red text-xs mt-0.5">Analytics Pipeline worker-3 crashed: OutOfMemoryError. Heap exhausted during portfolio correlation matrix computation (attempted 2.1GB). Auto-restart triggered.</div>
+              <div class="text-tui-muted text-xs mt-0.5">at com.sxa.analytics.CorrelationEngine.compute(CorrelationEngine.scala:142) | thread: analytics-worker-3</div>
+            </div>
+
+            <!-- Warning Entry -->
+            <div class="log-entry" style="border-left:3px solid #d29922;">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:30:45</span>
+                <span class="log-level-warn font-semibold">WARN</span>
+                <span class="text-tui-text">[WindDataAPI]</span>
+              </div>
+              <div class="text-tui-yellow text-xs mt-0.5">Wind Data API response time exceeded threshold: 3,200ms (threshold: 2,000ms). Endpoint: /api/v2/quotes/batch. Retries: 2/3. Degraded mode activated.</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:30:12</span>
+                <span class="log-level-info font-semibold">INFO</span>
+                <span class="text-tui-text">[OrderGateway]</span>
+              </div>
+              <div class="text-tui-text text-xs mt-0.5">Order ORD-20260510-014 submitted: MacroRotation BUY TLT US 2000@92.15 (Market). Route: SMART.</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:29:50</span>
+                <span class="log-level-info font-semibold">INFO</span>
+                <span class="text-tui-text">[OrderGateway]</span>
+              </div>
+              <div class="text-tui-text text-xs mt-0.5">Partial fill ORD-20260510-012: StatArb-FX SELL USD/JPY 750K filled @ 155.72. Remaining: 750K.</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:29:15</span>
+                <span class="log-level-info font-semibold">INFO</span>
+                <span class="text-tui-text">[TraderAgent]</span>
+              </div>
+              <div class="text-tui-text text-xs mt-0.5">AlphaMomentum execution update: 600519.SH SELL 1500/2000 filled @ avg 1856.80. Slippage: +0.027%.</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:28:20</span>
+                <span class="log-level-warn font-semibold">WARN</span>
+                <span class="text-tui-text">[RiskEngine]</span>
+              </div>
+              <div class="text-tui-yellow text-xs mt-0.5">VaR threshold warning: 78.0% of limit (2.34M / 3.0M). AlphaMomentum contributing 36.8%. Suggest position review.</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:27:18</span>
+                <span class="log-level-info font-semibold">INFO</span>
+                <span class="text-tui-text">[OrderGateway]</span>
+              </div>
+              <div class="text-tui-text text-xs mt-0.5">Partial fill ORD-20260510-008: MeanRevertV3 SELL 002415.SZ 6800/10000 filled @ avg 42.18.</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:25:03</span>
+                <span class="log-level-info font-semibold">INFO</span>
+                <span class="text-tui-text">[RiskEngine]</span>
+              </div>
+              <div class="text-tui-text text-xs mt-0.5">Stop-loss proximity alert: StatArb-FX EUR/USD unrealized loss -45,600 CNY (-3.6%). Stop at -63,200 CNY (-5%).</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:20:00</span>
+                <span class="log-level-info font-semibold">INFO</span>
+                <span class="text-tui-text">[WorkflowEngine]</span>
+              </div>
+              <div class="text-tui-text text-xs mt-0.5">WF-S-001 (VolBreakout V2) gate transition: G2 PASS -> G3 IN_PROGRESS. Assigned: Risk Agent + Compliance Agent.</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:15:00</span>
+                <span class="log-level-info font-semibold">INFO</span>
+                <span class="text-tui-text">[WorkflowEngine]</span>
+              </div>
+              <div class="text-tui-text text-xs mt-0.5">WF-S-002 (ESG-Alpha) phase transition: Phase B -> Phase C. Gate G2 (可执行性) PASSED.</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:10:00</span>
+                <span class="log-level-info font-semibold">INFO</span>
+                <span class="text-tui-text">[ComplianceAgent]</span>
+              </div>
+              <div class="text-tui-text text-xs mt-0.5">ESG-Alpha compliance pre-review PASSED. No regulatory conflicts detected. Market: A+HK. Sector: ESG/Green Finance.</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:05:00</span>
+                <span class="log-level-info font-semibold">INFO</span>
+                <span class="text-tui-text">[System]</span>
+              </div>
+              <div class="text-tui-text text-xs mt-0.5">Morning session started. Market Data Feed connected (SSE/SZSE/HKEX/NYSE/NASDAQ/FOREX). All feeds healthy.</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">09:00:00</span>
+                <span class="log-level-info font-semibold">INFO</span>
+                <span class="text-tui-text">[System]</span>
+              </div>
+              <div class="text-tui-text text-xs mt-0.5">SXA Platform v2.4.1-beta initialized. 8 agents loaded. 6 active users. Scheduled tasks: daily_report(17:00), risk_snapshot(12:00,15:00).</div>
+            </div>
+
+            <div class="log-entry">
+              <div class="flex items-center gap-2">
+                <span class="log-time">08:55:00</span>
+                <span class="log-level-debug font-semibold">DEBUG</span>
+                <span class="text-tui-text">[MonitorAgent]</span>
+              </div>
+              <div class="text-tui-muted text-xs mt-0.5">Health check completed. Services: 7/8 OK, 1 degraded (Wind API). Agents: 7/8 online, 1 error (Analytics).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Box 4: AgentChatBox - Right -->
+    <div class="flex flex-col overflow-hidden" style="width:320px;min-width:320px;border-left:1px solid #30363d;">
+      <div class="tui-box-title border-t-0">
+        <span class="box-number">4</span>
+        <span>System Agent / 系统助手</span>
+        <span class="flex-1"></span>
+        <span class="w-2 h-2 rounded-full bg-tui-green animate-pulse-slow"></span>
+        <span class="text-tui-green text-xs">Online</span>
+      </div>
+      <div class="flex-1 overflow-auto p-3 space-y-3 scrollbar-thin">
+        <div class="chat-agent" style="background:rgba(248,81,73,0.08);border-color:rgba(248,81,73,0.2);">
+          <div class="text-tui-red text-xs font-semibold mb-1">System Alert</div>
+          <div><span class="text-tui-red font-semibold">CRITICAL:</span> Analytics Agent 崩溃 (OOM)。Analytics Pipeline worker-3 在计算组合相关性矩阵时内存溢出（尝试分配 2.1GB）。</div>
+          <div class="text-tui-yellow text-xs mt-1">自动重启已触发。预计恢复时间: 2-3 分钟。</div>
+          <div class="text-tui-muted text-xs mt-1">09:31:38</div>
+        </div>
+        <div class="chat-user">
+          <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+          <div>Analytics Agent 崩溃的原因和影响？</div>
+          <div class="text-tui-muted text-xs mt-1">09:31:45</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
+          <div>Analytics Agent 崩溃分析：</div>
+          <div class="mt-1 text-xs">
+            <span class="text-tui-muted">原因:</span> 组合相关性矩阵计算涉及 856 个标的 x 856 维度，内存需求超出 JVM heap 限制（当前 1.5GB）。<br><br>
+            <span class="text-tui-muted">影响范围:</span><br>
+            - 实时风险指标更新暂停<br>
+            - E2E 评估报告延迟<br>
+            - 策略回测任务排队<br><br>
+            <span class="text-tui-muted">不影响:</span><br>
+            - 交易执行 (正常)<br>
+            - 风控引擎 (正常)<br>
+            - 合规审批 (正常)
+          </div>
+          <div class="text-tui-blue text-xs mt-1">建议: 增加 JVM heap 至 2.5GB 或分块计算。</div>
+          <div class="text-tui-muted text-xs mt-1">09:31:48</div>
+        </div>
+        <div class="chat-user">
+          <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+          <div>Wind Data API 为什么慢？</div>
+          <div class="text-tui-muted text-xs mt-1">09:28:00</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
+          <div>Wind Data API 响应超时分析：</div>
+          <div class="mt-1 text-xs">
+            - 响应时间: <span class="text-tui-yellow">3,200ms</span> (阈值 2,000ms)<br>
+            - 端点: /api/v2/quotes/batch<br>
+            - 原因: 早盘数据请求高峰（09:30 开盘），批量行情查询量激增 340%<br>
+            - 当前状态: <span class="text-tui-yellow">降级模式</span>，已切换至缓存优先策略<br>
+            - 预计恢复: 09:35 后流量回落
+          </div>
+          <div class="text-tui-muted text-xs mt-1">09:28:05</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
+          <div>系统健康总览：<span class="text-tui-green">7/8 Agents</span> 在线，<span class="text-tui-green">7/8 Services</span> 正常。整体健康度 <span class="text-tui-green">87.5%</span>。除 Analytics Agent 和 Wind API 外，其余组件运行正常。</div>
+          <div class="text-tui-muted text-xs mt-1">09:00:00</div>
+        </div>
+      </div>
+      <div class="p-3 border-t border-tui-border" style="background:#161b22;">
+        <div class="flex items-center gap-2">
+          <input type="text" placeholder="输入系统查询... (Enter)" class="flex-1 bg-tui-bg border border-tui-border rounded px-3 py-1.5 text-xs text-tui-text focus:outline-none focus:border-tui-blue">
+          <button class="cmd-btn text-tui-blue">Send</button>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button class="cmd-btn text-xs">/health</button>
+          <button class="cmd-btn text-xs">/restart</button>
+          <button class="cmd-btn text-xs">/logs</button>
+          <button class="cmd-btn text-xs">/metrics</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="flex items-center px-3 py-1 text-xs border-t border-tui-border" style="background:#161b22;">
+    <span class="text-tui-cyan font-semibold">MONITOR</span>
+    <span class="mx-2 text-tui-border">|</span>
+    <span class="nav-section flex items-center gap-1">
+      <span class="key">1</span><span class="text-tui-muted">Filter</span>
+      <span class="key">2</span><span class="text-tui-muted">Health</span>
+      <span class="key">3</span><span class="text-tui-muted">Logs</span>
+      <span class="key">4</span><span class="text-tui-muted">Agent</span>
+    </span>
+    <span class="nav-section flex items-center gap-1 px-2">
+      <span class="key">Tab</span><span class="text-tui-muted">Cycle</span>
+      <span class="key">/</span><span class="text-tui-muted">Command</span>
+    </span>
+    <span class="flex-1"></span>
+    <span class="nav-section flex items-center gap-2 px-2">
+      <a href="00-home.html" class="nav-item hover:text-tui-text">q Home</a>
+      <a href="02-agent-collaboration.html" class="nav-item hover:text-tui-text">Agents</a>
+      <a href="03-compliance-dashboard.html" class="nav-item hover:text-tui-text">Compliance</a>
+      <a href="05-e2e-workflow-overview.html" class="nav-item hover:text-tui-text">E2E</a>
+    </span>
+    <span class="text-tui-yellow ml-2">7/8 Agents OK | 42d uptime</span>
+  </div>
+</div>
+
+</body>
+</html>

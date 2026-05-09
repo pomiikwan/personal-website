@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SXA - 任务驱动工作面板 | Workflow Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            tui: {
+              bg: '#0d1117',
+              surface: '#161b22',
+              border: '#30363d',
+              borderLight: '#484f58',
+              text: '#e6edf3',
+              textMuted: '#8b949e',
+              textDim: '#6e7681',
+              accent: '#58a6ff',
+              accentDim: '#1f6feb',
+              green: '#3fb950',
+              greenDim: '#238636',
+              yellow: '#d29922',
+              orange: '#db6d28',
+              red: '#f85149',
+              purple: '#bc8cff',
+              cyan: '#39d2c0',
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Noto Sans SC', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+      background: #0d1117;
+      color: #e6edf3;
+      overflow: hidden;
+      height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #0d1117; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+    .kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 1px 6px; font-size: 11px;
+      background: #21262d; border: 1px solid #30363d; border-radius: 4px;
+      color: #8b949e; font-family: 'JetBrains Mono', monospace;
+      line-height: 1.6;
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .blink-cursor::after {
+      content: '|';
+      animation: blink 1s step-end infinite;
+      color: #58a6ff;
+    }
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    /* Task list */
+    .task-item {
+      padding: 6px 10px;
+      border-left: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border-bottom: 1px solid #21262d;
+    }
+    .task-item:hover {
+      background: rgba(88,166,255,0.04);
+      border-left-color: #30363d;
+    }
+    .task-item.active {
+      background: rgba(88,166,255,0.08);
+      border-left-color: #58a6ff;
+    }
+    .task-item.completed {
+      opacity: 0.5;
+    }
+    .task-item.completed .task-title {
+      text-decoration: line-through;
+    }
+
+    /* Breadcrumb / Phase progress bar */
+    .phase-step {
+      display: flex; align-items: center; gap: 0;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .phase-node {
+      display: flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      font-size: 11px; font-weight: 600;
+      border: 2px solid #30363d;
+      background: #0d1117;
+      color: #6e7681;
+      transition: all 0.2s ease;
+      position: relative;
+      z-index: 1;
+    }
+    .phase-node.active {
+      border-color: #58a6ff;
+      background: #1f6feb;
+      color: white;
+      box-shadow: 0 0 8px rgba(88,166,255,0.3);
+    }
+    .phase-node.completed {
+      border-color: #3fb950;
+      background: #238636;
+      color: white;
+    }
+    .phase-connector {
+      width: 32px; height: 2px;
+      background: #30363d;
+      transition: background 0.2s ease;
+    }
+    .phase-connector.completed {
+      background: #3fb950;
+    }
+    .phase-connector.active {
+      background: linear-gradient(90deg, #3fb950 50%, #30363d 50%);
+    }
+    .phase-label {
+      font-size: 9px;
+      color: #6e7681;
+      text-align: center;
+      margin-top: 2px;
+      white-space: nowrap;
+      transition: color 0.2s ease;
+    }
+    .phase-step.is-active .phase-label {
+      color: #58a6ff;
+    }
+    .phase-step.is-completed .phase-label {
+      color: #3fb950;
+    }
+
+    /* Detail section */
+    .detail-field {
+      display: flex;
+      padding: 6px 0;
+      border-bottom: 1px solid #21262d;
+    }
+    .detail-field-label {
+      width: 100px;
+      flex-shrink: 0;
+      font-size: 11px;
+      color: #8b949e;
+    }
+    .detail-field-value {
+      font-size: 11px;
+      color: #e6edf3;
+    }
+
+    /* Related links */
+    .related-link {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      text-decoration: none;
+      color: #8b949e;
+      font-size: 11px;
+      transition: all 0.15s ease;
+      background: #0d1117;
+    }
+    .related-link:hover {
+      border-color: #58a6ff;
+      color: #58a6ff;
+      background: rgba(88,166,255,0.04);
+    }
+
+    /* Action button */
+    .action-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 20px;
+      background: #1f6feb;
+      color: white;
+      border: 1px solid #1f6feb;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+    }
+    .action-btn:hover {
+      background: #388bfd;
+      box-shadow: 0 2px 8px rgba(88,166,255,0.3);
+    }
+    .action-btn.secondary {
+      background: #21262d;
+      border-color: #30363d;
+      color: #e6edf3;
+    }
+    .action-btn.secondary:hover {
+      background: #30363d;
+      border-color: #484f58;
+    }
+    .action-btn.danger {
+      background: transparent;
+      border-color: #f85149;
+      color: #f85149;
+    }
+    .action-btn.danger:hover {
+      background: rgba(248,81,73,0.1);
+    }
+
+    /* Section header */
+    .section-header {
+      display: flex; align-items: center; gap: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #30363d;
+      margin-bottom: 8px;
+    }
+
+    /* Agent message bubbles */
+    .agent-msg {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 11px;
+    }
+    .user-msg {
+      background: rgba(188,140,255,0.06);
+      border: 1px solid rgba(188,140,255,0.15);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 11px;
+      margin-left: 16px;
+    }
+
+    /* Tag / Badge */
+    .tag {
+      display: inline-flex; align-items: center;
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <!-- Terminal Window Frame -->
+  <div class="flex flex-col h-screen">
+
+    <!-- Title Bar -->
+    <div class="flex items-center justify-between px-4 py-2 bg-tui-surface border-b border-tui-border flex-shrink-0" style="height:40px;">
+      <div class="flex items-center gap-2">
+        <div class="flex gap-1.5">
+          <div style="width:12px;height:12px;border-radius:50%;background:#f85149;"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:#d29922;"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:#3fb950;"></div>
+        </div>
+        <span class="text-tui-textDim text-xs ml-2 font-mono">SXA v3.2.1</span>
+        <span class="text-tui-textDim text-xs">|</span>
+        <span class="text-xs text-tui-text font-mono">任务驱动工作面板</span>
+        <span class="text-tui-textDim text-xs">Workflow Panel</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="16-workflow-panel.html" class="px-2 py-0.5 bg-tui-accentDim text-white text-[10px] rounded hover:bg-tui-accent transition-colors font-mono">
+          工作面板
+        </a>
+      </div>
+      <div class="flex items-center gap-3 text-xs text-tui-textMuted font-mono">
+        <a href="00-home.html" class="text-tui-accent hover:underline text-[10px]">
+          <span class="kbd mr-0.5">ESC</span> 返回主页
+        </a>
+        <span class="text-tui-textDim">|</span>
+        <span id="clock">00:00:00</span>
+        <span class="text-tui-green">●</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden">
+
+      <!-- LEFT: Box 1 - Task Navigation -->
+      <div class="flex-shrink-0 border-r border-tui-border bg-tui-surface flex flex-col overflow-hidden" style="width:200px;" id="taskNavBox">
+        <div class="px-3 py-2 border-b border-tui-border flex items-center gap-2 flex-shrink-0">
+          <span class="text-tui-accent font-mono text-xs font-bold">[1]</span>
+          <span class="text-xs font-semibold text-tui-text">任务列表 Tasks</span>
+          <span class="ml-auto tag bg-tui-accent bg-opacity-15 text-tui-accent" id="taskCount">6</span>
+        </div>
+
+        <!-- Task filter tabs -->
+        <div class="flex border-b border-tui-border flex-shrink-0">
+          <button class="flex-1 py-1.5 text-[10px] font-mono text-tui-accent border-b-2 border-tui-accent bg-tui-accent bg-opacity-5" onclick="filterTasks('all')" id="filter-all">
+            全部 <span class="text-tui-textDim">(6)</span>
+          </button>
+          <button class="flex-1 py-1.5 text-[10px] font-mono text-tui-textMuted hover:text-tui-text border-b-2 border-transparent" onclick="filterTasks('active')" id="filter-active">
+            进行中 <span class="text-tui-textDim">(2)</span>
+          </button>
+          <button class="flex-1 py-1.5 text-[10px] font-mono text-tui-textMuted hover:text-tui-text border-b-2 border-transparent" onclick="filterTasks('done')" id="filter-done">
+            完成 <span class="text-tui-textDim">(4)</span>
+          </button>
+        </div>
+
+        <!-- Task list -->
+        <div class="flex-1 overflow-y-auto" id="taskList">
+          <!-- Active tasks -->
+          <div class="task-item active" data-task="1" data-status="active" data-phase="B" onclick="selectTask(1)">
+            <div class="flex items-center gap-1 mb-0.5">
+              <span class="status-dot flex-shrink-0" style="background:#d29922;width:6px;height:6px;"></span>
+              <span class="task-title text-[11px] text-tui-text font-medium truncate">QDII-2026-042 审批</span>
+            </div>
+            <div class="text-[10px] text-tui-textDim pl-3">
+              Phase B · 风控总监审批中
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-3">
+              <span class="tag bg-tui-red bg-opacity-15 text-tui-red">紧急</span>
+            </div>
+          </div>
+
+          <div class="task-item" data-task="2" data-status="active" data-phase="C" onclick="selectTask(2)">
+            <div class="flex items-center gap-1 mb-0.5">
+              <span class="status-dot flex-shrink-0" style="background:#58a6ff;width:6px;height:6px;"></span>
+              <span class="task-title text-[11px] text-tui-text font-medium truncate">Alpha-7 策略执行</span>
+            </div>
+            <div class="text-[10px] text-tui-textDim pl-3">
+              Phase C · 交易执行监控
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-3">
+              <span class="tag bg-tui-yellow bg-opacity-15 text-tui-yellow">进行中</span>
+            </div>
+          </div>
+
+          <div class="task-item" data-task="3" data-status="waiting" data-phase="A" onclick="selectTask(3)">
+            <div class="flex items-center gap-1 mb-0.5">
+              <span class="status-dot flex-shrink-0" style="background:#6e7681;width:6px;height:6px;"></span>
+              <span class="task-title text-[11px] text-tui-textMuted font-medium truncate">港股通新策略设计</span>
+            </div>
+            <div class="text-[10px] text-tui-textDim pl-3">
+              Phase A · 待启动
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-3">
+              <span class="tag bg-tui-border text-tui-textMuted">等待</span>
+            </div>
+          </div>
+
+          <div class="task-item" data-task="4" data-status="waiting" data-phase="D" onclick="selectTask(4)">
+            <div class="flex items-center gap-1 mb-0.5">
+              <span class="status-dot flex-shrink-0" style="background:#6e7681;width:6px;height:6px;"></span>
+              <span class="task-title text-[11px] text-tui-textMuted font-medium truncate">Beta-3 合规复核</span>
+            </div>
+            <div class="text-[10px] text-tui-textDim pl-3">
+              Phase D · 等待前置完成
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-3">
+              <span class="tag bg-tui-border text-tui-textMuted">等待</span>
+            </div>
+          </div>
+
+          <!-- Completed tasks -->
+          <div class="task-item completed" data-task="5" data-status="done" data-phase="F" onclick="selectTask(5)">
+            <div class="flex items-center gap-1 mb-0.5">
+              <span class="text-tui-green text-[10px] flex-shrink-0">✓</span>
+              <span class="task-title text-[11px] text-tui-textDim font-medium truncate">Gamma-1 归档</span>
+            </div>
+            <div class="text-[10px] text-tui-textDim pl-3">
+              Phase F · 已归档
+            </div>
+          </div>
+
+          <div class="task-item completed" data-task="6" data-status="done" data-phase="E" onclick="selectTask(6)">
+            <div class="flex items-center gap-1 mb-0.5">
+              <span class="text-tui-green text-[10px] flex-shrink-0">✓</span>
+              <span class="task-title text-[11px] text-tui-textDim font-medium truncate">Delta-2 监控评估</span>
+            </div>
+            <div class="text-[10px] text-tui-textDim pl-3">
+              Phase E · 已评估
+            </div>
+          </div>
+        </div>
+
+        <!-- Task nav footer -->
+        <div class="px-3 py-2 border-t border-tui-border text-[10px] text-tui-textDim font-mono flex-shrink-0">
+          <span class="kbd">↑↓</span> 切换 <span class="kbd">Enter</span> 选择
+        </div>
+      </div>
+
+      <!-- CENTER COLUMN -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+
+        <!-- Box 2: Breadcrumb Progress Bar -->
+        <div class="px-4 py-2.5 bg-tui-surface border-b border-tui-border flex-shrink-0">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-tui-accent font-mono text-xs font-bold">[2]</span>
+            <span class="text-xs text-tui-textMuted font-mono">工作流进度 Workflow Progress</span>
+            <span class="text-xs text-tui-text ml-2 font-semibold" id="currentPhaseLabel">Phase B - 审批中</span>
+          </div>
+          <div class="flex items-center justify-center" id="breadcrumbBar">
+            <!-- Phase A -->
+            <div class="phase-step is-completed" data-phase="A" onclick="switchPhase('A')">
+              <div class="phase-node completed" title="策略制定 Strategy Design">A</div>
+              <div class="phase-label">策略制定</div>
+            </div>
+            <div class="phase-connector completed" data-conn="A-B"></div>
+            <!-- Phase B -->
+            <div class="phase-step is-active" data-phase="B" onclick="switchPhase('B')">
+              <div class="phase-node active" title="审批 Approval">B</div>
+              <div class="phase-label">审批</div>
+            </div>
+            <div class="phase-connector" data-conn="B-C"></div>
+            <!-- Phase C -->
+            <div class="phase-step" data-phase="C" onclick="switchPhase('C')">
+              <div class="phase-node" title="交易执行 Execution">C</div>
+              <div class="phase-label">交易执行</div>
+            </div>
+            <div class="phase-connector" data-conn="C-D"></div>
+            <!-- Phase D -->
+            <div class="phase-step" data-phase="D" onclick="switchPhase('D')">
+              <div class="phase-node" title="风控合规 Risk & Compliance">D</div>
+              <div class="phase-label">风控合规</div>
+            </div>
+            <div class="phase-connector" data-conn="D-E"></div>
+            <!-- Phase E -->
+            <div class="phase-step" data-phase="E" onclick="switchPhase('E')">
+              <div class="phase-node" title="监控评估 Monitoring">E</div>
+              <div class="phase-label">监控评估</div>
+            </div>
+            <div class="phase-connector" data-conn="E-F"></div>
+            <!-- Phase F -->
+            <div class="phase-step" data-phase="F" onclick="switchPhase('F')">
+              <div class="phase-node" title="归档复盘 Archive">F</div>
+              <div class="phase-label">归档复盘</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Box 3: Detail Content -->
+        <div class="flex-1 overflow-y-auto p-4" id="detailBox">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-tui-accent font-mono text-xs font-bold">[3]</span>
+            <span class="text-sm font-semibold text-tui-text" id="detailTitle">QDII-2026-042 策略审批</span>
+            <span class="tag bg-tui-yellow bg-opacity-15 text-tui-yellow ml-2" id="detailStatus">审批中</span>
+            <span class="tag bg-tui-red bg-opacity-15 text-tui-red ml-1" id="detailPriority">紧急</span>
+          </div>
+
+          <!-- Task Meta -->
+          <div class="mb-4 bg-tui-surface border border-tui-border rounded-lg p-3" id="taskMeta">
+            <div class="detail-field">
+              <div class="detail-field-label">任务ID</div>
+              <div class="detail-field-value font-mono">WF-2026-042-AP</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">策略名称</div>
+              <div class="detail-field-value">QDII-2026-042 跨境量化对冲策略</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">当前阶段</div>
+              <div class="detail-field-value"><span class="text-tui-accent">Phase B</span> - 审批阶段 (Approval)</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">创建时间</div>
+              <div class="detail-field-value font-mono text-tui-textMuted">2026-05-09 09:15:00</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">截止时间</div>
+              <div class="detail-field-value font-mono text-tui-red">2026-05-10 16:30:00 (剩余 2h 15m)</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">审批人</div>
+              <div class="detail-field-value">
+                <span class="text-tui-yellow">王风控 (风控总监)</span>
+                <span class="text-tui-textDim mx-1">→</span>
+                <span class="text-tui-textDim">李合规 (合规总监)</span>
+              </div>
+            </div>
+            <div class="detail-field" style="border-bottom:none;">
+              <div class="detail-field-label">合规评分</div>
+              <div class="detail-field-value">
+                <span class="text-tui-green font-bold">96.2</span>
+                <span class="text-tui-textDim">/ 100</span>
+                <span class="text-tui-green text-[10px] ml-1">▲ 0.5 vs 上次</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Phase Description -->
+          <div class="mb-4">
+            <div class="section-header">
+              <span class="text-xs font-semibold text-tui-text">当前步骤 Current Step</span>
+            </div>
+            <div class="text-xs text-tui-textMuted leading-relaxed" id="phaseDescription">
+              <div class="mb-2">当前处于 <span class="text-tui-accent font-semibold">Phase B - 审批阶段</span>，需要完成以下审批流程：</div>
+              <div class="space-y-1.5 ml-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-tui-green text-[10px]">✓</span>
+                  <span class="text-tui-text line-through opacity-50">系统自动预检 - 合规规则扫描</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-tui-yellow text-[10px]">●</span>
+                  <span class="text-tui-text">风控总监审批 - 风险评估与确认</span>
+                  <span class="tag bg-tui-yellow bg-opacity-15 text-tui-yellow">当前</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-tui-textDim text-[10px]">○</span>
+                  <span class="text-tui-textMuted">合规总监会签 - 合规性终审</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-tui-textDim text-[10px]">○</span>
+                  <span class="text-tui-textMuted">投资总监核准 - 最终确认</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Checklist -->
+          <div class="mb-4">
+            <div class="section-header">
+              <span class="text-xs font-semibold text-tui-text">审批检查项 Checklist</span>
+              <span class="ml-auto text-[10px] text-tui-green font-mono">2/4 完成</span>
+            </div>
+            <div class="space-y-2" id="checklist">
+              <label class="flex items-center gap-2 px-3 py-2 rounded border border-tui-border bg-tui-bg cursor-pointer hover:border-tui-borderLight transition-colors">
+                <input type="checkbox" checked class="accent-green-500" disabled>
+                <span class="text-xs text-tui-textDim line-through">策略文档完整性检查</span>
+                <span class="ml-auto text-[10px] text-tui-green">✓ 通过</span>
+              </label>
+              <label class="flex items-center gap-2 px-3 py-2 rounded border border-tui-border bg-tui-bg cursor-pointer hover:border-tui-borderLight transition-colors">
+                <input type="checkbox" checked class="accent-green-500" disabled>
+                <span class="text-xs text-tui-textDim line-through">风险指标在阈值范围内</span>
+                <span class="ml-auto text-[10px] text-tui-green">✓ 通过</span>
+              </label>
+              <label class="flex items-center gap-2 px-3 py-2 rounded border border-tui-accent bg-tui-accent bg-opacity-5 cursor-pointer hover:bg-opacity-10 transition-colors">
+                <input type="checkbox" class="accent-blue-500" id="check-risk">
+                <span class="text-xs text-tui-text">风控总监风险评估确认</span>
+                <span class="ml-auto text-[10px] text-tui-yellow">待确认</span>
+              </label>
+              <label class="flex items-center gap-2 px-3 py-2 rounded border border-tui-border bg-tui-bg cursor-pointer hover:border-tui-borderLight transition-colors">
+                <input type="checkbox" class="accent-blue-500" id="check-compliance" disabled>
+                <span class="text-xs text-tui-textMuted">合规性终审意见</span>
+                <span class="ml-auto text-[10px] text-tui-textDim">待前项完成</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Related Navigation Links -->
+          <div class="mb-4">
+            <div class="section-header">
+              <span class="text-xs font-semibold text-tui-text">相关导航 Related Navigation</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2" id="relatedLinks">
+              <!-- Phase B related links -->
+              <a href="01-approval-center.html" class="related-link">
+                <span>✅</span>
+                <div>
+                  <div class="text-tui-text">审批中心</div>
+                  <div class="text-[10px] text-tui-textDim">前往审批中心处理</div>
+                </div>
+              </a>
+              <a href="02-agent-collaboration.html" class="related-link">
+                <span>🤖</span>
+                <div>
+                  <div class="text-tui-text">Agent 协作</div>
+                  <div class="text-[10px] text-tui-textDim">多Agent协同审批</div>
+                </div>
+              </a>
+              <a href="08-strategy-management.html" class="related-link">
+                <span>📋</span>
+                <div>
+                  <div class="text-tui-text">策略管理</div>
+                  <div class="text-[10px] text-tui-textDim">查看策略详情</div>
+                </div>
+              </a>
+              <a href="04-document-viewer.html" class="related-link">
+                <span>📄</span>
+                <div>
+                  <div class="text-tui-text">文档查看器</div>
+                  <div class="text-[10px] text-tui-textDim">查看审批文档</div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-3 pt-2 border-t border-tui-border" id="actionButtons">
+            <button class="action-btn" onclick="approveAction()">
+              ✓ 批准通过 Approve
+            </button>
+            <button class="action-btn secondary" onclick="requestRevision()">
+              ↩ 要求修订 Revise
+            </button>
+            <button class="action-btn danger" onclick="rejectAction()">
+              ✗ 拒绝 Reject
+            </button>
+            <div class="ml-auto flex items-center gap-2">
+              <a href="00-home.html" class="text-xs text-tui-textDim hover:text-tui-accent transition-colors">
+                ← 返回主页
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: Box 5 - Agent Chat Box -->
+      <div class="flex-shrink-0 border-l border-tui-border bg-tui-surface flex flex-col" style="width:300px;">
+        <div class="px-3 py-2 border-b border-tui-border flex items-center gap-2">
+          <span class="text-tui-accent font-mono text-xs font-bold">[5]</span>
+          <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px]" style="background:rgba(88,166,255,0.15);" id="agentAvatar">
+            🤖
+          </div>
+          <span class="text-xs font-semibold text-tui-text" id="agentName">Approval Agent</span>
+          <span class="status-dot ml-1" style="background:#3fb950;"></span>
+          <span class="text-[10px] text-tui-green" id="agentStatus">在线</span>
+        </div>
+
+        <div class="px-3 py-1.5 border-b border-tui-border bg-tui-bg text-[10px] text-tui-textDim flex items-center gap-1" id="agentContext">
+          <span>Phase B · 审批助手</span>
+          <span class="mx-1">|</span>
+          <span>自动切换 Auto-switch</span>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="flex-1 overflow-y-auto p-3 space-y-3" id="chatMessages" style="max-height: calc(100vh - 40px - 70px - 36px - 80px);">
+          <!-- System message -->
+          <div class="text-center text-[10px] text-tui-textDim py-1">
+            --- Agent 自动切换为 Approval Agent ---
+          </div>
+
+          <!-- Agent Message -->
+          <div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="text-[10px] text-tui-accent font-semibold">Approval Agent</span>
+              <span class="text-[10px] text-tui-textDim">14:30</span>
+            </div>
+            <div class="agent-msg">
+              <div class="text-tui-text">QDII-2026-042 审批分析摘要：</div>
+              <div class="mt-1 text-tui-textMuted text-[10px] space-y-0.5">
+                <div>• 合规评分: <span class="text-tui-green">96.2/100</span> (优良)</div>
+                <div>• 风险等级: <span class="text-tui-orange">R3</span> (中等风险)</div>
+                <div>• 预期收益: <span class="text-tui-green">+8.5% 年化</span></div>
+                <div>• 最大回撤: <span class="text-tui-yellow">-4.2%</span> (可控)</div>
+                <div>• 杠杆比率: 1.2x (合规范围内)</div>
+              </div>
+              <div class="mt-2 pt-2 border-t border-tui-border text-tui-textMuted text-[10px]">
+                建议: <span class="text-tui-green">推荐批准</span>。各项指标均在安全范围内，策略逻辑清晰，风控措施完备。
+              </div>
+            </div>
+          </div>
+
+          <!-- User message -->
+          <div>
+            <div class="flex items-center gap-1 mb-1 justify-end">
+              <span class="text-[10px] text-tui-textDim">14:31</span>
+              <span class="text-[10px] text-tui-purple font-semibold">You</span>
+            </div>
+            <div class="user-msg text-tui-text">
+              风险指标有没有异常点？最大回撤能控制住吗？
+            </div>
+          </div>
+
+          <!-- Agent Response -->
+          <div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="text-[10px] text-tui-accent font-semibold">Approval Agent</span>
+              <span class="text-[10px] text-tui-textDim">14:31</span>
+            </div>
+            <div class="agent-msg">
+              <div class="text-tui-text">风险分析：</div>
+              <div class="mt-1 text-tui-textMuted text-[10px] space-y-1">
+                <div>1. <span class="text-tui-green">VaR (95%)</span>: -2.1%，低于阈值 -3.5%</div>
+                <div>2. <span class="text-tui-green">CVaR (99%)</span>: -3.8%，低于阈值 -5.0%</div>
+                <div>3. <span class="text-tui-yellow">最大回撤</span>: -4.2%，接近阈值 -5.0%</div>
+                <div>4. <span class="text-tui-green">Beta</span>: 0.65，市场敏感度低</div>
+                <div>5. <span class="text-tui-green">Sharpe</span>: 1.82，风险收益比优良</div>
+              </div>
+              <div class="mt-2 text-tui-text text-[10px]">
+                最大回撤 <span class="text-tui-yellow">-4.2%</span> 接近阈值但仍在控制范围内。策略包含 <span class="text-tui-green">3层止损机制</span>：单品种止损 (-2%)、组合止损 (-3%)、总仓位止损 (-4%)。
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick action suggestions -->
+          <div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="text-[10px] text-tui-accent font-semibold">Approval Agent</span>
+              <span class="text-[10px] text-tui-textDim">14:32</span>
+            </div>
+            <div class="agent-msg">
+              <div class="text-[10px] text-tui-textDim mb-1.5">快捷操作：</div>
+              <div class="space-y-1">
+                <button class="w-full text-left text-[10px] px-2 py-1 rounded bg-tui-surface border border-tui-border hover:border-tui-green text-tui-textMuted hover:text-tui-green transition-colors" onclick="approveAction()">
+                  ✓ 一键批准通过
+                </button>
+                <button class="w-full text-left text-[10px] px-2 py-1 rounded bg-tui-surface border border-tui-border hover:border-tui-yellow text-tui-textMuted hover:text-tui-yellow transition-colors" onclick="requestRevision()">
+                  ↩ 要求补充风险说明
+                </button>
+                <a href="11-risk-management.html" class="block text-[10px] px-2 py-1 rounded bg-tui-surface border border-tui-border hover:border-tui-accent text-tui-textMuted hover:text-tui-accent transition-colors">
+                  → 前往风险管理工作台
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="p-2 border-t border-tui-border">
+          <div class="flex items-center gap-2">
+            <div class="flex-1 flex items-center bg-tui-bg border border-tui-border rounded px-2 py-1.5 focus-within:border-tui-accent transition-colors">
+              <span class="text-xs text-tui-textDim mr-1">/</span>
+              <input type="text" class="bg-transparent border-none outline-none text-xs text-tui-text flex-1 font-mono placeholder-tui-textDim" placeholder="输入指令或消息..." id="chatInput" onkeydown="if(event.key==='Enter')sendMessage()">
+            </div>
+            <button class="px-3 py-1.5 bg-tui-accentDim text-white text-xs rounded hover:bg-tui-accent transition-colors font-mono" onclick="sendMessage()">
+              发送
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Status Bar -->
+    <div class="flex items-center justify-between px-4 py-1.5 bg-tui-surface border-t border-tui-border text-[10px] text-tui-textDim font-mono flex-shrink-0" style="height:28px;">
+      <div class="flex items-center gap-3">
+        <span><span class="kbd">1</span>-<span class="kbd">5</span> 聚焦Box</span>
+        <span><span class="kbd">Tab</span> 切换</span>
+        <span><span class="kbd">Shift+Tab</span> 隐藏</span>
+        <span><span class="kbd">/</span> 命令</span>
+        <span><span class="kbd">q</span> 返回主页</span>
+        <span><span class="kbd">F1</span> 帮助</span>
+        <span class="text-tui-textDim">|</span>
+        <span><span class="kbd">↑↓</span> 切换任务</span>
+        <span><span class="kbd">Enter</span> 执行操作</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="00-home.html" class="text-tui-accent hover:underline">返回主页 Home</a>
+        <span>|</span>
+        <span>延迟: <span class="text-tui-green">12ms</span></span>
+        <span>|</span>
+        <span>Agent: <span class="text-tui-accent" id="statusAgent">Approval</span></span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ========== DATA ==========
+    const taskData = {
+      1: {
+        title: 'QDII-2026-042 策略审批',
+        status: '审批中',
+        statusTag: 'bg-tui-yellow bg-opacity-15 text-tui-yellow',
+        priority: '紧急',
+        priorityTag: 'bg-tui-red bg-opacity-15 text-tui-red',
+        phase: 'B',
+        id: 'WF-2026-042-AP',
+        strategy: 'QDII-2026-042 跨境量化对冲策略',
+        phaseLabel: 'Phase B - 审批阶段 (Approval)',
+        created: '2026-05-09 09:15:00',
+        deadline: '2026-05-10 16:30:00 (剩余 2h 15m)',
+        deadlineClass: 'text-tui-red',
+        approver: '<span class="text-tui-yellow">王风控 (风控总监)</span><span class="text-tui-textDim mx-1">→</span><span class="text-tui-textDim">李合规 (合规总监)</span>',
+        score: '<span class="text-tui-green font-bold">96.2</span><span class="text-tui-textDim">/ 100</span><span class="text-tui-green text-[10px] ml-1">▲ 0.5</span>',
+        description: `<div class="mb-2">当前处于 <span class="text-tui-accent font-semibold">Phase B - 审批阶段</span>，需要完成以下审批流程：</div>
+          <div class="space-y-1.5 ml-2">
+            <div class="flex items-center gap-2"><span class="text-tui-green text-[10px]">✓</span><span class="text-tui-text line-through opacity-50">系统自动预检 - 合规规则扫描</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-yellow text-[10px]">●</span><span class="text-tui-text">风控总监审批 - 风险评估与确认</span><span class="tag bg-tui-yellow bg-opacity-15 text-tui-yellow">当前</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">合规总监会签 - 合规性终审</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">投资总监核准 - 最终确认</span></div>
+          </div>`,
+        checklist: [
+          { checked: true, text: '策略文档完整性检查', status: '通过', statusClass: 'text-tui-green' },
+          { checked: true, text: '风险指标在阈值范围内', status: '通过', statusClass: 'text-tui-green' },
+          { checked: false, text: '风控总监风险评估确认', status: '待确认', statusClass: 'text-tui-yellow', active: true },
+          { checked: false, text: '合规性终审意见', status: '待前项完成', statusClass: 'text-tui-textDim', disabled: true },
+        ],
+        relatedLinks: [
+          { href: '01-approval-center.html', icon: '✅', title: '审批中心', desc: '前往审批中心处理' },
+          { href: '02-agent-collaboration.html', icon: '🤖', title: 'Agent 协作', desc: '多Agent协同审批' },
+          { href: '08-strategy-management.html', icon: '📋', title: '策略管理', desc: '查看策略详情' },
+          { href: '04-document-viewer.html', icon: '📄', title: '文档查看器', desc: '查看审批文档' },
+        ],
+        actions: ['approve', 'revise', 'reject'],
+        agent: { name: 'Approval Agent', avatar: '🤖', context: 'Phase B · 审批助手' },
+      },
+      2: {
+        title: 'Alpha-7 策略执行',
+        status: '执行中',
+        statusTag: 'bg-tui-accent bg-opacity-15 text-tui-accent',
+        priority: '高',
+        priorityTag: 'bg-tui-orange bg-opacity-15 text-tui-orange',
+        phase: 'C',
+        id: 'WF-2026-A7-EX',
+        strategy: 'Alpha-7 量化多因子策略',
+        phaseLabel: 'Phase C - 交易执行阶段 (Execution)',
+        created: '2026-05-08 14:00:00',
+        deadline: '2026-05-10 18:00:00 (剩余 4h)',
+        deadlineClass: 'text-tui-orange',
+        approver: '<span class="text-tui-accent">自动执行</span><span class="text-tui-textDim mx-1">|</span><span class="text-tui-textDim">监控: 张交易</span>',
+        score: '<span class="text-tui-green font-bold">94.8</span><span class="text-tui-textDim">/ 100</span>',
+        description: `<div class="mb-2">当前处于 <span class="text-tui-accent font-semibold">Phase C - 交易执行阶段</span>，执行状态：</div>
+          <div class="space-y-1.5 ml-2">
+            <div class="flex items-center gap-2"><span class="text-tui-green text-[10px]">✓</span><span class="text-tui-text">订单拆分算法初始化</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-green text-[10px]">✓</span><span class="text-tui-text">TWAP 执行引擎启动</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-yellow text-[10px]">●</span><span class="text-tui-text">实时交易监控中</span><span class="tag bg-tui-accent bg-opacity-15 text-tui-accent">当前</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">执行报告生成</span></div>
+          </div>`,
+        checklist: [
+          { checked: true, text: '交易参数配置正确', status: '通过', statusClass: 'text-tui-green' },
+          { checked: true, text: '通道连接正常', status: '通过', statusClass: 'text-tui-green' },
+          { checked: false, text: '执行过程监控', status: '监控中', statusClass: 'text-tui-accent', active: true },
+          { checked: false, text: '执行偏差分析', status: '待执行完成', statusClass: 'text-tui-textDim', disabled: true },
+        ],
+        relatedLinks: [
+          { href: '10-trading-execution.html', icon: '💹', title: '交易执行', desc: '实时交易面板' },
+          { href: '11-risk-management.html', icon: '⚠️', title: '风险管理', desc: '风险监控台' },
+          { href: '09-market-overview.html', icon: '📊', title: '市场总览', desc: '实时行情' },
+          { href: '02-agent-collaboration.html', icon: '🤖', title: 'Agent 协作', desc: '执行协调' },
+        ],
+        actions: ['monitor', 'pause', 'emergency-stop'],
+        agent: { name: 'Execution Agent', avatar: '⚡', context: 'Phase C · 交易执行' },
+      },
+      3: {
+        title: '港股通新策略设计',
+        status: '待启动',
+        statusTag: 'bg-tui-border text-tui-textMuted',
+        priority: '中',
+        priorityTag: 'bg-tui-accent bg-opacity-15 text-tui-accent',
+        phase: 'A',
+        id: 'WF-2026-HK-DS',
+        strategy: '港股通增强型指数策略 (设计阶段)',
+        phaseLabel: 'Phase A - 策略制定阶段 (Design)',
+        created: '2026-05-10 10:00:00',
+        deadline: '2026-05-15 18:00:00 (剩余 5d)',
+        deadlineClass: 'text-tui-textMuted',
+        approver: '<span class="text-tui-textDim">待分配</span>',
+        score: '<span class="text-tui-textDim">--</span><span class="text-tui-textDim">/ 100</span><span class="text-tui-textDim text-[10px] ml-1">未评分</span>',
+        description: `<div class="mb-2">当前处于 <span class="text-tui-accent font-semibold">Phase A - 策略制定阶段</span>，待完成以下步骤：</div>
+          <div class="space-y-1.5 ml-2">
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">市场研究与策略构想</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">量化模型构建</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">历史数据回测</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">策略文档编写</span></div>
+          </div>`,
+        checklist: [
+          { checked: false, text: '市场分析报告', status: '未开始', statusClass: 'text-tui-textDim' },
+          { checked: false, text: '策略框架设计', status: '未开始', statusClass: 'text-tui-textDim' },
+          { checked: false, text: '回测验证', status: '未开始', statusClass: 'text-tui-textDim', disabled: true },
+          { checked: false, text: '策略文档定稿', status: '未开始', statusClass: 'text-tui-textDim', disabled: true },
+        ],
+        relatedLinks: [
+          { href: '08-strategy-management.html', icon: '📋', title: '策略管理', desc: '创建新策略' },
+          { href: '04-document-viewer.html', icon: '📄', title: '文档查看器', desc: '研究资料' },
+          { href: '09-market-overview.html', icon: '📊', title: '市场总览', desc: '港股行情' },
+          { href: '14-macro-analysis.html', icon: '🌍', title: '宏观分析', desc: '市场环境' },
+        ],
+        actions: ['start', 'cancel'],
+        agent: { name: 'Strategy Agent', avatar: '🧠', context: 'Phase A · 策略设计' },
+      },
+      4: {
+        title: 'Beta-3 合规复核',
+        status: '等待中',
+        statusTag: 'bg-tui-border text-tui-textMuted',
+        priority: '常规',
+        priorityTag: 'bg-tui-border text-tui-textMuted',
+        phase: 'D',
+        id: 'WF-2026-B3-CR',
+        strategy: 'Beta-3 固定收益策略 (等待前置任务完成)',
+        phaseLabel: 'Phase D - 风控合规阶段 (Risk & Compliance)',
+        created: '2026-05-09 16:00:00',
+        deadline: '2026-05-12 12:00:00 (剩余 2d)',
+        deadlineClass: 'text-tui-textMuted',
+        approver: '<span class="text-tui-textDim">等待 Phase C 完成</span>',
+        score: '<span class="text-tui-green font-bold">93.5</span><span class="text-tui-textDim">/ 100</span>',
+        description: `<div class="mb-2">当前处于 <span class="text-tui-accent font-semibold">Phase D - 风控合规阶段</span>，但需要等待 Phase C 交易执行完成：</div>
+          <div class="space-y-1.5 ml-2">
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">交易执行结果审查</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">风险暴露评估</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">合规规则复核</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-textDim text-[10px]">○</span><span class="text-tui-textMuted">出具合规意见书</span></div>
+          </div>`,
+        checklist: [
+          { checked: false, text: '执行数据完整', status: '等待数据', statusClass: 'text-tui-textDim', disabled: true },
+          { checked: false, text: '风险指标复核', status: '等待', statusClass: 'text-tui-textDim', disabled: true },
+          { checked: false, text: '合规性检查', status: '等待', statusClass: 'text-tui-textDim', disabled: true },
+          { checked: false, text: '意见书签发', status: '等待', statusClass: 'text-tui-textDim', disabled: true },
+        ],
+        relatedLinks: [
+          { href: '01-approval-center.html', icon: '✅', title: '审批中心', desc: '合规审批' },
+          { href: '03-compliance-dashboard.html', icon: '🛡️', title: '合规仪表盘', desc: '合规监控' },
+          { href: '11-risk-management.html', icon: '⚠️', title: '风险管理', desc: '风险详情' },
+          { href: '10-trading-execution.html', icon: '💹', title: '交易执行', desc: '前置任务' },
+        ],
+        actions: ['view-dependency'],
+        agent: { name: 'Compliance Agent', avatar: '🛡️', context: 'Phase D · 合规复核' },
+      },
+      5: {
+        title: 'Gamma-1 归档',
+        status: '已归档',
+        statusTag: 'bg-tui-green bg-opacity-15 text-tui-green',
+        priority: '已完成',
+        priorityTag: 'bg-tui-green bg-opacity-15 text-tui-green',
+        phase: 'F',
+        id: 'WF-2026-G1-AR',
+        strategy: 'Gamma-1CTA策略 (已归档)',
+        phaseLabel: 'Phase F - 归档复盘阶段 (Archive)',
+        created: '2026-05-05 09:00:00',
+        deadline: '2026-05-06 18:00:00 (已完成)',
+        deadlineClass: 'text-tui-green',
+        approver: '<span class="text-tui-green">已全部完成</span>',
+        score: '<span class="text-tui-green font-bold">97.1</span><span class="text-tui-textDim">/ 100</span>',
+        description: `<div class="mb-2">此任务已 <span class="text-tui-green font-semibold">全部完成并归档</span>。</div>
+          <div class="space-y-1.5 ml-2">
+            <div class="flex items-center gap-2"><span class="text-tui-green text-[10px]">✓</span><span class="text-tui-textDim">所有阶段已完成</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-green text-[10px]">✓</span><span class="text-tui-textDim">文档已归档</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-green text-[10px]">✓</span><span class="text-tui-textDim">复盘报告已生成</span></div>
+          </div>`,
+        checklist: [
+          { checked: true, text: '执行数据归档', status: '完成', statusClass: 'text-tui-green' },
+          { checked: true, text: '合规文件归档', status: '完成', statusClass: 'text-tui-green' },
+          { checked: true, text: '复盘报告', status: '完成', statusClass: 'text-tui-green' },
+          { checked: true, text: '经验知识库更新', status: '完成', statusClass: 'text-tui-green' },
+        ],
+        relatedLinks: [
+          { href: '07-management-center.html', icon: '🏠', title: '管理中心', desc: '查看全部任务' },
+          { href: '03-compliance-dashboard.html', icon: '🛡️', title: '合规仪表盘', desc: '合规记录' },
+        ],
+        actions: [],
+        agent: { name: 'Archive Agent', avatar: '📦', context: 'Phase F · 归档完成' },
+      },
+      6: {
+        title: 'Delta-2 监控评估',
+        status: '已评估',
+        statusTag: 'bg-tui-green bg-opacity-15 text-tui-green',
+        priority: '已完成',
+        priorityTag: 'bg-tui-green bg-opacity-15 text-tui-green',
+        phase: 'E',
+        id: 'WF-2026-D2-MN',
+        strategy: 'Delta-2 债券增强策略 (评估完成)',
+        phaseLabel: 'Phase E - 监控评估阶段 (Monitoring)',
+        created: '2026-05-07 10:00:00',
+        deadline: '2026-05-09 18:00:00 (已完成)',
+        deadlineClass: 'text-tui-green',
+        approver: '<span class="text-tui-green">评估完成</span>',
+        score: '<span class="text-tui-green font-bold">95.6</span><span class="text-tui-textDim">/ 100</span>',
+        description: `<div class="mb-2">此任务 <span class="text-tui-green font-semibold">监控评估已完成</span>，待进入归档阶段。</div>
+          <div class="space-y-1.5 ml-2">
+            <div class="flex items-center gap-2"><span class="text-tui-green text-[10px]">✓</span><span class="text-tui-textDim">7天监控周期完成</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-green text-[10px]">✓</span><span class="text-tui-textDim">绩效评估达标</span></div>
+            <div class="flex items-center gap-2"><span class="text-tui-green text-[10px]">✓</span><span class="text-tui-textDim">风险评估更新</span></div>
+          </div>`,
+        checklist: [
+          { checked: true, text: '7天绩效跟踪', status: '完成', statusClass: 'text-tui-green' },
+          { checked: true, text: '风险指标监控', status: '完成', statusClass: 'text-tui-green' },
+          { checked: true, text: '绩效评估报告', status: '完成', statusClass: 'text-tui-green' },
+          { checked: false, text: '归档移交', status: '待归档', statusClass: 'text-tui-yellow' },
+        ],
+        relatedLinks: [
+          { href: '03-compliance-dashboard.html', icon: '🛡️', title: '合规仪表盘', desc: '合规记录' },
+          { href: '15-system-monitor.html', icon: '📡', title: '系统监控', desc: '监控台' },
+          { href: '09-market-overview.html', icon: '📊', title: '市场总览', desc: '最新行情' },
+          { href: '07-management-center.html', icon: '🏠', title: '管理中心', desc: '返回' },
+        ],
+        actions: [],
+        agent: { name: 'Monitor Agent', avatar: '📡', context: 'Phase E · 评估完成' },
+      },
+    };
+
+    const phases = ['A', 'B', 'C', 'D', 'E', 'F'];
+    const phaseNames = { A: '策略制定', B: '审批', C: '交易执行', D: '风控合规', E: '监控评估', F: '归档复盘' };
+    const phaseNamesEn = { A: 'Design', B: 'Approval', C: 'Execution', D: 'Risk & Compliance', E: 'Monitoring', F: 'Archive' };
+
+    let currentTask = 1;
+    let currentPhase = 'B';
+
+    // ========== FUNCTIONS ==========
+
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function selectTask(taskId) {
+      currentTask = taskId;
+      const data = taskData[taskId];
+      currentPhase = data.phase;
+
+      // Update task list active state
+      document.querySelectorAll('.task-item').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.task-item[data-task="${taskId}"]`).classList.add('active');
+
+      // Update breadcrumb
+      updateBreadcrumb(data.phase);
+
+      // Update detail
+      updateDetail(data);
+
+      // Update agent
+      updateAgent(data.agent);
+
+      // Update phase label
+      document.getElementById('currentPhaseLabel').textContent = `Phase ${data.phase} - ${phaseNames[data.phase]}中`;
+    }
+
+    function updateBreadcrumb(activePhase) {
+      const activeIdx = phases.indexOf(activePhase);
+
+      phases.forEach((phase, idx) => {
+        const stepEl = document.querySelector(`.phase-step[data-phase="${phase}"]`);
+        const nodeEl = stepEl.querySelector('.phase-node');
+        const labelEl = stepEl.querySelector('.phase-label');
+
+        stepEl.className = 'phase-step';
+        nodeEl.className = 'phase-node';
+
+        if (idx < activeIdx) {
+          stepEl.classList.add('is-completed');
+          nodeEl.classList.add('completed');
+          nodeEl.textContent = '✓';
+        } else if (idx === activeIdx) {
+          stepEl.classList.add('is-active');
+          nodeEl.classList.add('active');
+          nodeEl.textContent = phase;
+        } else {
+          nodeEl.textContent = phase;
+        }
+
+        // Update connectors
+        if (idx < phases.length - 1) {
+          const connEl = document.querySelector(`.phase-connector[data-conn="${phase}-${phases[idx + 1]}"]`);
+          connEl.className = 'phase-connector';
+          if (idx < activeIdx) {
+            connEl.classList.add('completed');
+          } else if (idx === activeIdx) {
+            connEl.classList.add('active');
+          }
+        }
+      });
+    }
+
+    function updateDetail(data) {
+      document.getElementById('detailTitle').textContent = data.title;
+      document.getElementById('detailStatus').className = `tag ${data.statusTag}`;
+      document.getElementById('detailStatus').textContent = data.status;
+      document.getElementById('detailPriority').className = `tag ${data.priorityTag}`;
+      document.getElementById('detailPriority').textContent = data.priority;
+
+      // Meta
+      document.getElementById('taskMeta').innerHTML = `
+        <div class="detail-field"><div class="detail-field-label">任务ID</div><div class="detail-field-value font-mono">${data.id}</div></div>
+        <div class="detail-field"><div class="detail-field-label">策略名称</div><div class="detail-field-value">${data.strategy}</div></div>
+        <div class="detail-field"><div class="detail-field-label">当前阶段</div><div class="detail-field-value"><span class="text-tui-accent">Phase ${data.phase}</span> - ${phaseNames[data.phase]} (${phaseNamesEn[data.phase]})</div></div>
+        <div class="detail-field"><div class="detail-field-label">创建时间</div><div class="detail-field-value font-mono text-tui-textMuted">${data.created}</div></div>
+        <div class="detail-field"><div class="detail-field-label">截止时间</div><div class="detail-field-value font-mono ${data.deadlineClass}">${data.deadline}</div></div>
+        <div class="detail-field"><div class="detail-field-label">审批人</div><div class="detail-field-value">${data.approver}</div></div>
+        <div class="detail-field" style="border-bottom:none;"><div class="detail-field-label">合规评分</div><div class="detail-field-value">${data.score}</div></div>
+      `;
+
+      // Description
+      document.getElementById('phaseDescription').innerHTML = data.description;
+
+      // Checklist
+      const checklistHtml = data.checklist.map(item => {
+        const borderColor = item.active ? 'border-tui-accent' : 'border-tui-border';
+        const bgColor = item.active ? 'bg-tui-accent bg-opacity-5' : 'bg-tui-bg';
+        return `<label class="flex items-center gap-2 px-3 py-2 rounded border ${borderColor} ${bgColor} cursor-pointer hover:border-tui-borderLight transition-colors">
+          <input type="checkbox" ${item.checked ? 'checked' : ''} ${item.disabled ? 'disabled' : ''} class="accent-green-500">
+          <span class="text-xs ${item.checked ? 'text-tui-textDim line-through' : (item.active ? 'text-tui-text' : 'text-tui-textMuted')}">${item.text}</span>
+          <span class="ml-auto text-[10px] ${item.statusClass}">${item.checked ? '✓' : ''} ${item.status}</span>
+        </label>`;
+      }).join('');
+      document.getElementById('checklist').innerHTML = checklistHtml;
+
+      // Related Links
+      const linksHtml = data.relatedLinks.map(link => `
+        <a href="${link.href}" class="related-link">
+          <span>${link.icon}</span>
+          <div>
+            <div class="text-tui-text">${link.title}</div>
+            <div class="text-[10px] text-tui-textDim">${link.desc}</div>
+          </div>
+        </a>
+      `).join('');
+      document.getElementById('relatedLinks').innerHTML = linksHtml;
+
+      // Action Buttons
+      const actionMap = {
+        'approve': '<button class="action-btn" onclick="approveAction()">✓ 批准通过 Approve</button>',
+        'revise': '<button class="action-btn secondary" onclick="requestRevision()">↩ 要求修订 Revise</button>',
+        'reject': '<button class="action-btn danger" onclick="rejectAction()">✗ 拒绝 Reject</button>',
+        'monitor': '<button class="action-btn" onclick="window.location.href=\'10-trading-execution.html\'">📊 实时监控 Monitor</button>',
+        'pause': '<button class="action-btn secondary">⏸ 暂停执行 Pause</button>',
+        'emergency-stop': '<button class="action-btn danger">🛑 紧急止损 E-Stop</button>',
+        'start': '<button class="action-btn" onclick="startTask()">▶ 启动任务 Start</button>',
+        'cancel': '<button class="action-btn secondary" onclick="cancelTask()">✗ 取消 Cancel</button>',
+        'view-dependency': '<button class="action-btn secondary">🔗 查看依赖 Dependency</button>',
+      };
+
+      const actionsHtml = data.actions.map(a => actionMap[a] || '').join('');
+      document.getElementById('actionButtons').innerHTML = `
+        ${actionsHtml}
+        <div class="ml-auto flex items-center gap-2">
+          <a href="00-home.html" class="text-xs text-tui-textDim hover:text-tui-accent transition-colors">← 返回主页</a>
+        </div>
+      `;
+    }
+
+    function updateAgent(agent) {
+      document.getElementById('agentName').textContent = agent.name;
+      document.getElementById('agentAvatar').textContent = agent.avatar;
+      document.getElementById('agentContext').innerHTML = `<span>${agent.context}</span><span class="mx-1">|</span><span>自动切换 Auto-switch</span>`;
+      document.getElementById('statusAgent').textContent = agent.name.replace(' Agent', '');
+    }
+
+    function switchPhase(phase) {
+      currentPhase = phase;
+      updateBreadcrumb(phase);
+      document.getElementById('currentPhaseLabel').textContent = `Phase ${phase} - ${phaseNames[phase]}`;
+    }
+
+    function filterTasks(filter) {
+      document.querySelectorAll('.task-item').forEach(item => {
+        const status = item.dataset.status;
+        if (filter === 'all') {
+          item.style.display = '';
+        } else if (filter === 'active') {
+          item.style.display = (status === 'active' || status === 'waiting') ? '' : 'none';
+        } else if (filter === 'done') {
+          item.style.display = (status === 'done') ? '' : 'none';
+        }
+      });
+
+      // Update filter tab styles
+      ['all', 'active', 'done'].forEach(f => {
+        const btn = document.getElementById(`filter-${f}`);
+        if (f === filter) {
+          btn.className = 'flex-1 py-1.5 text-[10px] font-mono text-tui-accent border-b-2 border-tui-accent bg-tui-accent bg-opacity-5';
+        } else {
+          btn.className = 'flex-1 py-1.5 text-[10px] font-mono text-tui-textMuted hover:text-tui-text border-b-2 border-transparent';
+        }
+      });
+    }
+
+    function approveAction() {
+      alert('批准通过! 审批结果已提交。任务将进入下一阶段。');
+    }
+    function requestRevision() {
+      alert('已发送修订要求。任务将退回至上一阶段。');
+    }
+    function rejectAction() {
+      if (confirm('确认拒绝此审批? 此操作不可撤销。')) {
+        alert('审批已拒绝。');
+      }
+    }
+    function startTask() {
+      alert('任务已启动! 进入 Phase A 策略制定阶段。');
+    }
+    function cancelTask() {
+      if (confirm('确认取消此任务?')) {
+        alert('任务已取消。');
+      }
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const chatContainer = document.getElementById('chatMessages');
+      const now = new Date();
+      const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+      chatContainer.innerHTML += `
+        <div>
+          <div class="flex items-center gap-1 mb-1 justify-end">
+            <span class="text-[10px] text-tui-textDim">${time}</span>
+            <span class="text-[10px] text-tui-purple font-semibold">You</span>
+          </div>
+          <div class="user-msg text-tui-text">${text}</div>
+        </div>
+      `;
+
+      input.value = '';
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      // Simulate agent response
+      setTimeout(() => {
+        chatContainer.innerHTML += `
+          <div>
+            <div class="flex items-center gap-1 mb-1">
+              <span class="text-[10px] text-tui-accent font-semibold">${taskData[currentTask].agent.name}</span>
+              <span class="text-[10px] text-tui-textDim">${time}</span>
+            </div>
+            <div class="agent-msg">
+              <div class="text-tui-text text-[10px]">收到您的消息。正在处理中...</div>
+              <div class="text-tui-textMuted text-[10px] mt-1">相关操作将同步至 <a href="01-approval-center.html" class="text-tui-accent hover:underline">审批中心</a>。</div>
+            </div>
+          </div>
+        `;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }, 800);
+    }
+
+    // Keyboard navigation
+    let selectedTaskIdx = 0;
+    document.addEventListener('keydown', (e) => {
+      const taskItems = Array.from(document.querySelectorAll('.task-item'));
+      const visibleItems = taskItems.filter(el => el.style.display !== 'none');
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedTaskIdx = Math.min(selectedTaskIdx + 1, visibleItems.length - 1);
+        const taskId = parseInt(visibleItems[selectedTaskIdx].dataset.task);
+        selectTask(taskId);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedTaskIdx = Math.max(selectedTaskIdx - 1, 0);
+        const taskId = parseInt(visibleItems[selectedTaskIdx].dataset.task);
+        selectTask(taskId);
+      } else if (e.key === 'q') {
+        window.location.href = '00-home.html';
+      } else if (e.key === 'Escape') {
+        window.location.href = '00-home.html';
+      }
+    });
+
+    // Initialize
+    updateBreadcrumb('B');
+  </script>
+</body>
+</html>

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - Agent协作可视化 | Agent Collaboration Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#38d3d7',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+    background: #0d1117;
+    color: #c9d1d9;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .font-sans { font-family: 'Noto Sans SC', sans-serif; }
+
+  .terminal-frame {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .terminal-titlebar {
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .terminal-dots { display: flex; gap: 6px; }
+  .terminal-dots span { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #f85149; }
+  .dot-yellow { background: #d29922; }
+  .dot-green { background: #3fb950; }
+
+  .tui-box {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s;
+  }
+  .tui-box.focused {
+    border-color: #388bfd;
+    box-shadow: 0 0 0 1px #388bfd33, 0 0 12px #388bfd15;
+  }
+  .tui-box-header {
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .tui-box-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .box-number {
+    color: #388bfd;
+    font-weight: 600;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .focus-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #388bfd;
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .tui-box-title { color: #c9d1d9; font-weight: 500; font-size: 12px; }
+
+  .key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 4px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 3px;
+    font-size: 10px;
+    color: #c9d1d9;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .tag-active { background: #3fb95033; color: #3fb950; border: 1px solid #3fb95044; }
+  .tag-idle { background: #484f5833; color: #8b949e; border: 1px solid #484f5844; }
+  .tag-busy { background: #d2992233; color: #d29922; border: 1px solid #d2992244; }
+  .tag-error { background: #f8514933; color: #f85149; border: 1px solid #f8514944; }
+  .tag-info { background: #388bfd33; color: #388bfd; border: 1px solid #388bfd44; }
+
+  .nav-item {
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+    color: #8b949e;
+  }
+  .nav-item:hover { background: #1c2128; color: #c9d1d9; }
+  .nav-item.active { background: #388bfd22; color: #388bfd; }
+
+  .list-item {
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+  }
+  .list-item:hover { background: #1c2128; }
+  .list-item.selected { background: #161b22; border-color: #388bfd; }
+
+  .cmd-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid;
+    font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  }
+  .cmd-btn-info { background: #388bfd22; border-color: #388bfd44; color: #388bfd; }
+  .cmd-btn-info:hover { background: #388bfd44; }
+
+  .chat-agent {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+  .chat-user {
+    background: #1c3a5e;
+    border: 1px solid #264a7a;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+    margin-bottom: 6px;
+    margin-left: 20px;
+  }
+
+  .glow-green { text-shadow: 0 0 6px #3fb95066; }
+  .glow-blue { text-shadow: 0 0 6px #388bfd66; }
+  .glow-red { text-shadow: 0 0 6px #f8514966; }
+  .glow-yellow { text-shadow: 0 0 6px #d2992266; }
+  .glow-cyan { text-shadow: 0 0 6px #38d3d766; }
+  .glow-purple { text-shadow: 0 0 6px #bc8cff66; }
+
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  .status-bar {
+    background: #161b22;
+    border-top: 1px solid #30363d;
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+    color: #8b949e;
+  }
+
+  /* Agent status indicator */
+  .agent-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-online { background: #3fb950; box-shadow: 0 0 4px #3fb95066; }
+  .status-busy { background: #d29922; box-shadow: 0 0 4px #d2992266; }
+  .status-offline { background: #484f58; }
+  .status-error { background: #f85149; box-shadow: 0 0 4px #f8514966; }
+
+  /* Flow diagram styles */
+  .flow-stage {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 8px 12px;
+    position: relative;
+    transition: all 0.2s;
+  }
+  .flow-stage.active {
+    border-color: #388bfd;
+    background: #388bfd11;
+    box-shadow: 0 0 12px #388bfd22;
+  }
+  .flow-stage.completed {
+    border-color: #3fb95066;
+    background: #3fb95008;
+  }
+  .flow-stage-label {
+    font-size: 10px;
+    color: #8b949e;
+    margin-bottom: 2px;
+  }
+  .flow-stage-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: #c9d1d9;
+  }
+  .flow-stage.active .flow-stage-name { color: #388bfd; }
+  .flow-stage.completed .flow-stage-name { color: #3fb950; }
+
+  .flow-connector {
+    color: #484f58;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+  }
+  .flow-connector.active { color: #388bfd; }
+  .flow-connector.completed { color: #3fb95066; }
+
+  /* Agent node in flow */
+  .agent-node {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 9px;
+    margin: 1px;
+    background: #21262d;
+    border: 1px solid #30363d;
+  }
+
+  /* Communication log */
+  .comm-entry {
+    padding: 5px 8px;
+    border-left: 2px solid transparent;
+    margin-bottom: 2px;
+    border-radius: 0 3px 3px 0;
+    font-size: 11px;
+    transition: background 0.15s;
+  }
+  .comm-entry:hover { background: #1c2128; }
+  .comm-entry.comm-info { border-left-color: #388bfd; }
+  .comm-entry.comm-warning { border-left-color: #d29922; }
+  .comm-entry.comm-success { border-left-color: #3fb950; }
+  .comm-entry.comm-error { border-left-color: #f85149; }
+</style>
+</head>
+<body>
+
+<div class="terminal-frame flex flex-col h-full">
+
+  <!-- Title Bar -->
+  <div class="terminal-titlebar">
+    <div class="terminal-dots">
+      <span class="dot-red"></span>
+      <span class="dot-yellow"></span>
+      <span class="dot-green"></span>
+    </div>
+    <span class="text-tui-muted text-xs font-mono">SXA v2.4.0</span>
+    <span class="text-tui-text text-xs font-sans font-medium ml-1">Agent协作可视化 / Agent Collaboration Panel</span>
+    <div class="flex-1"></div>
+    <span class="key">ESC</span>
+    <a href="00-home.html" class="nav-item text-xs">返回主页</a>
+    <span class="text-tui-muted mx-1">|</span>
+    <a href="01-approval-center.html" class="nav-item text-xs">审批中心</a>
+    <a href="03-compliance-dashboard.html" class="nav-item text-xs">合规仪表盘</a>
+    <a href="16-workflow-panel.html" class="nav-item text-xs">工作流面板</a>
+    <a href="15-system-monitor.html" class="nav-item text-xs">系统监控</a>
+  </div>
+
+  <!-- Main Content: 5-Box Grid -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- Left Column: Filter + Agent List -->
+    <div class="flex flex-col" style="width:250px; margin:6px 0 6px 6px; gap:4px;">
+
+      <!-- Box 1: Filter -->
+      <div class="tui-box">
+        <div class="tui-box-header">
+          <span class="box-number"><span class="focus-dot"></span> [1]</span>
+          <span class="tui-box-title font-sans">Agent筛选 Filter</span>
+        </div>
+        <div style="padding:6px 8px; font-size:11px;">
+          <div class="flex flex-wrap gap-1 mb-2">
+            <span class="tag tag-active" style="cursor:pointer;">全部 (8)</span>
+            <span class="tag tag-idle" style="cursor:pointer;">活跃 (5)</span>
+            <span class="tag tag-busy" style="cursor:pointer;">繁忙 (2)</span>
+            <span class="tag tag-idle" style="cursor:pointer;">空闲 (1)</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <input type="text" placeholder="搜索Agent..." style="flex:1; background:#161b22; border:1px solid #30363d; border-radius:3px; padding:3px 6px; font-size:10px; color:#c9d1d9; outline:none; font-family:'JetBrains Mono',monospace;" />
+          </div>
+          <div class="mt-2 text-tui-muted" style="font-size:10px;">
+            运行模式: <span class="text-tui-green">CA-FPM 六阶段</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 2: Agent Status List -->
+      <div class="tui-box flex-1">
+        <div class="tui-box-header">
+          <span class="box-number">[2]</span>
+          <span class="tui-box-title font-sans">Agent状态 Status</span>
+          <div class="flex-1"></div>
+          <span class="text-tui-green text-xs">5/8 在线</span>
+        </div>
+        <div class="tui-box-body scrollbar-thin" style="padding:4px;">
+          <!-- Compliance Agent -->
+          <div class="list-item selected" style="margin-bottom:2px;">
+            <div class="flex items-center gap-2">
+              <div class="agent-status status-online"></div>
+              <div class="flex-1">
+                <div class="text-tui-text text-xs font-medium">Compliance Agent</div>
+                <div class="text-tui-muted" style="font-size:9px;">合规合规 · CA-FPM L3</div>
+              </div>
+              <span class="tag tag-active" style="font-size:9px;">分析中</span>
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-4">
+              <span class="text-tui-muted" style="font-size:9px;">CPU: 23%</span>
+              <span class="text-tui-muted">·</span>
+              <span class="text-tui-muted" style="font-size:9px;">MEM: 128MB</span>
+            </div>
+          </div>
+
+          <!-- Strategist Agent -->
+          <div class="list-item" style="margin-bottom:2px;">
+            <div class="flex items-center gap-2">
+              <div class="agent-status status-busy"></div>
+              <div class="flex-1">
+                <div class="text-tui-text text-xs font-medium">Strategist Agent</div>
+                <div class="text-tui-muted" style="font-size:9px;">策略生成 · CA-FPM L2</div>
+              </div>
+              <span class="tag tag-busy" style="font-size:9px;">生成中</span>
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-4">
+              <span class="text-tui-muted" style="font-size:9px;">CPU: 78%</span>
+              <span class="text-tui-muted">·</span>
+              <span class="text-tui-muted" style="font-size:9px;">MEM: 256MB</span>
+            </div>
+          </div>
+
+          <!-- Macro Agent -->
+          <div class="list-item" style="margin-bottom:2px;">
+            <div class="flex items-center gap-2">
+              <div class="agent-status status-online"></div>
+              <div class="flex-1">
+                <div class="text-tui-text text-xs font-medium">Macro Agent</div>
+                <div class="text-tui-muted" style="font-size:9px;">宏观分析 · CA-FPM L1</div>
+              </div>
+              <span class="tag tag-active" style="font-size:9px;">就绪</span>
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-4">
+              <span class="text-tui-muted" style="font-size:9px;">CPU: 5%</span>
+              <span class="text-tui-muted">·</span>
+              <span class="text-tui-muted" style="font-size:9px;">MEM: 64MB</span>
+            </div>
+          </div>
+
+          <!-- Sentiment Agent -->
+          <div class="list-item" style="margin-bottom:2px;">
+            <div class="flex items-center gap-2">
+              <div class="agent-status status-online"></div>
+              <div class="flex-1">
+                <div class="text-tui-text text-xs font-medium">Sentiment Agent</div>
+                <div class="text-tui-muted" style="font-size:9px;">情绪分析 · CA-FPM L1</div>
+              </div>
+              <span class="tag tag-active" style="font-size:9px;">分析中</span>
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-4">
+              <span class="text-tui-muted" style="font-size:9px;">CPU: 45%</span>
+              <span class="text-tui-muted">·</span>
+              <span class="text-tui-muted" style="font-size:9px;">MEM: 192MB</span>
+            </div>
+          </div>
+
+          <!-- Logic Agent -->
+          <div class="list-item" style="margin-bottom:2px;">
+            <div class="flex items-center gap-2">
+              <div class="agent-status status-busy"></div>
+              <div class="flex-1">
+                <div class="text-tui-text text-xs font-medium">Logic Agent</div>
+                <div class="text-tui-muted" style="font-size:9px;">逻辑验证 · CA-FPM L4</div>
+              </div>
+              <span class="tag tag-busy" style="font-size:9px;">验证中</span>
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-4">
+              <span class="text-tui-muted" style="font-size:9px;">CPU: 62%</span>
+              <span class="text-tui-muted">·</span>
+              <span class="text-tui-muted" style="font-size:9px;">MEM: 224MB</span>
+            </div>
+          </div>
+
+          <!-- Trader Agent -->
+          <div class="list-item" style="margin-bottom:2px;">
+            <div class="flex items-center gap-2">
+              <div class="agent-status status-online"></div>
+              <div class="flex-1">
+                <div class="text-tui-text text-xs font-medium">Trader Agent</div>
+                <div class="text-tui-muted" style="font-size:9px;">执行交易 · CA-FPM L5</div>
+              </div>
+              <span class="tag tag-idle" style="font-size:9px;">待命</span>
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-4">
+              <span class="text-tui-muted" style="font-size:9px;">CPU: 2%</span>
+              <span class="text-tui-muted">·</span>
+              <span class="text-tui-muted" style="font-size:9px;">MEM: 48MB</span>
+            </div>
+          </div>
+
+          <!-- Risk Agent -->
+          <div class="list-item" style="margin-bottom:2px;">
+            <div class="flex items-center gap-2">
+              <div class="agent-status status-online"></div>
+              <div class="flex-1">
+                <div class="text-tui-text text-xs font-medium">Risk Agent</div>
+                <div class="text-tui-muted" style="font-size:9px;">风险管理 · CA-FPM L3</div>
+              </div>
+              <span class="tag tag-active" style="font-size:9px;">监控中</span>
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-4">
+              <span class="text-tui-muted" style="font-size:9px;">CPU: 15%</span>
+              <span class="text-tui-muted">·</span>
+              <span class="text-tui-muted" style="font-size:9px;">MEM: 96MB</span>
+            </div>
+          </div>
+
+          <!-- System Agent -->
+          <div class="list-item" style="margin-bottom:2px;">
+            <div class="flex items-center gap-2">
+              <div class="agent-status status-offline"></div>
+              <div class="flex-1">
+                <div class="text-tui-text text-xs font-medium">System Agent</div>
+                <div class="text-tui-muted" style="font-size:9px;">系统运维 · 后台</div>
+              </div>
+              <span class="tag tag-error" style="font-size:9px;">离线</span>
+            </div>
+            <div class="flex items-center gap-1 mt-1 pl-4">
+              <span class="text-tui-red" style="font-size:9px;">维护中 · 预计14:00恢复</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Flow Diagram + Communication Log -->
+    <div class="flex flex-col flex-1" style="margin:6px 3px; gap:4px;">
+
+      <!-- Box 3: Collaboration Flow -->
+      <div class="tui-box focused flex-1">
+        <div class="tui-box-header">
+          <span class="box-number">[3]</span>
+          <span class="tui-box-title font-sans">CA-FPM 执行流程 Collaboration Flow</span>
+          <div class="flex-1"></div>
+          <span class="text-tui-yellow text-xs">当前: L3 风险评估</span>
+          <span class="text-tui-muted text-xs ml-2">会话 #SXA-20260510-007</span>
+        </div>
+        <div class="tui-box-body scrollbar-thin" style="padding:12px;">
+          <!-- CA-FPM 6-Stage Flow -->
+          <div class="flex items-start gap-0 mb-4" style="justify-content:center;">
+            <!-- L1 -->
+            <div class="flow-stage completed" style="width:150px; text-align:center;">
+              <div class="flow-stage-label">L1</div>
+              <div class="flow-stage-name">信息采集</div>
+              <div class="flow-stage-label">Intelligence Gathering</div>
+              <div class="flex flex-wrap justify-center mt-2 gap-1">
+                <span class="agent-node"><span class="status-online" style="width:5px;height:5px;border-radius:50%;display:inline-block;background:#3fb950;"></span> Macro</span>
+                <span class="agent-node"><span class="status-online" style="width:5px;height:5px;border-radius:50%;display:inline-block;background:#3fb950;"></span> Sentiment</span>
+              </div>
+              <div class="text-tui-muted mt-1" style="font-size:9px;">耗时: 2.3s ✓</div>
+            </div>
+
+            <div class="flow-connector completed">→</div>
+
+            <!-- L2 -->
+            <div class="flow-stage completed" style="width:150px; text-align:center;">
+              <div class="flow-stage-label">L2</div>
+              <div class="flow-stage-name">策略生成</div>
+              <div class="flow-stage-label">Strategy Generation</div>
+              <div class="flex flex-wrap justify-center mt-2 gap-1">
+                <span class="agent-node"><span class="status-busy" style="width:5px;height:5px;border-radius:50%;display:inline-block;background:#d29922;"></span> Strategist</span>
+              </div>
+              <div class="text-tui-muted mt-1" style="font-size:9px;">耗时: 4.8s ✓</div>
+            </div>
+
+            <div class="flow-connector active">→</div>
+
+            <!-- L3 (Current) -->
+            <div class="flow-stage active" style="width:170px; text-align:center;">
+              <div class="flow-stage-label" style="color:#388bfd;">L3 ⚡</div>
+              <div class="flow-stage-name">风险评估</div>
+              <div class="flow-stage-label" style="color:#388bfd99;">Risk Assessment</div>
+              <div class="flex flex-wrap justify-center mt-2 gap-1">
+                <span class="agent-node" style="border-color:#388bfd44;background:#388bfd11;"><span style="width:5px;height:5px;border-radius:50%;display:inline-block;background:#388bfd;"></span> Compliance</span>
+                <span class="agent-node" style="border-color:#388bfd44;background:#388bfd11;"><span style="width:5px;height:5px;border-radius:50%;display:inline-block;background:#388bfd;"></span> Risk</span>
+              </div>
+              <div class="text-tui-blue mt-1" style="font-size:9px;">进行中... 1.2s</div>
+            </div>
+
+            <div class="flow-connector">→</div>
+
+            <!-- L4 -->
+            <div class="flow-stage" style="width:150px; text-align:center;">
+              <div class="flow-stage-label">L4</div>
+              <div class="flow-stage-name">逻辑验证</div>
+              <div class="flow-stage-label">Logic Verification</div>
+              <div class="flex flex-wrap justify-center mt-2 gap-1">
+                <span class="agent-node"><span class="status-busy" style="width:5px;height:5px;border-radius:50%;display:inline-block;background:#d29922;"></span> Logic</span>
+              </div>
+              <div class="text-tui-muted mt-1" style="font-size:9px;">等待中</div>
+            </div>
+
+            <div class="flow-connector">→</div>
+
+            <!-- L5 -->
+            <div class="flow-stage" style="width:130px; text-align:center;">
+              <div class="flow-stage-label">L5</div>
+              <div class="flow-stage-name">交易执行</div>
+              <div class="flow-stage-label">Trade Execution</div>
+              <div class="flex flex-wrap justify-center mt-2 gap-1">
+                <span class="agent-node"><span style="width:5px;height:5px;border-radius:50%;display:inline-block;background:#8b949e;"></span> Trader</span>
+              </div>
+              <div class="text-tui-muted mt-1" style="font-size:9px;">待命</div>
+            </div>
+          </div>
+
+          <!-- L6 (separate row) -->
+          <div class="flex justify-center mb-4">
+            <div class="flow-stage" style="width:200px; text-align:center;">
+              <div class="flow-stage-label">L6</div>
+              <div class="flow-stage-name">合规审计与归档</div>
+              <div class="flow-stage-label">Compliance Audit & Archive</div>
+              <div class="flex flex-wrap justify-center mt-2 gap-1">
+                <span class="agent-node"><span style="width:5px;height:5px;border-radius:50%;display:inline-block;background:#8b949e;"></span> Compliance</span>
+                <span class="agent-node"><span style="width:5px;height:5px;border-radius:50%;display:inline-block;background:#8b949e;"></span> System</span>
+              </div>
+              <div class="text-tui-muted mt-1" style="font-size:9px;">待执行</div>
+            </div>
+          </div>
+
+          <!-- Execution Summary -->
+          <div style="background:#161b22; border:1px solid #30363d; border-radius:4px; padding:10px;">
+            <div class="text-tui-text text-xs font-medium mb-2">执行摘要 Execution Summary</div>
+            <div class="grid grid-cols-3 gap-4" style="font-size:11px;">
+              <div>
+                <div class="text-tui-muted text-xs mb-1">会话ID</div>
+                <div class="text-tui-cyan text-xs">SXA-20260510-007</div>
+              </div>
+              <div>
+                <div class="text-tui-muted text-xs mb-1">启动时间</div>
+                <div class="text-tui-text text-xs">10:42:15 CST</div>
+              </div>
+              <div>
+                <div class="text-tui-muted text-xs mb-1">已用时间</div>
+                <div class="text-tui-yellow text-xs">8.3s / ~15s 预估</div>
+              </div>
+            </div>
+            <div class="mt-3 grid grid-cols-4 gap-3" style="font-size:11px;">
+              <div>
+                <div class="text-tui-muted text-xs mb-1">策略类型</div>
+                <div class="text-tui-text text-xs">量化对冲 v3.2</div>
+              </div>
+              <div>
+                <div class="text-tui-muted text-xs mb-1">标的范围</div>
+                <div class="text-tui-text text-xs">沪深300成分股</div>
+              </div>
+              <div>
+                <div class="text-tui-muted text-xs mb-1">预估规模</div>
+                <div class="text-tui-text text-xs">2.8亿 CNY</div>
+              </div>
+              <div>
+                <div class="text-tui-muted text-xs mb-1">风险等级</div>
+                <div class="text-tui-yellow text-xs glow-yellow">R3 中等</div>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mt-3">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-tui-muted">总体进度 Progress</span>
+                <span class="text-tui-blue">55%</span>
+              </div>
+              <div style="background:#21262d; border-radius:3px; height:6px; overflow:hidden;">
+                <div style="background:linear-gradient(90deg, #3fb950, #388bfd); width:55%; height:100%; border-radius:3px; transition:width 0.3s;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 4: Communication Log -->
+      <div class="tui-box" style="height:200px;">
+        <div class="tui-box-header">
+          <span class="box-number">[4]</span>
+          <span class="tui-box-title font-sans">Agent通信日志 Communication Log</span>
+          <div class="flex-1"></div>
+          <span class="text-tui-muted text-xs">实时更新</span>
+          <span class="text-tui-green text-xs glow-green ml-1">●</span>
+        </div>
+        <div class="tui-box-body scrollbar-thin" style="padding:4px;">
+          <div class="comm-entry comm-success">
+            <div class="flex items-center gap-2">
+              <span class="text-tui-green text-xs">✓</span>
+              <span class="text-tui-cyan text-xs">Macro Agent</span>
+              <span class="text-tui-muted">→</span>
+              <span class="text-tui-purple text-xs">Strategist Agent</span>
+              <span class="text-tui-muted text-xs ml-auto">10:42:17</span>
+            </div>
+            <div class="text-tui-text text-xs mt-1" style="padding-left:16px;">[L1→L2] 宏观数据采集完成。GDP增速5.2%，CPI同比+0.3%，PPI同比-1.2%，货币供应M2同比+7.8%。市场流动性充裕，建议关注成长板块。</div>
+          </div>
+
+          <div class="comm-entry comm-success">
+            <div class="flex items-center gap-2">
+              <span class="text-tui-green text-xs">✓</span>
+              <span class="text-tui-cyan text-xs">Sentiment Agent</span>
+              <span class="text-tui-muted">→</span>
+              <span class="text-tui-purple text-xs">Strategist Agent</span>
+              <span class="text-tui-muted text-xs ml-auto">10:42:18</span>
+            </div>
+            <div class="text-tui-text text-xs mt-1" style="padding-left:16px;">[L1→L2] 情绪分析完成。机构情绪指数67.3（偏多），散户情绪指数54.1（中性），融资余额环比+1.2%。舆论热度TOP3：AI算力/新能源/半导体。</div>
+          </div>
+
+          <div class="comm-entry comm-success">
+            <div class="flex items-center gap-2">
+              <span class="text-tui-green text-xs">✓</span>
+              <span class="text-tui-purple text-xs">Strategist Agent</span>
+              <span class="text-tui-muted">→</span>
+              <span class="text-tui-cyan text-xs">Compliance Agent</span>
+              <span class="text-tui-muted text-xs ml-auto">10:42:23</span>
+            </div>
+            <div class="text-tui-text text-xs mt-1" style="padding-left:16px;">[L2→L3] 策略方案已生成。方案A：动量增强型（权重0.35），预期Sharpe 1.85；方案B：均衡型（权重0.28），预期Sharpe 1.62。推荐方案A，请进行合规风险评估。</div>
+          </div>
+
+          <div class="comm-entry comm-info">
+            <div class="flex items-center gap-2">
+              <span class="text-tui-blue text-xs">⟳</span>
+              <span class="text-tui-cyan text-xs">Compliance Agent</span>
+              <span class="text-tui-muted">→</span>
+              <span class="text-tui-purple text-xs">Risk Agent</span>
+              <span class="text-tui-muted text-xs ml-auto">10:42:25</span>
+            </div>
+            <div class="text-tui-text text-xs mt-1" style="padding-left:16px;">[L3] 合规预检请求。方案A动量因子权重0.35，回撤限额-6%，请评估组合风险暴露与VaR变化。</div>
+          </div>
+
+          <div class="comm-entry comm-info">
+            <div class="flex items-center gap-2">
+              <span class="text-tui-blue text-xs">⟳</span>
+              <span class="text-tui-purple text-xs">Risk Agent</span>
+              <span class="text-tui-muted">→</span>
+              <span class="text-tui-cyan text-xs">Compliance Agent</span>
+              <span class="text-tui-muted text-xs ml-auto">10:42:28</span>
+            </div>
+            <div class="text-tui-text text-xs mt-1" style="padding-left:16px;">[L3] 风险评估进行中。95% VaR从2.1%升至2.4%，99% VaR从3.5%升至3.9%。组合Beta维持在0.02。尾部风险可控，但回撤限额接近阈值。</div>
+          </div>
+
+          <div class="comm-entry comm-warning">
+            <div class="flex items-center gap-2">
+              <span class="text-tui-yellow text-xs">⚠</span>
+              <span class="text-tui-cyan text-xs">Compliance Agent</span>
+              <span class="text-tui-muted">→</span>
+              <span class="text-tui-purple text-xs">Logic Agent</span>
+              <span class="text-tui-muted text-xs ml-auto">10:42:30</span>
+            </div>
+            <div class="text-tui-text text-xs mt-1" style="padding-left:16px;">[L3→L4] 有条件通过。请验证：1) 止损逻辑在极端行情下是否可靠；2) 回撤恢复冷却时间300s是否充分；3) 动量信号在低波动环境下的衰减特性。</div>
+          </div>
+
+          <div class="comm-entry comm-info">
+            <div class="flex items-center gap-2">
+              <span class="text-tui-blue text-xs">⟳</span>
+              <span class="text-tui-purple text-xs">Logic Agent</span>
+              <span class="text-tui-muted">↻</span>
+              <span class="text-tui-muted text-xs">验证进行中...</span>
+              <span class="text-tui-muted text-xs ml-auto">10:42:32</span>
+            </div>
+            <div class="text-tui-muted text-xs mt-1" style="padding-left:16px;">[L4] 逻辑验证已启动，正在运行3项验证测试...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Agent Chat -->
+    <div class="tui-box flex flex-col" style="width:320px; margin:6px 6px 6px 3px;">
+      <div class="tui-box-header">
+        <span class="box-number">[5]</span>
+        <span class="tui-box-title font-sans">Compliance Agent 合规助手</span>
+        <div class="flex-1"></div>
+        <span class="text-tui-green text-xs glow-green">● 在线</span>
+      </div>
+      <div class="tui-box-body scrollbar-thin flex-1" style="font-size:11px;">
+        <div class="chat-agent">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-cyan text-xs font-medium">Compliance Agent</span>
+            <span class="text-tui-muted text-xs">10:42</span>
+          </div>
+          <div class="text-tui-text text-xs">当前正在执行会话 #SXA-20260510-007 的L3风险评估阶段。我正在与Risk Agent协作评估方案A的合规风险。</div>
+        </div>
+
+        <div class="chat-user">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-blue text-xs font-medium">我</span>
+            <span class="text-tui-muted text-xs">10:43</span>
+          </div>
+          <div class="text-tui-text text-xs">当前风险评估进展如何？方案A的合规性如何？</div>
+        </div>
+
+        <div class="chat-agent">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-cyan text-xs font-medium">Compliance Agent</span>
+            <span class="text-tui-muted text-xs">10:43</span>
+          </div>
+          <div class="text-tui-text text-xs leading-relaxed">
+            <div class="mb-2">L3 风险评估中间报告：</div>
+            <div class="mb-1"><span class="text-tui-yellow">⚠ VaR变动：</span>95% VaR +0.3%, 99% VaR +0.4%</div>
+            <div class="mb-1"><span class="text-tui-green">✓ Beta暴露：</span>组合Beta 0.02，市场中性保持</div>
+            <div class="mb-1"><span class="text-tui-yellow">⚠ 回撤风险：</span>最大回撤-6%接近阈值-8%</div>
+            <div class="mb-1"><span class="text-tui-green">✓ 行业集中度：</span>前三大行业权重<30%</div>
+            <div class="mt-2 p-2" style="background:#0d1117; border-radius:3px; border:1px solid #30363d;">
+              <span class="text-tui-cyan text-xs">建议：</span>方案A有条件通过。附加条件已发送至Logic Agent验证。预计L4阶段在30秒内完成。
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-user">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-blue text-xs font-medium">我</span>
+            <span class="text-tui-muted text-xs">10:44</span>
+          </div>
+          <div class="text-tui-text text-xs">查看所有Agent的资源使用情况。</div>
+        </div>
+
+        <div class="chat-agent">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-cyan text-xs font-medium">Compliance Agent</span>
+            <span class="text-tui-muted text-xs">10:44</span>
+          </div>
+          <div class="text-tui-text text-xs leading-relaxed">
+            <div class="mb-1">8个Agent资源汇总：</div>
+            <div style="background:#0d1117; border-radius:3px; border:1px solid #30363d; padding:4px; font-size:10px;">
+              <div class="flex justify-between mb-1">
+                <span>总CPU使用率</span>
+                <span class="text-tui-yellow">28.8%</span>
+              </div>
+              <div class="flex justify-between mb-1">
+                <span>总内存使用</span>
+                <span class="text-tui-green">1.01 GB / 4 GB</span>
+              </div>
+              <div class="flex justify-between mb-1">
+                <span>网络I/O</span>
+                <span class="text-tui-blue">12.4 MB/s</span>
+              </div>
+              <div class="flex justify-between">
+                <span>活跃Agent</span>
+                <span class="text-tui-green">7/8</span>
+              </div>
+            </div>
+            <div class="mt-1 text-tui-muted" style="font-size:9px;">System Agent 离线维护中，预计14:00恢复。</div>
+          </div>
+        </div>
+
+        <div class="chat-user">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-blue text-xs font-medium">我</span>
+            <span class="text-tui-muted text-xs">10:45</span>
+          </div>
+          <div class="text-tui-text text-xs">Logic Agent验证完成后，自动转入L5执行吗？</div>
+        </div>
+
+        <div class="chat-agent">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-cyan text-xs font-medium">Compliance Agent</span>
+            <span class="text-tui-muted text-xs">10:45</span>
+          </div>
+          <div class="text-tui-text text-xs leading-relaxed">
+            <div>是的，CA-FPM流程自动化执行：</div>
+            <div class="mt-1 p-2" style="background:#0d1117; border-radius:3px; border:1px solid #30363d; font-size:10px;">
+              <div>L4 验证通过 → 自动触发审批流</div>
+              <div class="mt-1">↓</div>
+              <div>L5 Trader Agent执行 → 需人工确认</div>
+              <div class="mt-1">↓</div>
+              <div>L6 合规归档 → 自动执行</div>
+            </div>
+            <div class="mt-2 text-tui-yellow" style="font-size:10px;">注意：L5交易执行阶段需要您的人工确认才能继续。系统会通过通知提醒您。</div>
+          </div>
+        </div>
+      </div>
+      <!-- Chat Input -->
+      <div style="border-top:1px solid #30363d; padding:6px 8px; display:flex; gap:4px; align-items:center;">
+        <span class="key" style="font-size:9px;">⌘K</span>
+        <input type="text" placeholder="输入消息或指令..." style="flex:1; background:#161b22; border:1px solid #30363d; border-radius:4px; padding:4px 8px; font-size:11px; color:#c9d1d9; outline:none; font-family:'JetBrains Mono','Noto Sans SC',monospace;" />
+        <button class="cmd-btn cmd-btn-info" style="font-size:10px;">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="flex items-center gap-1"><span class="key">1</span>-<span class="key">5</span> 焦点</span>
+    <span class="flex items-center gap-1"><span class="key">Tab</span> 切换</span>
+    <span class="flex items-center gap-1"><span class="key">⇧Tab</span> 隐藏</span>
+    <span class="flex items-center gap-1"><span class="key">/</span> 命令</span>
+    <span class="flex items-center gap-1"><span class="key">Space</span> 暂停/恢复</span>
+    <span class="flex items-center gap-1"><span class="key">q</span> <a href="00-home.html" class="text-tui-muted hover:text-tui-text" style="text-decoration:none;">返回主页</a></span>
+    <span class="flex items-center gap-1"><span class="key">F1</span> 帮助</span>
+    <div class="flex-1"></div>
+    <span class="text-tui-green">●</span>
+    <span class="text-tui-muted">CA-FPM 执行中</span>
+    <span class="text-tui-muted mx-1">|</span>
+    <span class="text-tui-muted">L3 → L4 · 7/8 Agent在线</span>
+    <span class="text-tui-muted mx-1">|</span>
+    <span class="text-tui-muted">2026-05-10 10:45:33 CST</span>
+  </div>
+</div>
+
+</body>
+</html>

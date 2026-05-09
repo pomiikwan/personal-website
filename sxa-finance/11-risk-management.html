@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 风险管理面板 | Risk Management Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#38d3d7',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family: 'JetBrains Mono', 'Noto Sans SC', monospace; }
+  body { background: #0d1117; color: #c9d1d9; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  .terminal-frame { border: 1px solid #30363d; border-radius: 8px; overflow: hidden; background: #0d1117; }
+  .terminal-titlebar { background: #161b22; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #30363d; }
+  .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .terminal-dot.red { background: #f85149; }
+  .terminal-dot.yellow { background: #d29922; }
+  .terminal-dot.green { background: #3fb950; }
+
+  .tui-box { border: 1px solid #30363d; border-radius: 6px; background: #0d1117; position: relative; }
+  .tui-box.focused { border-color: #388bfd; box-shadow: 0 0 0 1px #388bfd, 0 0 12px rgba(56,139,253,0.15); }
+  .tui-box-title { background: #161b22; padding: 6px 12px; border-bottom: 1px solid #30363d; font-size: 12px; font-weight: 600; color: #c9d1d9; display: flex; align-items: center; gap: 8px; }
+  .box-number { background: #388bfd; color: #0d1117; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .key { background: #21262d; border: 1px solid #30363d; padding: 1px 6px; border-radius: 3px; font-size: 10px; color: #c9d1d9; }
+  .tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+  .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .tag-yellow { background: rgba(210,153,34,0.15); color: #d29922; }
+  .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+  .tag-blue { background: rgba(56,139,253,0.15); color: #388bfd; }
+  .tag-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+  .tag-cyan { background: rgba(56,211,215,0.15); color: #38d3d7; }
+
+  .filter-btn { background: #21262d; border: 1px solid #30363d; padding: 4px 12px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { background: #388bfd; color: #0d1117; border-color: #388bfd; }
+  .cmd-btn { background: #21262d; border: 1px solid #30363d; padding: 3px 10px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; }
+  .cmd-btn:hover { background: #30363d; }
+  .list-item { padding: 6px 10px; border-bottom: 1px solid rgba(48,54,61,0.5); cursor: pointer; transition: background 0.1s; }
+  .list-item:hover { background: #1c2128; }
+
+  .chat-agent { background: rgba(56,139,253,0.08); border: 1px solid rgba(56,139,253,0.2); border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.5; }
+  .chat-user { background: rgba(188,140,255,0.08); border: 1px solid rgba(188,140,255,0.2); border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.5; }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+
+  .glow-green { text-shadow: 0 0 8px rgba(63,185,80,0.5); }
+  .glow-red { text-shadow: 0 0 8px rgba(248,81,73,0.5); }
+  .glow-blue { text-shadow: 0 0 8px rgba(56,139,253,0.5); }
+  .glow-yellow { text-shadow: 0 0 8px rgba(210,153,34,0.5); }
+
+  .nav-item { padding: 2px 8px; font-size: 10px; color: #484f58; text-decoration: none; transition: color 0.15s; }
+  .nav-item:hover { color: #c9d1d9; }
+  .nav-section { border-right: 1px solid #30363d; padding: 0 8px; }
+
+  .progress-bar { height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+
+  .gauge-ring { width: 120px; height: 120px; border-radius: 50%; position: relative; }
+  .gauge-value { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  .gate-step { display: flex; align-items: center; gap: 6px; }
+  .gate-dot { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
+  .gate-line { height: 2px; width: 30px; background: #30363d; }
+
+  .risk-card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px; }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .animate-pulse-slow { animation: pulse 2s infinite; }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+  .animate-blink { animation: blink 1s infinite; }
+</style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+<div class="terminal-frame flex flex-col h-full">
+  <!-- Title Bar -->
+  <div class="terminal-titlebar">
+    <span class="terminal-dot red"></span>
+    <span class="terminal-dot yellow"></span>
+    <span class="terminal-dot green"></span>
+    <span class="text-tui-muted text-xs ml-2">
+      <a href="00-home.html" class="nav-item hover:text-tui-text">ESC</a>
+    </span>
+    <span class="text-tui-text text-xs font-semibold ml-2">SXA Risk Management</span>
+    <span class="text-tui-muted text-xs">/</span>
+    <span class="text-tui-red text-xs">风险管理面板</span>
+    <span class="flex-1"></span>
+    <span class="text-tui-muted text-xs">2026-05-10 09:31:42 CST</span>
+    <span class="tag tag-red ml-2">3 ALERTS</span>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="flex flex-col flex-1 overflow-hidden">
+    <!-- Box 1: RiskFilterBox -->
+    <div class="tui-box focused rounded-none border-0 border-b border-tui-border">
+      <div class="tui-box-title">
+        <span class="box-number">1</span>
+        <span>RiskFilter / 风险筛选</span>
+        <span class="flex-1"></span>
+        <span class="key">Tab</span>
+        <span class="text-tui-muted text-xs">focus</span>
+      </div>
+      <div class="p-3 flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-2">
+          <span class="text-tui-muted text-xs">类型 Type:</span>
+          <button class="filter-btn active">全部 All</button>
+          <button class="filter-btn">止损 StopLoss</button>
+          <button class="filter-btn">仓位 Position</button>
+          <button class="filter-btn">VaR</button>
+          <button class="filter-btn">压力测试 Stress</button>
+        </div>
+        <div class="w-px h-5 bg-tui-border"></div>
+        <div class="flex items-center gap-2">
+          <span class="text-tui-muted text-xs">级别 Severity:</span>
+          <button class="filter-btn">Critical</button>
+          <button class="filter-btn">High</button>
+          <button class="filter-btn active">Medium</button>
+          <button class="filter-btn">Low</button>
+        </div>
+        <div class="flex-1"></div>
+        <button class="cmd-btn text-tui-red">Run Stress Test</button>
+      </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Box 2: RiskIndicatorBox - Left -->
+      <div class="flex flex-col overflow-y-auto scrollbar-thin" style="width:250px;min-width:250px;border-right:1px solid #30363d;">
+        <div class="tui-box-title border-t-0">
+          <span class="box-number">2</span>
+          <span>RiskMetrics / 风险指标</span>
+        </div>
+        <div class="p-3 space-y-4">
+          <!-- VaR Gauge -->
+          <div class="risk-card">
+            <div class="text-tui-muted text-xs mb-2">VaR (Value at Risk)</div>
+            <div class="flex items-center justify-center">
+              <svg width="110" height="70" viewBox="0 0 110 70">
+                <path d="M10 65 A50 50 0 0 1 100 65" fill="none" stroke="#21262d" stroke-width="8" stroke-linecap="round"/>
+                <path d="M10 65 A50 50 0 0 1 73 18" fill="none" stroke="#d29922" stroke-width="8" stroke-linecap="round"/>
+                <circle cx="55" cy="65" r="4" fill="#d29922"/>
+              </svg>
+            </div>
+            <div class="text-center mt-1">
+              <span class="text-tui-yellow text-xl font-bold glow-yellow">¥2.34M</span>
+              <div class="text-tui-muted text-xs">95% CI / 1-Day</div>
+              <div class="text-tui-yellow text-xs">限额 ¥3M (78.0%)</div>
+            </div>
+          </div>
+
+          <!-- Max Drawdown -->
+          <div class="risk-card">
+            <div class="text-tui-muted text-xs mb-1">最大回撤 Max Drawdown</div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-tui-red text-xl font-bold glow-red">-6.82%</span>
+              <span class="text-tui-muted text-xs">/ 限 -10%</span>
+            </div>
+            <div class="progress-bar mt-2">
+              <div class="progress-fill bg-tui-red" style="width:68.2%"></div>
+            </div>
+            <div class="text-tui-muted text-xs mt-1">触发于 2026-04-18</div>
+          </div>
+
+          <!-- Position Usage -->
+          <div class="risk-card">
+            <div class="text-tui-muted text-xs mb-1">仓位使用率 Position Usage</div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-tui-cyan text-xl font-bold">72.5%</span>
+              <span class="text-tui-muted text-xs">/ 限 85%</span>
+            </div>
+            <div class="progress-bar mt-2">
+              <div class="progress-fill bg-tui-cyan" style="width:72.5%"></div>
+            </div>
+            <div class="flex justify-between mt-1">
+              <span class="text-tui-muted text-xs">A股 45.2%</span>
+              <span class="text-tui-muted text-xs">海外 18.8%</span>
+              <span class="text-tui-muted text-xs">外汇 8.5%</span>
+            </div>
+          </div>
+
+          <!-- Risk Level -->
+          <div class="risk-card">
+            <div class="text-tui-muted text-xs mb-1">风险等级 Risk Level</div>
+            <div class="flex items-center gap-2">
+              <span class="text-tui-yellow text-2xl font-bold glow-yellow">MEDIUM</span>
+              <span class="text-tui-yellow text-xs">中等</span>
+            </div>
+            <div class="flex gap-1 mt-2">
+              <div class="h-2 flex-1 rounded bg-tui-green"></div>
+              <div class="h-2 flex-1 rounded bg-tui-yellow"></div>
+              <div class="h-2 flex-1 rounded bg-tui-yellow animate-pulse-slow"></div>
+              <div class="h-2 flex-1 rounded bg-tui-border"></div>
+              <div class="h-2 flex-1 rounded bg-tui-border"></div>
+            </div>
+            <div class="flex justify-between text-tui-muted text-xs mt-1">
+              <span>Low</span><span>Med</span><span>High</span><span>Crit</span><span>Extreme</span>
+            </div>
+          </div>
+
+          <!-- Sector Exposure -->
+          <div class="risk-card">
+            <div class="text-tui-muted text-xs mb-2">行业集中度 Sector Exposure</div>
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span>金融 Finance</span>
+                <span class="text-tui-yellow">28.3%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill bg-tui-yellow" style="width:56.6%"></div></div>
+              <div class="flex items-center justify-between text-xs">
+                <span>科技 Tech</span>
+                <span class="text-tui-blue">22.1%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill bg-tui-blue" style="width:44.2%"></div></div>
+              <div class="flex items-center justify-between text-xs">
+                <span>消费 Consumer</span>
+                <span class="text-tui-green">15.8%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill bg-tui-green" style="width:31.6%"></div></div>
+              <div class="flex items-center justify-between text-xs">
+                <span>能源 Energy</span>
+                <span class="text-tui-cyan">6.3%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill bg-tui-cyan" style="width:12.6%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 3: RiskAlertBox - Center -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="tui-box-title border-t-0">
+          <span class="box-number">3</span>
+          <span>RiskAlerts / 风险告警与规则</span>
+          <span class="flex-1"></span>
+          <span class="tag tag-red">3 Active</span>
+          <span class="tag tag-yellow ml-1">2 Warning</span>
+        </div>
+
+        <!-- Wind Control Gates -->
+        <div class="p-3 border-b border-tui-border" style="background:#161b22;">
+          <div class="text-xs font-semibold text-tui-muted mb-2">Wind Control Gates / 风控关卡</div>
+          <div class="flex items-center justify-center gap-0">
+            <div class="gate-step">
+              <div class="gate-dot bg-tui-green text-tui-bg">G1</div>
+              <div class="text-xs">
+                <div class="text-tui-green text-xs font-semibold">参数合理性</div>
+                <div class="text-tui-muted text-xs">Param Check</div>
+              </div>
+            </div>
+            <div class="gate-line bg-tui-green"></div>
+            <div class="gate-step">
+              <div class="gate-dot bg-tui-green text-tui-bg">G2</div>
+              <div class="text-xs">
+                <div class="text-tui-green text-xs font-semibold">压力测试</div>
+                <div class="text-tui-muted text-xs">Stress Test</div>
+              </div>
+            </div>
+            <div class="gate-line bg-tui-green"></div>
+            <div class="gate-step">
+              <div class="gate-dot bg-tui-yellow text-tui-bg">G3</div>
+              <div class="text-xs">
+                <div class="text-tui-yellow text-xs font-semibold">规则确认</div>
+                <div class="text-tui-muted text-xs">Rule Confirm</div>
+              </div>
+            </div>
+            <div class="gate-line" style="background:#484f58;"></div>
+            <div class="gate-step">
+              <div class="gate-dot" style="background:#484f58;color:#0d1117;">G4</div>
+              <div class="text-xs">
+                <div class="text-tui-muted text-xs font-semibold">运行时生效</div>
+                <div class="text-tui-muted text-xs">Runtime Active</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerts List -->
+        <div class="flex-1 overflow-auto scrollbar-thin">
+          <!-- Critical Alert -->
+          <div class="list-item" style="border-left:3px solid #f85149;">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="tag tag-red">CRITICAL</span>
+              <span class="text-tui-text text-xs font-semibold">VaR 接近限额</span>
+              <span class="flex-1"></span>
+              <span class="text-tui-muted text-xs">09:28:15</span>
+            </div>
+            <div class="text-xs text-tui-text">组合 VaR 已达 ¥2.34M（限额 ¥3M 的 78%）。AlphaMomentum 策略贡献最大风险敞口 ¥860K。建议降低高波动标的仓位。</div>
+            <div class="flex gap-2 mt-1">
+              <button class="cmd-btn text-xs text-tui-red">Reduce Position</button>
+              <button class="cmd-btn text-xs text-tui-yellow">Acknowledge</button>
+              <button class="cmd-btn text-xs">Dismiss</button>
+            </div>
+          </div>
+
+          <!-- Critical Alert 2 -->
+          <div class="list-item" style="border-left:3px solid #f85149;">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="tag tag-red">CRITICAL</span>
+              <span class="text-tui-text text-xs font-semibold">止损触发 EUR/USD</span>
+              <span class="flex-1"></span>
+              <span class="text-tui-muted text-xs">09:25:03</span>
+            </div>
+            <div class="text-xs text-tui-text">StatArb-FX 策略 EUR/USD 头寸浮亏已达 ¥45,600，接近止损线 ¥63,200。当前亏损率 -3.6% / 限 -5%。</div>
+            <div class="flex gap-2 mt-1">
+              <button class="cmd-btn text-xs text-tui-red">Force Close</button>
+              <button class="cmd-btn text-xs text-tui-yellow">Widen Stop</button>
+            </div>
+          </div>
+
+          <!-- High Alert -->
+          <div class="list-item" style="border-left:3px solid #d29922;">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="tag tag-yellow">HIGH</span>
+              <span class="text-tui-text text-xs font-semibold">集中度超限 金融板块</span>
+              <span class="flex-1"></span>
+              <span class="text-tui-muted text-xs">09:20:00</span>
+            </div>
+            <div class="text-xs text-tui-text">金融板块持仓占比 28.3%，超过 25% 集中度限制。涉及标的：601318(平安保险)、600036(招商银行)、601398(工商银行)。</div>
+            <div class="flex gap-2 mt-1">
+              <button class="cmd-btn text-xs text-tui-yellow">Rebalance</button>
+              <button class="cmd-btn text-xs">View Details</button>
+            </div>
+          </div>
+
+          <!-- Warning -->
+          <div class="list-item" style="border-left:3px solid #d29922;">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="tag tag-yellow">WARNING</span>
+              <span class="text-tui-text text-xs font-semibold">回撤接近阈值</span>
+              <span class="flex-1"></span>
+              <span class="text-tui-muted text-xs">08:45:00</span>
+            </div>
+            <div class="text-xs text-tui-text">VolBreakout 策略当前回撤 -8.2%，接近 -10% 强制止损线。策略自 2026-04-18 起持续回撤。</div>
+          </div>
+
+          <!-- Medium Alert -->
+          <div class="list-item" style="border-left:3px solid #388bfd;">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="tag tag-blue">MEDIUM</span>
+              <span class="text-tui-text text-xs font-semibold">G3规则确认待审批</span>
+              <span class="flex-1"></span>
+              <span class="text-tui-muted text-xs">09:15:00</span>
+            </div>
+            <div class="text-xs text-tui-text">VolBreakout 策略参数修改已通过 G1、G2，等待 G3 规则确认。修改内容：止损线 -10% → -8%，仓位上限 15% → 12%。</div>
+            <div class="flex gap-2 mt-1">
+              <a href="01-approval-center.html" class="cmd-btn text-xs text-tui-blue">Go to Approval</a>
+            </div>
+          </div>
+
+          <!-- Stress Test Results -->
+          <div class="p-3 border-t border-tui-border" style="background:#161b22;">
+            <div class="text-xs font-semibold text-tui-muted mb-2">Stress Test Results / 压力测试结果</div>
+            <div class="grid grid-cols-3 gap-2">
+              <div class="risk-card">
+                <div class="text-tui-muted text-xs">2015股灾</div>
+                <div class="text-tui-red text-sm font-bold">-18.3%</div>
+                <div class="text-tui-muted text-xs">VaR: ¥4.2M</div>
+              </div>
+              <div class="risk-card">
+                <div class="text-tui-muted text-xs">2020新冠</div>
+                <div class="text-tui-red text-sm font-bold">-12.7%</div>
+                <div class="text-tui-muted text-xs">VaR: ¥3.1M</div>
+              </div>
+              <div class="risk-card">
+                <div class="text-tui-muted text-xs">利率+200bp</div>
+                <div class="text-tui-yellow text-sm font-bold">-7.4%</div>
+                <div class="text-tui-muted text-xs">VaR: ¥2.8M</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Risk Rules Status -->
+          <div class="p-3 border-t border-tui-border">
+            <div class="text-xs font-semibold text-tui-muted mb-2">Active Risk Rules / 活跃风控规则</div>
+            <div class="space-y-2">
+              <div class="flex items-center gap-2 text-xs">
+                <span class="w-2 h-2 rounded-full bg-tui-green"></span>
+                <span class="text-tui-text flex-1">单标的止损 Single Stock StopLoss</span>
+                <span class="tag tag-green">Active</span>
+                <span class="text-tui-muted">限 -5%</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="w-2 h-2 rounded-full bg-tui-green"></span>
+                <span class="text-tui-text flex-1">组合VaR限制 Portfolio VaR</span>
+                <span class="tag tag-green">Active</span>
+                <span class="text-tui-muted">限 ¥3M</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="w-2 h-2 rounded-full bg-tui-yellow"></span>
+                <span class="text-tui-text flex-1">行业集中度 Sector Concentration</span>
+                <span class="tag tag-yellow">Triggered</span>
+                <span class="text-tui-muted">限 25%</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="w-2 h-2 rounded-full bg-tui-green"></span>
+                <span class="text-tui-text flex-1">最大回撤 Max Drawdown</span>
+                <span class="tag tag-green">Active</span>
+                <span class="text-tui-muted">限 -10%</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="w-2 h-2 rounded-full bg-tui-green"></span>
+                <span class="text-tui-text flex-1">相关性限制 Correlation Limit</span>
+                <span class="tag tag-green">Active</span>
+                <span class="text-tui-muted">限 0.7</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="w-2 h-2 rounded-full bg-tui-green"></span>
+                <span class="text-tui-text flex-1">流动性检测 Liquidity Check</span>
+                <span class="tag tag-green">Active</span>
+                <span class="text-tui-muted">> ¥500K/d</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 4: AgentChatBox - Right -->
+      <div class="flex flex-col overflow-hidden" style="width:320px;min-width:320px;border-left:1px solid #30363d;">
+        <div class="tui-box-title border-t-0">
+          <span class="box-number">4</span>
+          <span>Risk Agent / 风险助手</span>
+          <span class="flex-1"></span>
+          <span class="w-2 h-2 rounded-full bg-tui-green animate-pulse-slow"></span>
+          <span class="text-tui-green text-xs">Online</span>
+        </div>
+        <div class="flex-1 overflow-auto p-3 space-y-3 scrollbar-thin">
+          <div class="chat-agent">
+            <div class="text-tui-blue text-xs font-semibold mb-1">Risk Agent</div>
+            <div><span class="text-tui-red font-semibold">CRITICAL:</span> 检测到 <span class="text-tui-yellow">3</span> 个活跃风险告警。最紧急：VaR 接近限额（78%），建议立即评估是否需要减仓。</div>
+            <div class="text-tui-muted text-xs mt-1">09:28:20</div>
+          </div>
+          <div class="chat-user">
+            <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+            <div>分析 AlphaMomentum 策略的风险贡献。</div>
+            <div class="text-tui-muted text-xs mt-1">09:25:00</div>
+          </div>
+          <div class="chat-agent">
+            <div class="text-tui-blue text-xs font-semibold mb-1">Risk Agent</div>
+            <div>AlphaMomentum 当前风险贡献：</div>
+            <div class="mt-1 text-xs">
+              - VaR贡献: <span class="text-tui-red">¥860K</span> (36.8%)<br>
+              - 最大回撤: -8.5%<br>
+              - Beta: 1.32 (高市场敏感度)<br>
+              - 持仓集中: 600519.SH 占策略仓位 42%
+            </div>
+            <div class="text-tui-yellow text-xs mt-1">建议: 减少 600519.SH 仓位至策略30%以下。</div>
+            <div class="text-tui-muted text-xs mt-1">09:25:05</div>
+          </div>
+          <div class="chat-user">
+            <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+            <div>VolBreakout 的 G3 规则确认进度如何？</div>
+            <div class="text-tui-muted text-xs mt-1">09:20:00</div>
+          </div>
+          <div class="chat-agent">
+            <div class="text-tui-blue text-xs font-semibold mb-1">Risk Agent</div>
+            <div>VolBreakout 策略参数修改审批状态：</div>
+            <div class="mt-1 text-xs">
+              G1 参数合理性 <span class="text-tui-green">PASS</span> (09:10)<br>
+              G2 压力测试 <span class="text-tui-green">PASS</span> (09:12)<br>
+              G3 规则确认 <span class="text-tui-yellow">PENDING</span> (等待合规官审批)<br>
+              G4 运行时生效 <span class="text-tui-muted">BLOCKED</span>
+            </div>
+            <div class="text-tui-blue text-xs mt-1">已提交至 <a href="01-approval-center.html" class="text-tui-blue underline">审批中心</a>，预计 30 分钟内完成。</div>
+            <div class="text-tui-muted text-xs mt-1">09:20:02</div>
+          </div>
+          <div class="chat-agent">
+            <div class="text-tui-blue text-xs font-semibold mb-1">Risk Agent</div>
+            <div>压力测试更新：在"2020新冠"情景下，组合最大亏损 -12.7%，超过风险容忍度。建议增加对冲头寸。</div>
+            <div class="text-tui-muted text-xs mt-1">09:15:00</div>
+          </div>
+        </div>
+        <div class="p-3 border-t border-tui-border" style="background:#161b22;">
+          <div class="flex items-center gap-2">
+            <input type="text" placeholder="输入风险查询... (Enter)" class="flex-1 bg-tui-bg border border-tui-border rounded px-3 py-1.5 text-xs text-tui-text focus:outline-none focus:border-tui-blue">
+            <button class="cmd-btn text-tui-blue">Send</button>
+          </div>
+          <div class="flex gap-2 mt-2">
+            <button class="cmd-btn text-xs">/var</button>
+            <button class="cmd-btn text-xs">/stress</button>
+            <button class="cmd-btn text-xs">/position</button>
+            <button class="cmd-btn text-xs">/exposure</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="flex items-center px-3 py-1 text-xs border-t border-tui-border" style="background:#161b22;">
+    <span class="text-tui-red font-semibold">RISK MONITOR</span>
+    <span class="mx-2 text-tui-border">|</span>
+    <span class="nav-section flex items-center gap-1">
+      <span class="key">1</span><span class="text-tui-muted">Filter</span>
+      <span class="key">2</span><span class="text-tui-muted">Metrics</span>
+      <span class="key">3</span><span class="text-tui-muted">Alerts</span>
+      <span class="key">4</span><span class="text-tui-muted">Agent</span>
+    </span>
+    <span class="nav-section flex items-center gap-1 px-2">
+      <span class="key">Tab</span><span class="text-tui-muted">Cycle</span>
+      <span class="key">/</span><span class="text-tui-muted">Command</span>
+    </span>
+    <span class="flex-1"></span>
+    <span class="nav-section flex items-center gap-2 px-2">
+      <a href="00-home.html" class="nav-item hover:text-tui-text">q Home</a>
+      <a href="10-trading-execution.html" class="nav-item hover:text-tui-text">Trading</a>
+      <a href="01-approval-center.html" class="nav-item hover:text-tui-text">Approval</a>
+      <a href="03-compliance-dashboard.html" class="nav-item hover:text-tui-text">Compliance</a>
+      <a href="02-agent-collaboration.html" class="nav-item hover:text-tui-text">Agents</a>
+      <a href="16-workflow-panel.html" class="nav-item hover:text-tui-text">Workflow</a>
+    </span>
+    <span class="text-tui-yellow ml-2">VaR 78% | 3 Alerts</span>
+  </div>
+</div>
+
+</body>
+</html>

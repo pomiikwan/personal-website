@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 情绪分析 | Sentiment Analysis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#38d3d7',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+      },
+      fontFamily: {
+        'mono': ['JetBrains Mono', 'monospace'],
+        'sans': ['Noto Sans SC', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0d1117; color:#c9d1d9; font-family:'Noto Sans SC','JetBrains Mono',monospace; overflow:hidden; height:100vh; }
+  .terminal-frame { border:1px solid #30363d; border-radius:8px; overflow:hidden; height:100vh; display:flex; flex-direction:column; }
+  .terminal-titlebar { background:#161b22; border-bottom:1px solid #30363d; padding:8px 16px; display:flex; align-items:center; gap:8px; }
+  .terminal-dots { display:flex; gap:6px; }
+  .terminal-dots span { width:12px; height:12px; border-radius:50%; }
+  .dot-red { background:#f85149; }
+  .dot-yellow { background:#d29922; }
+  .dot-green { background:#3fb950; }
+  .terminal-title { color:#c9d1d9; font-family:'JetBrains Mono',monospace; font-size:13px; margin-left:12px; }
+  .tui-box { background:#0d1117; border:1px solid #30363d; border-radius:6px; overflow:hidden; display:flex; flex-direction:column; }
+  .tui-box.focused { border-color:#388bfd; box-shadow:0 0 0 1px #388bfd; }
+  .tui-box-title { background:#161b22; border-bottom:1px solid #30363d; padding:6px 12px; font-family:'JetBrains Mono',monospace; font-size:12px; color:#c9d1d9; display:flex; align-items:center; gap:8px; }
+  .tui-box-title .box-number { color:#388bfd; font-weight:600; }
+  .key { display:inline-block; background:#21262d; border:1px solid #30363d; border-radius:3px; padding:1px 6px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#c9d1d9; }
+  .tag { display:inline-block; padding:2px 8px; border-radius:3px; font-size:11px; font-family:'JetBrains Mono',monospace; }
+  .tag-green { background:rgba(63,185,80,0.15); color:#3fb950; }
+  .tag-red { background:rgba(248,81,73,0.15); color:#f85149; }
+  .tag-yellow { background:rgba(210,153,34,0.15); color:#d29922; }
+  .tag-blue { background:rgba(56,139,253,0.15); color:#388bfd; }
+  .tag-purple { background:rgba(188,140,255,0.15); color:#bc8cff; }
+  .tag-cyan { background:rgba(56,211,215,0.15); color:#38d3d7; }
+  .tag-orange { background:rgba(210,153,34,0.15); color:#d29922; }
+  .filter-btn { background:#21262d; border:1px solid #30363d; color:#c9d1d9; padding:4px 12px; border-radius:4px; font-size:12px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all 0.15s; }
+  .filter-btn:hover { background:#30363d; }
+  .filter-btn.active { background:rgba(56,139,253,0.2); border-color:#388bfd; color:#388bfd; }
+  .cmd-btn { background:#21262d; border:1px solid #30363d; color:#c9d1d9; padding:6px 14px; border-radius:4px; font-size:12px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all 0.15s; text-decoration:none; display:inline-block; }
+  .cmd-btn:hover { background:#30363d; border-color:#484f58; }
+  .scrollbar-thin::-webkit-scrollbar { width:4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background:#0d1117; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background:#30363d; border-radius:2px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background:#484f58; }
+  .list-item { padding:8px 12px; border-bottom:1px solid #21262d; cursor:pointer; transition:background 0.1s; }
+  .list-item:hover { background:#1c2128; }
+  .list-item.active { background:rgba(56,139,253,0.1); border-left:2px solid #388bfd; }
+  .chat-agent { background:#161b22; border-left:2px solid #388bfd; padding:8px 12px; margin:4px 8px; border-radius:0 6px 6px 0; font-size:12px; }
+  .chat-user { background:#1c2128; border-left:2px solid #bc8cff; padding:8px 12px; margin:4px 8px; border-radius:0 6px 6px 0; font-size:12px; }
+  .glow-green { text-shadow:0 0 8px rgba(63,185,80,0.5); }
+  .glow-red { text-shadow:0 0 8px rgba(248,81,73,0.5); }
+  .glow-blue { text-shadow:0 0 8px rgba(56,139,253,0.5); }
+  .glow-yellow { text-shadow:0 0 8px rgba(210,153,34,0.5); }
+  .status-bar { background:#161b22; border-top:1px solid #30363d; padding:4px 16px; display:flex; align-items:center; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:11px; color:#484f58; }
+  .chain-step { padding:3px 10px; border-radius:3px; background:#21262d; border:1px solid #30363d; color:#484f58; text-decoration:none; }
+  .chain-step.active { background:rgba(56,139,253,0.2); border-color:#388bfd; color:#388bfd; }
+  .chain-arrow { color:#30363d; }
+  .card { background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; }
+
+  .gauge-container { position:relative; width:180px; height:100px; margin:0 auto; }
+  .gauge-bg { fill:none; stroke:#21262d; stroke-width:12; }
+  .gauge-fill { fill:none; stroke-width:12; stroke-linecap:round; transition:stroke-dashoffset 1s ease; }
+  .gauge-text { font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; fill:#c9d1d9; }
+  .gauge-label { font-family:'JetBrains Mono',monospace; font-size:10px; fill:#484f58; }
+
+  .sentiment-bar { height:6px; border-radius:3px; transition:width 0.5s ease; }
+  @keyframes pulse-slow { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .pulse-slow { animation: pulse-slow 2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div class="terminal-frame">
+  <!-- Title Bar -->
+  <div class="terminal-titlebar">
+    <div class="terminal-dots">
+      <a href="00-home.html" style="text-decoration:none"><span class="dot-red"></span></a>
+      <span class="dot-yellow"></span>
+      <span class="dot-green"></span>
+    </div>
+    <span class="terminal-title">SXA v2.1.0 | 情绪分析 Sentiment Analysis</span>
+    <div style="flex:1"></div>
+    <span style="color:#484f58; font-size:11px; font-family:'JetBrains Mono',monospace;">
+      <span class="key">ESC</span> Home &nbsp;
+      <span class="key">1-4</span> Focus &nbsp;
+      <span class="key">Tab</span> Cycle &nbsp;
+      <span class="key">/</span> Command
+    </span>
+  </div>
+
+  <!-- Analysis Chain -->
+  <div style="background:#161b22; border-bottom:1px solid #30363d; padding:6px 16px; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:11px;">
+      <span style="color:#484f58; margin-right:8px;">分析链路 Pipeline:</span>
+      <a href="09-market-overview.html" style="text-decoration:none"><span class="chain-step">Step 1: 市场接入</span></a>
+      <span class="chain-arrow">→</span>
+      <a href="14-macro-analysis.html" style="text-decoration:none"><span class="chain-step">Step 2: 宏观分析</span></a>
+      <span class="chain-arrow">→</span>
+      <span class="chain-step active">Step 3: 情绪分析 ●</span>
+      <span class="chain-arrow">→</span>
+      <a href="13-signal-aggregation.html" style="text-decoration:none"><span class="chain-step">Step 4: 信号聚合</span></a>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="14-macro-analysis.html" class="cmd-btn" style="border-color:#484f58; color:#484f58;">← 上一步: 宏观分析</a>
+      <a href="13-signal-aggregation.html" class="cmd-btn" style="border-color:#3fb950; color:#3fb950;">下一步: 信号聚合 →</a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+    <!-- Box 1: SentimentFilterBox -->
+    <div class="tui-box focused" style="margin:8px 8px 4px 8px; flex-shrink:0;">
+      <div class="tui-box-title">
+        <span class="box-number">[1]</span>
+        <span>SentimentFilterBox | 情绪筛选</span>
+        <span class="tag tag-yellow">SENTIMENT</span>
+        <span class="pulse-slow" style="width:6px;height:6px;background:#3fb950;border-radius:50%;display:inline-block;"></span>
+      </div>
+      <div style="padding:8px 12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="color:#484f58; font-size:11px;">标的 Symbol:</span>
+          <button class="filter-btn active">全部 A股</button>
+          <button class="filter-btn">沪深300</button>
+          <button class="filter-btn">中芯国际</button>
+          <button class="filter-btn">宁德时代</button>
+        </div>
+        <div style="width:1px; height:20px; background:#30363d;"></div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="color:#484f58; font-size:11px;">情绪类型 Type:</span>
+          <button class="filter-btn active">恐慌贪婪指数</button>
+          <button class="filter-btn">舆情热度</button>
+          <button class="filter-btn">资金流向</button>
+          <button class="filter-btn">社交媒体</button>
+        </div>
+        <div style="width:1px; height:20px; background:#30363d;"></div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="color:#484f58; font-size:11px;">周期 Period:</span>
+          <button class="filter-btn">1D</button>
+          <button class="filter-btn">1W</button>
+          <button class="filter-btn active">1M</button>
+          <button class="filter-btn">3M</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body: Three columns -->
+    <div style="flex:1; display:flex; gap:4px; padding:0 8px; overflow:hidden;">
+      <!-- Box 2: SentimentScoreBox (250px) -->
+      <div class="tui-box" style="width:250px; flex-shrink:0;">
+        <div class="tui-box-title">
+          <span class="box-number">[2]</span>
+          <span>SentimentScore | 情绪评分</span>
+        </div>
+        <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:10px;">
+          <!-- Fear & Greed Gauge -->
+          <div class="card" style="margin-bottom:10px; text-align:center;">
+            <div style="font-size:11px; color:#484f58; margin-bottom:8px;">恐慌贪婪指数 Fear & Greed Index</div>
+            <svg width="180" height="105" viewBox="0 0 180 105" style="margin:0 auto; display:block;">
+              <!-- Gauge background arc -->
+              <path d="M 15 95 A 75 75 0 0 1 165 95" class="gauge-bg" stroke="#21262d" stroke-width="14" fill="none" stroke-linecap="round"/>
+              <!-- Colored segments -->
+              <path d="M 15 95 A 75 75 0 0 1 45 35" stroke="#f85149" stroke-width="14" fill="none" stroke-linecap="round"/>
+              <path d="M 45 35 A 75 75 0 0 1 75 18" stroke="#d29922" stroke-width="14" fill="none"/>
+              <path d="M 75 18 A 75 75 0 0 1 105 18" stroke="#8b949e" stroke-width="14" fill="none"/>
+              <path d="M 105 18 A 75 75 0 0 1 135 35" stroke="#3fb950" stroke-width="14" fill="none"/>
+              <path d="M 135 35 A 75 75 0 0 1 165 95" stroke="#3fb950" stroke-width="14" fill="none" stroke-linecap="round"/>
+              <!-- Needle indicator at 65 (greed zone) -->
+              <line x1="90" y1="95" x2="128" y2="40" stroke="#c9d1d9" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="90" cy="95" r="5" fill="#c9d1d9"/>
+              <!-- Value text -->
+              <text x="90" y="80" text-anchor="middle" class="gauge-text" font-size="32" font-weight="700" fill="#3fb950">65</text>
+              <!-- Labels -->
+              <text x="15" y="105" class="gauge-label" font-size="9" fill="#f85149">恐慌</text>
+              <text x="72" y="8" class="gauge-label" font-size="9" fill="#8b949e">中性</text>
+              <text x="155" y="105" class="gauge-label" font-size="9" fill="#3fb950">贪婪</text>
+            </svg>
+            <div style="margin-top:6px;">
+              <span class="tag tag-green" style="font-size:13px; font-weight:600;">偏贪婪 Greedy</span>
+            </div>
+            <div style="color:#484f58; font-size:10px; margin-top:4px;">前值 58 | 变化 +7 | 30日最高 72</div>
+          </div>
+
+          <!-- 舆情热度排名 -->
+          <div class="card" style="margin-bottom:10px;">
+            <div style="font-size:11px; color:#484f58; margin-bottom:8px;">舆情热度排名 Hot Topics</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;">
+                  <span style="color:#c9d1d9;">半导体国产替代</span>
+                  <span style="color:#f85149;" class="glow-red">98</span>
+                </div>
+                <div style="height:4px; background:#21262d; border-radius:2px;">
+                  <div class="sentiment-bar" style="width:98%; background:linear-gradient(90deg,#d29922,#f85149);"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;">
+                  <span style="color:#c9d1d9;">新能源汽车出海</span>
+                  <span style="color:#f85149;">92</span>
+                </div>
+                <div style="height:4px; background:#21262d; border-radius:2px;">
+                  <div class="sentiment-bar" style="width:92%; background:linear-gradient(90deg,#d29922,#f85149);"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;">
+                  <span style="color:#c9d1d9;">AI芯片制裁升级</span>
+                  <span style="color:#d29922;">87</span>
+                </div>
+                <div style="height:4px; background:#21262d; border-radius:2px;">
+                  <div class="sentiment-bar" style="width:87%; background:linear-gradient(90deg,#d29922,#d29922);"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;">
+                  <span style="color:#c9d1d9;">央行降准预期</span>
+                  <span style="color:#d29922;">79</span>
+                </div>
+                <div style="height:4px; background:#21262d; border-radius:2px;">
+                  <div class="sentiment-bar" style="width:79%; background:#d29922;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;">
+                  <span style="color:#c9d1d9;">地产政策放松</span>
+                  <span style="color:#388bfd;">71</span>
+                </div>
+                <div style="height:4px; background:#21262d; border-radius:2px;">
+                  <div class="sentiment-bar" style="width:71%; background:#388bfd;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;">
+                  <span style="color:#c9d1d9;">北向资金净流入</span>
+                  <span style="color:#388bfd;">65</span>
+                </div>
+                <div style="height:4px; background:#21262d; border-radius:2px;">
+                  <div class="sentiment-bar" style="width:65%; background:#388bfd;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 社交媒体情绪 -->
+          <div class="card">
+            <div style="font-size:11px; color:#484f58; margin-bottom:8px;">社交媒体情绪 Social Sentiment</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px;">
+                  <span style="color:#c9d1d9;">东方财富股吧</span>
+                  <span style="color:#3fb950;">看多 62%</span>
+                </div>
+                <div style="height:5px; background:#21262d; border-radius:2px; display:flex; overflow:hidden; margin-top:3px;">
+                  <div style="width:62%; background:#3fb950;"></div>
+                  <div style="width:14%; background:#d29922;"></div>
+                  <div style="width:24%; background:#f85149;"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:9px; color:#484f58; margin-top:2px;">
+                  <span style="color:#3fb950;">看多 62%</span>
+                  <span style="color:#d29922;">中性 14%</span>
+                  <span style="color:#f85149;">看空 24%</span>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px;">
+                  <span style="color:#c9d1d9;">雪球</span>
+                  <span style="color:#3fb950;">看多 57%</span>
+                </div>
+                <div style="height:5px; background:#21262d; border-radius:2px; display:flex; overflow:hidden; margin-top:3px;">
+                  <div style="width:57%; background:#3fb950;"></div>
+                  <div style="width:18%; background:#d29922;"></div>
+                  <div style="width:25%; background:#f85149;"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:9px; color:#484f58; margin-top:2px;">
+                  <span style="color:#3fb950;">看多 57%</span>
+                  <span style="color:#d29922;">中性 18%</span>
+                  <span style="color:#f85149;">看空 25%</span>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:11px;">
+                  <span style="color:#c9d1d9;">微博财经</span>
+                  <span style="color:#3fb950;">看多 68%</span>
+                </div>
+                <div style="height:5px; background:#21262d; border-radius:2px; display:flex; overflow:hidden; margin-top:3px;">
+                  <div style="width:68%; background:#3fb950;"></div>
+                  <div style="width:12%; background:#d29922;"></div>
+                  <div style="width:20%; background:#f85149;"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:9px; color:#484f58; margin-top:2px;">
+                  <span style="color:#3fb950;">看多 68%</span>
+                  <span style="color:#d29922;">中性 12%</span>
+                  <span style="color:#f85149;">看空 20%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 3: SentimentDetailBox -->
+      <div class="tui-box" style="flex:1; margin:0 4px;">
+        <div class="tui-box-title">
+          <span class="box-number">[3]</span>
+          <span>SentimentDetailBox | 情绪详细分析</span>
+          <span class="tag tag-yellow">ANALYZING</span>
+        </div>
+        <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:10px;">
+          <!-- 情绪趋势图 -->
+          <div class="card" style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="font-size:13px; font-weight:600; color:#c9d1d9;">情绪趋势 Sentiment Trend (30D)</div>
+              <div style="display:flex; gap:8px;">
+                <span class="tag tag-green">恐慌贪婪指数</span>
+                <span class="tag tag-blue">舆情热度</span>
+              </div>
+            </div>
+            <!-- ASCII-style chart -->
+            <div style="background:#0d1117; border:1px solid #21262d; border-radius:4px; padding:10px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#484f58; overflow-x:auto;">
+              <pre style="line-height:1.4;">
+100 ┤                                                          ╭──
+ 90 ┤                                                    ╭────╯
+ 80 ┤                                              ╭─────╯
+ 70 ┤                                        ╭─────╯     ← 当前 65
+ 60 ┤                              ╭─────────╯
+ 50 ┤                    ╭─────────╯    ← 30日均线 56
+ 40 ┤          ╭─────────╯
+ 30 ┤    ╭─────╯
+ 20 ┤────╯  ← 恐慌区间
+ 10 ┤
+  0 ┼────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬──
+    4/10 4/13 4/16 4/19 4/22 4/25 4/28 5/01 5/04 5/07 5/10</pre>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px;">
+              <span style="color:#3fb950;">当前: 65 (偏贪婪)</span>
+              <span style="color:#d29922;">30日均值: 56</span>
+              <span style="color:#3fb950;">趋势: 上升 ↑</span>
+              <span style="color:#388bfd;">波动率: 12.3%</span>
+            </div>
+          </div>
+
+          <!-- 重大情绪事件 -->
+          <div class="card" style="margin-bottom:10px;">
+            <div style="font-size:13px; font-weight:600; color:#c9d1d9; margin-bottom:8px;">重大情绪事件 Key Sentiment Events</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div style="background:#0d1117; border:1px solid #21262d; border-radius:4px; padding:8px; display:flex; gap:10px; align-items:flex-start;">
+                <div style="width:4px; min-height:40px; background:#3fb950; border-radius:2px; flex-shrink:0;"></div>
+                <div style="flex:1;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; font-weight:500; color:#3fb950;">半导体板块集体暴涨</span>
+                    <span style="font-size:10px; color:#484f58;">05-09 14:32</span>
+                  </div>
+                  <div style="font-size:11px; color:#8b949e; margin-top:3px;">市场对国产替代信心增强，中芯国际涨停带动板块情绪。相关话题讨论量暴增280%。</div>
+                  <div style="display:flex; gap:4px; margin-top:4px;">
+                    <span class="tag tag-green">正面</span>
+                    <span class="tag tag-blue">影响度: HIGH</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background:#0d1117; border:1px solid #21262d; border-radius:4px; padding:8px; display:flex; gap:10px; align-items:flex-start;">
+                <div style="width:4px; min-height:40px; background:#3fb950; border-radius:2px; flex-shrink:0;"></div>
+                <div style="flex:1;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; font-weight:500; color:#3fb950;">北向资金连续5日净流入</span>
+                    <span style="font-size:10px; color:#484f58;">05-09 16:00</span>
+                  </div>
+                  <div style="font-size:11px; color:#8b949e; margin-top:3px;">北向资金今日净买入42.3亿，连续5日累计净买入超180亿。外资持续加仓A股，提振市场信心。</div>
+                  <div style="display:flex; gap:4px; margin-top:4px;">
+                    <span class="tag tag-green">正面</span>
+                    <span class="tag tag-blue">影响度: MED</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background:#0d1117; border:1px solid #21262d; border-radius:4px; padding:8px; display:flex; gap:10px; align-items:flex-start;">
+                <div style="width:4px; min-height:40px; background:#f85149; border-radius:2px; flex-shrink:0;"></div>
+                <div style="flex:1;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; font-weight:500; color:#f85149;">美国拟扩大芯片出口限制</span>
+                    <span style="font-size:10px; color:#484f58;">05-08 22:15</span>
+                  </div>
+                  <div style="font-size:11px; color:#8b949e; margin-top:3px;">外媒报道美国正考虑扩大对华芯片出口管制范围，引发短期避险情绪，但随后市场消化为国产替代利好。</div>
+                  <div style="display:flex; gap:4px; margin-top:4px;">
+                    <span class="tag tag-red">负面转正面</span>
+                    <span class="tag tag-yellow">影响度: HIGH</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background:#0d1117; border:1px solid #21262d; border-radius:4px; padding:8px; display:flex; gap:10px; align-items:flex-start;">
+                <div style="width:4px; min-height:40px; background:#d29922; border-radius:2px; flex-shrink:0;"></div>
+                <div style="flex:1;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; font-weight:500; color:#d29922;">地产板块继续承压</span>
+                    <span style="font-size:10px; color:#484f58;">05-09 10:20</span>
+                  </div>
+                  <div style="font-size:11px; color:#8b949e; margin-top:3px;">4月销售数据不及预期，房企信用风险担忧再起。地产板块连续3日资金净流出。</div>
+                  <div style="display:flex; gap:4px; margin-top:4px;">
+                    <span class="tag tag-red">负面</span>
+                    <span class="tag tag-yellow">影响度: MED</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 资金流向情绪分析 -->
+          <div class="card" style="margin-bottom:10px;">
+            <div style="font-size:13px; font-weight:600; color:#c9d1d9; margin-bottom:8px;">资金流向情绪分析 Capital Flow Sentiment</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+              <div style="background:#0d1117; border:1px solid #21262d; border-radius:4px; padding:8px; text-align:center;">
+                <div style="font-size:10px; color:#484f58; margin-bottom:4px;">主力情绪 Main Force</div>
+                <div style="font-size:18px; font-weight:700; color:#3fb950;" class="glow-green">偏多</div>
+                <div style="font-size:10px; color:#8b949e; margin-top:2px;">主力净流入集中在科技/新能源</div>
+              </div>
+              <div style="background:#0d1117; border:1px solid #21262d; border-radius:4px; padding:8px; text-align:center;">
+                <div style="font-size:10px; color:#484f58; margin-bottom:4px;">散户情绪 Retail</div>
+                <div style="font-size:18px; font-weight:700; color:#d29922;">观望</div>
+                <div style="font-size:10px; color:#8b949e; margin-top:2px;">散户资金净流出，追涨意愿降低</div>
+              </div>
+              <div style="background:#0d1117; border:1px solid #21262d; border-radius:4px; padding:8px; text-align:center;">
+                <div style="font-size:10px; color:#484f58; margin-bottom:4px;">外资情绪 Foreign</div>
+                <div style="font-size:18px; font-weight:700; color:#3fb950;" class="glow-green">看多</div>
+                <div style="font-size:10px; color:#8b949e; margin-top:2px;">北向连续5日净流入，信心增强</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sentiment Agent 分析摘要 -->
+          <div class="card" style="border-color:#d29922; border-width:1px;">
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+              <span style="color:#d29922; font-weight:600; font-size:12px;">Sentiment Agent 综合研判</span>
+              <span class="tag tag-yellow">AI Summary</span>
+            </div>
+            <div style="font-size:12px; line-height:1.8; color:#c9d1d9;">
+              <p><span style="color:#3fb950;">情绪面综合判断:</span> 市场情绪从恐慌区间快速回升至<span style="color:#3fb950; font-weight:600;">偏贪婪(65)</span>。半导体和新能源主题驱动情绪高涨，社交媒体看多比例达62%。</p>
+              <p style="margin-top:6px;"><span style="color:#d29922;">需警惕:</span> 1) 恐慌贪婪指数从20附近快速拉升至65，短期可能过热；2) 散户资金净流出与情绪背离；3) 外部地缘政治风险(芯片制裁)可能引发情绪反转。</p>
+              <p style="margin-top:6px;"><span style="color:#388bfd;">与宏观面交叉验证:</span> 宏观经济复苏+情绪回暖形成共振，但情绪过热需要回调消化。建议进入信号聚合阶段综合判断。</p>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+              <a href="13-signal-aggregation.html" class="cmd-btn" style="border-color:#3fb950; color:#3fb950; font-size:11px;">进入信号聚合 →</a>
+              <a href="14-macro-analysis.html" class="cmd-btn" style="font-size:11px;">返回宏观分析</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 4: AgentChatBox -->
+      <div class="tui-box" style="width:310px; flex-shrink:0;">
+        <div class="tui-box-title">
+          <span class="box-number">[4]</span>
+          <span>AgentChatBox | Sentiment Agent</span>
+          <span class="tag tag-cyan">ONLINE</span>
+        </div>
+        <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:4px 0;">
+          <div class="chat-agent">
+            <div style="color:#388bfd; font-size:10px; margin-bottom:4px;">Sentiment Agent | 09:35</div>
+            <div>情绪分析模块已启动。最新扫描结果：<br><br><span style="color:#3fb950;">恐慌贪婪指数: 65 (偏贪婪)</span><br>较上周+7点，情绪快速升温。<br><br>舆情热点Top1: 半导体国产替代(热度98)</div>
+          </div>
+          <div class="chat-user">
+            <div style="color:#bc8cff; font-size:10px; margin-bottom:4px;">You | 09:37</div>
+            <div>情绪指数从20快速拉到65，是否过热？</div>
+          </div>
+          <div class="chat-agent">
+            <div style="color:#388bfd; font-size:10px; margin-bottom:4px;">Sentiment Agent | 09:37</div>
+            <div>好问题。30天内从恐慌(20)快速回升至偏贪婪(65)确实值得关注：<br><br><span style="color:#d29922;">历史上类似快速拉升:</span><br>- 2025年11月: 22→68，随后回调至45<br>- 2025年3月: 18→62，维持高位3周后回调<br><br><span style="color:#3fb950;">本次不同之处:</span><br>1. 有基本面支撑(GDP超预期)<br>2. 资金面配合(北向持续流入)<br>3. 政策面友好(稳增长政策)<br><br>判断：短期有回调压力，但中期趋势偏多。</div>
+          </div>
+          <div class="chat-user">
+            <div style="color:#bc8cff; font-size:10px; margin-bottom:4px;">You | 09:39</div>
+            <div>散户和主力情绪的背离意味着什么？</div>
+          </div>
+          <div class="chat-agent">
+            <div style="color:#388bfd; font-size:10px; margin-bottom:4px;">Sentiment Agent | 09:39</div>
+            <div>散户资金净流出 vs 主力偏多，形成<span style="color:#d29922;">经典的"聪明钱"与"散户"背离</span>：<br><br>历史统计：<br>- 80%概率: 主力正确，行情延续<br>- 20%概率: 散户正确，见顶信号<br><br>当前环境下更倾向主力正确(80%)，因为：<br>1. 北向资金(外资)同步看多<br>2. 宏观面支持权益市场<br>3. 估值仍在合理区间<br><br>建议在信号聚合中综合确认。</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid #30363d; padding:8px;">
+          <div style="display:flex; gap:6px;">
+            <input type="text" placeholder="输入消息或命令... (Enter发送)" style="flex:1; background:#0d1117; border:1px solid #30363d; border-radius:4px; padding:6px 10px; color:#c9d1d9; font-size:12px; font-family:'JetBrains Mono',monospace; outline:none;">
+            <button class="cmd-btn" style="padding:6px 10px; background:rgba(56,139,253,0.2); border-color:#388bfd; color:#388bfd;">Send</button>
+          </div>
+          <div style="display:flex; gap:4px; margin-top:4px;">
+            <button class="cmd-btn" style="font-size:10px; padding:2px 8px;">情绪扫描</button>
+            <button class="cmd-btn" style="font-size:10px; padding:2px 8px;">背离检测</button>
+            <button class="cmd-btn" style="font-size:10px; padding:2px 8px;">事件追踪</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div style="display:flex; gap:12px; align-items:center;">
+      <span><span class="key">1</span> 筛选</span>
+      <span><span class="key">2</span> 评分</span>
+      <span><span class="key">3</span> 详情</span>
+      <span><span class="key">4</span> Agent</span>
+      <span style="color:#30363d;">|</span>
+      <span><span class="key">Tab</span> 切换</span>
+      <span><span class="key">/</span> 命令</span>
+      <span><span class="key">q</span> <a href="00-home.html" style="color:#484f58; text-decoration:none;">首页</a></span>
+      <span><span class="key">F1</span> 帮助</span>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <span style="color:#3fb950;">Fear&Greed: 65 Greedy</span>
+      <span>舆情: 78 热度</span>
+      <span>09:42:18 CST</span>
+      <span style="color:#484f58;">SXA v2.1.0</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

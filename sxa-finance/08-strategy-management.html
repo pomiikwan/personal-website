@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 策略管理面板 / Strategy Management Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#38d3d7',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+    background: #0d1117;
+    color: #c9d1d9;
+    overflow: hidden;
+    height: 100vh;
+  }
+  ::selection { background: #388bfd44; }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  /* Terminal Frame */
+  .terminal-frame {
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #0d1117;
+  }
+  .title-bar {
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .title-bar .dots { display: flex; gap: 8px; }
+  .title-bar .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #f85149; }
+  .dot-yellow { background: #d29922; }
+  .dot-green { background: #3fb950; }
+  .title-bar .title { font-size: 13px; color: #484f58; letter-spacing: 0.5px; }
+  .title-bar .nav-links { display: flex; gap: 12px; font-size: 12px; }
+  .title-bar .nav-links a { color: #484f58; text-decoration: none; transition: color 0.15s; }
+  .title-bar .nav-links a:hover { color: #388bfd; }
+
+  /* TUI Box */
+  .tui-box {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s;
+  }
+  .tui-box:hover { border-color: #484f58; }
+  .tui-box.focused { border-color: #388bfd; box-shadow: 0 0 0 1px #388bfd33; }
+  .tui-box-title {
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: #8b949e;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .box-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 16px;
+    background: #30363d;
+    border-radius: 3px;
+    font-size: 10px;
+    color: #8b949e;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  .tui-box.focused .box-number { background: #388bfd; color: #fff; }
+
+  /* Tags */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .tag-green { background: #3fb95022; color: #3fb950; border: 1px solid #3fb95033; }
+  .tag-yellow { background: #d2992222; color: #d29922; border: 1px solid #d2992233; }
+  .tag-red { background: #f8514922; color: #f85149; border: 1px solid #f8514933; }
+  .tag-blue { background: #388bfd22; color: #388bfd; border: 1px solid #388bfd33; }
+  .tag-purple { background: #bc8cff22; color: #bc8cff; border: 1px solid #bc8cff33; }
+  .tag-cyan { background: #38d3d722; color: #38d3d7; border: 1px solid #38d3d733; }
+  .tag-muted { background: #484f5822; color: #8b949e; border: 1px solid #484f5833; }
+  .tag-orange { background: #e8881d22; color: #e8881d; border: 1px solid #e8881d33; }
+
+  /* Key hints */
+  .key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 20px;
+    padding: 0 5px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    font-size: 10px;
+    color: #8b949e;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Glow effects */
+  .glow-green { text-shadow: 0 0 8px #3fb95066; }
+  .glow-blue { text-shadow: 0 0 8px #388bfd66; }
+  .glow-red { text-shadow: 0 0 8px #f8514966; }
+  .glow-yellow { text-shadow: 0 0 8px #d2992266; }
+  .glow-cyan { text-shadow: 0 0 8px #38d3d766; }
+  .glow-purple { text-shadow: 0 0 8px #bc8cff66; }
+
+  /* Buttons */
+  .cmd-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid #30363d;
+    background: #161b22;
+    color: #c9d1d9;
+    text-decoration: none;
+  }
+  .cmd-btn:hover { background: #1c2128; border-color: #484f58; }
+  .cmd-btn-primary { background: #388bfd22; border-color: #388bfd44; color: #388bfd; }
+  .cmd-btn-primary:hover { background: #388bfd33; border-color: #388bfd; }
+  .cmd-btn-green { background: #3fb95022; border-color: #3fb95044; color: #3fb950; }
+  .cmd-btn-green:hover { background: #3fb95033; border-color: #3fb950; }
+  .cmd-btn-red { background: #f8514922; border-color: #f8514944; color: #f85149; }
+  .cmd-btn-red:hover { background: #f8514933; border-color: #f85149; }
+
+  /* Strategy card */
+  .strategy-card {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    background: #0d1117;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 8px;
+  }
+  .strategy-card:hover { background: #1c2128; border-color: #484f58; }
+  .strategy-card.active { background: #388bfd08; border-color: #388bfd; }
+  .strategy-card .card-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #c9d1d9;
+    margin-bottom: 4px;
+  }
+  .strategy-card .card-meta {
+    font-size: 10px;
+    color: #484f58;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* Lifecycle phase */
+  .phase-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+  }
+  .phase-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid;
+  }
+  .phase-dot.completed { background: #3fb950; border-color: #3fb950; }
+  .phase-dot.current { background: #388bfd; border-color: #388bfd; box-shadow: 0 0 6px #388bfd66; }
+  .phase-dot.pending { background: transparent; border-color: #484f58; }
+
+  /* Timeline */
+  .timeline-item {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    position: relative;
+  }
+  .timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 28px;
+    bottom: 0;
+    width: 1px;
+    background: #30363d;
+  }
+  .timeline-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .timeline-dot-green { border-color: #3fb950; color: #3fb950; background: #3fb95011; }
+  .timeline-dot-blue { border-color: #388bfd; color: #388bfd; background: #388bfd11; }
+  .timeline-dot-yellow { border-color: #d29922; color: #d29922; background: #d2992211; }
+  .timeline-dot-purple { border-color: #bc8cff; color: #bc8cff; background: #bc8cff11; }
+  .timeline-dot-muted { border-color: #484f58; color: #484f58; background: #484f5811; }
+  .timeline-dot-red { border-color: #f85149; color: #f85149; background: #f8514911; }
+
+  /* Metric card */
+  .metric-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px 14px;
+    flex: 1;
+    min-width: 120px;
+  }
+  .metric-card .metric-label {
+    font-size: 10px;
+    color: #484f58;
+    margin-bottom: 4px;
+  }
+  .metric-card .metric-value {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 3px;
+    background: #30363d;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  /* Chat */
+  .chat-agent, .chat-user {
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .chat-agent {
+    background: #161b22;
+    border: 1px solid #30363d;
+  }
+  .chat-user {
+    background: #388bfd11;
+    border: 1px solid #388bfd33;
+    margin-left: 24px;
+  }
+  .chat-label {
+    font-size: 10px;
+    color: #484f58;
+    margin-bottom: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .chat-agent .chat-label { color: #bc8cff; }
+  .chat-user .chat-label { color: #388bfd; }
+
+  /* Filter select */
+  .filter-select {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: #c9d1d9;
+    font-family: 'JetBrains Mono', monospace;
+    outline: none;
+    cursor: pointer;
+  }
+  .filter-select:focus { border-color: #388bfd; }
+
+  /* Filter input */
+  .filter-input {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: #c9d1d9;
+    font-family: 'JetBrains Mono', monospace;
+    outline: none;
+    width: 100%;
+  }
+  .filter-input:focus { border-color: #388bfd; }
+  .filter-input::placeholder { color: #484f58; }
+
+  /* Status bar */
+  .status-bar {
+    background: #161b22;
+    border-top: 1px solid #30363d;
+    padding: 4px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #484f58;
+    flex-shrink: 0;
+  }
+  .status-bar a { color: #484f58; text-decoration: none; }
+  .status-bar a:hover { color: #388bfd; }
+
+  /* Lifecycle bar */
+  .lifecycle-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+  }
+  .lifecycle-step {
+    flex: 1;
+    text-align: center;
+    padding: 6px 4px;
+    font-size: 10px;
+    position: relative;
+    color: #484f58;
+  }
+  .lifecycle-step::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -1px;
+    width: 2px;
+    height: 60%;
+    transform: translateY(-50%);
+    background: #30363d;
+  }
+  .lifecycle-step:last-child::after { display: none; }
+  .lifecycle-step.completed { color: #3fb950; background: #3fb95008; }
+  .lifecycle-step.completed::after { background: #3fb950; }
+  .lifecycle-step.current { color: #388bfd; background: #388bfd11; font-weight: 600; }
+  .lifecycle-step.current::after { background: #388bfd; }
+  .lifecycle-step .step-icon { font-size: 14px; display: block; margin-bottom: 2px; }
+
+  /* Compliance score */
+  .score-ring {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<div class="terminal-frame">
+  <!-- Title Bar -->
+  <div class="title-bar">
+    <div class="flex items-center gap-3">
+      <div class="dots">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+      </div>
+      <span class="title">SXA v2.6.0 // 策略管理面板 / Strategy Management Panel</span>
+    </div>
+    <div class="nav-links">
+      <a href="00-home.html"><span class="key" style="margin-right:2px">ESC</span> 主页</a>
+      <span style="color:#30363d">|</span>
+      <a href="01-approval-center.html">审批中心</a>
+      <a href="04-document-viewer.html">文档编辑</a>
+      <a href="10-trading-execution.html">交易执行</a>
+      <a href="11-risk-management.html">风险管理</a>
+      <a href="16-workflow-panel.html">工作流</a>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div style="flex:1; display:flex; flex-direction:column; overflow:hidden; padding:8px; gap:8px;">
+
+    <!-- Row 1: Filter Box -->
+    <div class="tui-box focused" style="flex-shrink:0;">
+      <div class="tui-box-title">
+        <div class="flex items-center">
+          <span class="box-number">1</span>
+          <span>StrategyFilterBox / 策略筛选器</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="font-size:10px; color:#484f58;">共 7 条策略 / 7 Strategies</span>
+        </div>
+      </div>
+      <div style="padding:8px 12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div class="flex items-center gap-2">
+          <span style="font-size:11px; color:#484f58;">状态:</span>
+          <select class="filter-select">
+            <option>全部 / All</option>
+            <option>草稿 / Draft</option>
+            <option>审查中 / Under Review</option>
+            <option>回测中 / Backtesting</option>
+            <option selected>运行中 / Running</option>
+            <option>已归档 / Archived</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="font-size:11px; color:#484f58;">类型:</span>
+          <select class="filter-select">
+            <option>全部类型 / All Types</option>
+            <option>动量 / Momentum</option>
+            <option>均值回归 / Mean Reversion</option>
+            <option>多因子 / Multi-Factor</option>
+            <option>配对交易 / Pairs Trading</option>
+            <option>统计套利 / Statistical Arbitrage</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="font-size:11px; color:#484f58;">生命周期:</span>
+          <select class="filter-select" style="min-width:100px;">
+            <option>全部阶段 / All Phases</option>
+            <option>Phase A - 创建</option>
+            <option>Phase B - 编辑</option>
+            <option>Phase C - 提交</option>
+            <option>Phase D - 审批</option>
+            <option>Phase E - 回测</option>
+            <option>Phase F - 运行</option>
+          </select>
+        </div>
+        <div style="flex:1; max-width:220px;">
+          <input class="filter-input" placeholder="&#x1F50D; 搜索策略名称..." />
+        </div>
+        <div style="flex:1;"></div>
+        <button class="cmd-btn cmd-btn-green">
+          <span>+</span> 新建策略 / New Strategy
+        </button>
+        <button class="cmd-btn cmd-btn-primary">
+          <span>&#x21BB;</span> 刷新
+        </button>
+      </div>
+    </div>
+
+    <!-- Row 2: Main content area -->
+    <div style="flex:1; display:flex; gap:8px; min-height:0;">
+
+      <!-- Box 2: Strategy List -->
+      <div class="tui-box" style="width:250px; flex-shrink:0;">
+        <div class="tui-box-title">
+          <div class="flex items-center">
+            <span class="box-number">2</span>
+            <span>StrategyListBox / 策略列表</span>
+          </div>
+          <span style="font-size:10px; color:#484f58;">7 items</span>
+        </div>
+        <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:8px;">
+
+          <!-- Strategy Card 1 - Active -->
+          <div class="strategy-card active">
+            <div class="card-name">动量突破策略 <span style="color:#bc8cff; font-size:11px;">v2.4</span></div>
+            <div class="card-meta" style="margin-bottom:6px;">
+              <span class="tag tag-green" style="font-size:9px;">运行中</span>
+              <span class="tag tag-blue" style="font-size:9px;">Phase F</span>
+            </div>
+            <div class="card-meta">
+              <span style="color:#3fb950;">&#9733; 92</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#8b949e;">动量</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#484f58;">张明</span>
+            </div>
+            <div class="phase-indicator" style="margin-top:6px;">
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">A</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">B</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">C</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">D</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">E</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#388bfd; margin-right:4px;">F</span><div class="phase-dot current"></div>
+            </div>
+          </div>
+
+          <!-- Strategy Card 2 -->
+          <div class="strategy-card">
+            <div class="card-name">均值回归策略 <span style="color:#bc8cff; font-size:11px;">v1.8</span></div>
+            <div class="card-meta" style="margin-bottom:6px;">
+              <span class="tag tag-yellow" style="font-size:9px;">回测中</span>
+              <span class="tag tag-purple" style="font-size:9px;">Phase E</span>
+            </div>
+            <div class="card-meta">
+              <span style="color:#d29922;">&#9733; 78</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#8b949e;">均值回归</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#484f58;">李芳</span>
+            </div>
+            <div class="phase-indicator" style="margin-top:6px;">
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">A</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">B</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">C</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">D</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#388bfd; margin-right:4px;">E</span><div class="phase-dot current"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">F</span><div class="phase-dot pending"></div>
+            </div>
+          </div>
+
+          <!-- Strategy Card 3 -->
+          <div class="strategy-card">
+            <div class="card-name">多因子选股策略 <span style="color:#bc8cff; font-size:11px;">v3.1</span></div>
+            <div class="card-meta" style="margin-bottom:6px;">
+              <span class="tag tag-blue" style="font-size:9px;">审查中</span>
+              <span class="tag tag-cyan" style="font-size:9px;">Phase D</span>
+            </div>
+            <div class="card-meta">
+              <span style="color:#388bfd;">&#9733; 85</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#8b949e;">多因子</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#484f58;">王磊</span>
+            </div>
+            <div class="phase-indicator" style="margin-top:6px;">
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">A</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">B</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">C</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#388bfd; margin-right:4px;">D</span><div class="phase-dot current"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">E</span><div class="phase-dot pending"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">F</span><div class="phase-dot pending"></div>
+            </div>
+          </div>
+
+          <!-- Strategy Card 4 -->
+          <div class="strategy-card">
+            <div class="card-name">配对交易策略 <span style="color:#bc8cff; font-size:11px;">v1.2</span></div>
+            <div class="card-meta" style="margin-bottom:6px;">
+              <span class="tag tag-muted" style="font-size:9px;">草稿</span>
+              <span class="tag tag-orange" style="font-size:9px;">Phase B</span>
+            </div>
+            <div class="card-meta">
+              <span style="color:#484f58;">&#9733; --</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#8b949e;">配对交易</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#484f58;">赵静</span>
+            </div>
+            <div class="phase-indicator" style="margin-top:6px;">
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">A</span><div class="phase-dot completed"></div>
+              <span style="font-size:9px; color:#388bfd; margin-right:4px;">B</span><div class="phase-dot current"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">C</span><div class="phase-dot pending"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">D</span><div class="phase-dot pending"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">E</span><div class="phase-dot pending"></div>
+              <span style="font-size:9px; color:#484f58; margin-right:4px;">F</span><div class="phase-dot pending"></div>
+            </div>
+          </div>
+
+          <!-- Strategy Card 5 -->
+          <div class="strategy-card">
+            <div class="card-name">统计套利策略 <span style="color:#bc8cff; font-size:11px;">v2.0</span></div>
+            <div class="card-meta" style="margin-bottom:6px;">
+              <span class="tag tag-green" style="font-size:9px;">运行中</span>
+              <span class="tag tag-blue" style="font-size:9px;">Phase F</span>
+            </div>
+            <div class="card-meta">
+              <span style="color:#3fb950;">&#9733; 88</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#8b949e;">统计套利</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#484f58;">陈刚</span>
+            </div>
+          </div>
+
+          <!-- Strategy Card 6 -->
+          <div class="strategy-card">
+            <div class="card-name">波动率突破策略 <span style="color:#bc8cff; font-size:11px;">v1.5</span></div>
+            <div class="card-meta" style="margin-bottom:6px;">
+              <span class="tag tag-red" style="font-size:9px;">已暂停</span>
+              <span class="tag tag-muted" style="font-size:9px;">Phase F</span>
+            </div>
+            <div class="card-meta">
+              <span style="color:#f85149;">&#9733; 45</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#8b949e;">波动率</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#484f58;">张明</span>
+            </div>
+          </div>
+
+          <!-- Strategy Card 7 -->
+          <div class="strategy-card">
+            <div class="card-name">行业轮动策略 <span style="color:#bc8cff; font-size:11px;">v1.0</span></div>
+            <div class="card-meta" style="margin-bottom:6px;">
+              <span class="tag tag-muted" style="font-size:9px;">已归档</span>
+            </div>
+            <div class="card-meta">
+              <span style="color:#484f58;">&#9733; 72</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#8b949e;">行业轮动</span>
+              <span style="color:#484f58;">|</span>
+              <span style="color:#484f58;">王磊</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Box 3: Strategy Detail -->
+      <div class="tui-box" style="flex:1; min-width:0;">
+        <div class="tui-box-title">
+          <div class="flex items-center">
+            <span class="box-number">3</span>
+            <span>StrategyDetailBox / 策略详情</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="04-document-viewer.html" class="cmd-btn" style="font-size:10px;">&#x1F4C4; 文档</a>
+            <a href="10-trading-execution.html" class="cmd-btn" style="font-size:10px;">&#x1F4C8; 交易</a>
+            <a href="11-risk-management.html" class="cmd-btn" style="font-size:10px;">&#x26A0; 风控</a>
+            <a href="01-approval-center.html" class="cmd-btn cmd-btn-green" style="font-size:10px;">&#x2713; 审批</a>
+          </div>
+        </div>
+        <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:12px;">
+
+          <!-- Strategy Overview Card -->
+          <div style="background:#161b22; border:1px solid #30363d; border-radius:8px; padding:16px; margin-bottom:12px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                  <span style="font-size:18px; font-weight:600; color:#c9d1d9;">动量突破策略</span>
+                  <span style="font-size:13px; color:#bc8cff; font-weight:500;">v2.4</span>
+                  <span class="tag tag-green">运行中 / Running</span>
+                  <span class="tag tag-blue">Phase F - 运行</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px; font-size:11px; color:#484f58;">
+                  <span>类型: <span style="color:#8b949e;">动量 / Momentum</span></span>
+                  <span>|</span>
+                  <span>负责: <span style="color:#8b949e;">张明 / Zhang Ming</span></span>
+                  <span>|</span>
+                  <span>创建: <span style="color:#8b949e;">2026-01-15</span></span>
+                  <span>|</span>
+                  <span>更新: <span style="color:#8b949e;">2026-05-10</span></span>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div class="score-ring" style="background: #3fb95022; border: 2px solid #3fb950; color: #3fb950;">
+                  92
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:10px; color:#484f58;">合规评分</div>
+                  <div style="font-size:10px; color:#3fb950;">优秀</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Risk Level -->
+            <div style="display:flex; gap:16px; font-size:11px; margin-bottom:12px;">
+              <div class="flex items-center gap-2">
+                <span style="color:#484f58;">风险等级:</span>
+                <span class="tag tag-yellow">R3 - 中等</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span style="color:#484f58;">投资范围:</span>
+                <span style="color:#8b949e;">A股 / 中小市值</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span style="color:#484f58;">交易频率:</span>
+                <span style="color:#8b949e;">日内-短线</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span style="color:#484f58;">最大仓位:</span>
+                <span style="color:#d29922;">80%</span>
+              </div>
+            </div>
+
+            <!-- Lifecycle Timeline Bar -->
+            <div style="border:1px solid #30363d; border-radius:6px; overflow:hidden;">
+              <div class="lifecycle-bar">
+                <div class="lifecycle-step completed">
+                  <span class="step-icon">&#x2713;</span>
+                  创建<br/>Phase A
+                </div>
+                <div class="lifecycle-step completed">
+                  <span class="step-icon">&#x2713;</span>
+                  编辑<br/>Phase B
+                </div>
+                <div class="lifecycle-step completed">
+                  <span class="step-icon">&#x2713;</span>
+                  提交<br/>Phase C
+                </div>
+                <div class="lifecycle-step completed">
+                  <span class="step-icon">&#x2713;</span>
+                  审批<br/>Phase D
+                </div>
+                <div class="lifecycle-step completed">
+                  <span class="step-icon">&#x2713;</span>
+                  回测<br/>Phase E
+                </div>
+                <div class="lifecycle-step current">
+                  <span class="step-icon">&#x25B6;</span>
+                  运行<br/>Phase F
+                </div>
+                <div class="lifecycle-step">
+                  <span class="step-icon">&#x25CB;</span>
+                  监控<br/>&mdash;
+                </div>
+                <div class="lifecycle-step">
+                  <span class="step-icon">&#x25CB;</span>
+                  归档<br/>&mdash;
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance Metrics -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:12px; color:#8b949e; margin-bottom:8px; font-weight:500;">&#x1F4CA; 绩效指标 / Performance Metrics (实盘 28天)</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <div class="metric-card">
+                <div class="metric-label">累计收益 / Total Return</div>
+                <div class="metric-value" style="color:#3fb950;">+4.82%</div>
+                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:48%; background:#3fb950;"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">年化收益 / Annualized</div>
+                <div class="metric-value" style="color:#3fb950;">22.3%</div>
+                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:74%; background:#3fb950;"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">最大回撤 / Max DD</div>
+                <div class="metric-value" style="color:#f85149;">-3.8%</div>
+                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:19%; background:#f85149;"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">夏普比率 / Sharpe</div>
+                <div class="metric-value" style="color:#388bfd;">1.92</div>
+                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:64%; background:#388bfd;"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">胜率 / Win Rate</div>
+                <div class="metric-value" style="color:#d29922;">61.2%</div>
+                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:61%; background:#d29922;"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">盈亏比 / PnL Ratio</div>
+                <div class="metric-value" style="color:#3fb950;">1.85</div>
+                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:62%; background:#3fb950;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Associated Documents -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:12px; color:#8b949e; margin-bottom:8px; font-weight:500;">&#x1F4C1; 关联文档 / Associated Documents</div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
+                <span style="color:#3fb950;">&#x1F4C4;</span>
+                <span style="color:#c9d1d9; font-size:12px;">momentum-breakout-v2.4.md</span>
+                <span class="tag tag-green" style="margin-left:auto;">策略需求</span>
+                <span style="font-size:10px; color:#484f58;">v2.4</span>
+              </a>
+              <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
+                <span style="color:#388bfd;">&#x1F4CB;</span>
+                <span style="color:#c9d1d9; font-size:12px;">entry-rules-momentum.json</span>
+                <span class="tag tag-blue" style="margin-left:auto;">规则模型</span>
+                <span style="font-size:10px; color:#484f58;">v2.4</span>
+              </a>
+              <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
+                <span style="color:#d29922;">&#x2611;</span>
+                <span style="color:#c9d1d9; font-size:12px;">implementation-checklist-v2.4.md</span>
+                <span class="tag tag-yellow" style="margin-left:auto;">实施清单</span>
+                <span style="font-size:10px; color:#484f58;">v2.4</span>
+              </a>
+              <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
+                <span style="color:#f85149;">&#x1F4CA;</span>
+                <span style="color:#c9d1d9; font-size:12px;">backtest-report-2026-05-08.pdf</span>
+                <span class="tag tag-red" style="margin-left:auto;">审计报告</span>
+                <span style="font-size:10px; color:#484f58;">最新</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Assigned Agents -->
+          <div>
+            <div style="font-size:12px; color:#8b949e; margin-bottom:8px; font-weight:500;">&#x1F916; 分配 Agent / Assigned Agents</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
+                <span style="font-size:11px; color:#c9d1d9;">Compliance Agent</span>
+                <span class="tag tag-green" style="font-size:9px;">合规</span>
+              </div>
+              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
+                <span style="font-size:11px; color:#c9d1d9;">Backtest Agent</span>
+                <span class="tag tag-blue" style="font-size:9px;">回测</span>
+              </div>
+              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
+                <span style="font-size:11px; color:#c9d1d9;">Risk Monitor Agent</span>
+                <span class="tag tag-red" style="font-size:9px;">风控</span>
+              </div>
+              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#d29922;"></span>
+                <span style="font-size:11px; color:#c9d1d9;">Execution Agent</span>
+                <span class="tag tag-yellow" style="font-size:9px;">执行</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 5: Agent Chat -->
+      <div class="tui-box" style="width:320px; flex-shrink:0;">
+        <div class="tui-box-title">
+          <div class="flex items-center">
+            <span class="box-number">5</span>
+            <span>Strategist Agent / 策略助手</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span style="width:6px; height:6px; border-radius:50%; background:#3fb950; display:inline-block;"></span>
+            <span style="font-size:10px; color:#3fb950;">在线</span>
+          </div>
+        </div>
+        <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:10px;">
+
+          <!-- Strategy Summary Card -->
+          <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; margin-bottom:10px;">
+            <div style="font-size:11px; color:#bc8cff; margin-bottom:6px; font-weight:500;">&#x1F4CB; 策略摘要 / Strategy Summary</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:10px;">
+              <div><span style="color:#484f58;">策略:</span> <span style="color:#c9d1d9;">动量突破</span></div>
+              <div><span style="color:#484f58;">版本:</span> <span style="color:#bc8cff;">v2.4</span></div>
+              <div><span style="color:#484f58;">状态:</span> <span style="color:#3fb950;">运行中</span></div>
+              <div><span style="color:#484f58;">阶段:</span> <span style="color:#388bfd;">Phase F</span></div>
+              <div><span style="color:#484f58;">运行天数:</span> <span style="color:#c9d1d9;">28天</span></div>
+              <div><span style="color:#484f58;">交易次数:</span> <span style="color:#c9d1d9;">142笔</span></div>
+            </div>
+          </div>
+
+          <!-- Agent Messages -->
+          <div class="chat-agent">
+            <div class="chat-label">&#x1F916; Strategist Agent</div>
+            <div style="color:#8b949e;">动量突破策略 v2.4 当前运行状态良好。过去7天表现:</div>
+            <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px; font-size:11px;">
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:#8b949e;">本周收益</span>
+                <span style="color:#3fb950;">+1.23%</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:#8b949e;">本周交易</span>
+                <span style="color:#c9d1d9;">31笔</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:#8b949e;">本周胜率</span>
+                <span style="color:#3fb950;">64.5%</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:#8b949e;">最大持仓</span>
+                <span style="color:#d29922;">4只</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-agent">
+            <div class="chat-label">&#x1F916; Strategist Agent</div>
+            <div style="color:#d29922; font-size:11px; margin-bottom:4px;">&#x26A0; 策略优化建议:</div>
+            <div style="color:#8b949e; font-size:11px;">
+              <p style="margin-bottom:4px;">1. 当前RSI区间 [50,75] 在震荡行情中假信号较多，建议增加 ADX 过滤条件 (ADX &gt; 25)</p>
+              <p style="margin-bottom:4px;">2. 止损 3% 在高波动期偏紧，建议根据 ATR 动态调整</p>
+              <p>3. 可考虑增加量价背离检测作为退出辅助信号</p>
+            </div>
+          </div>
+
+          <div class="chat-user">
+            <div class="chat-label">&#x1F464; You</div>
+            <div style="color:#c9d1d9;">对比一下均值回归策略 v1.8 的表现</div>
+          </div>
+
+          <div class="chat-agent">
+            <div class="chat-label">&#x1F916; Strategist Agent</div>
+            <div style="color:#8b949e; margin-bottom:6px;">策略对比 / Strategy Comparison:</div>
+            <div style="font-size:11px; border:1px solid #30363d; border-radius:4px; overflow:hidden;">
+              <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr; font-size:10px;">
+                <div style="background:#161b22; padding:6px 8px; border-bottom:1px solid #30363d; border-right:1px solid #30363d; color:#484f58;">指标</div>
+                <div style="background:#161b22; padding:6px 8px; border-bottom:1px solid #30363d; border-right:1px solid #30363d; color:#3fb950; text-align:center;">动量突破</div>
+                <div style="background:#161b22; padding:6px 8px; border-bottom:1px solid #30363d; color:#d29922; text-align:center;">均值回归</div>
+
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; border-right:1px solid #30363d; color:#484f58;">年化收益</div>
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; border-right:1px solid #30363d; color:#3fb950; text-align:center;">22.3%</div>
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; color:#d29922; text-align:center;">15.8%</div>
+
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; border-right:1px solid #30363d; color:#484f58;">最大回撤</div>
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; border-right:1px solid #30363d; color:#f85149; text-align:center;">-3.8%</div>
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; color:#f85149; text-align:center;">-5.2%</div>
+
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; border-right:1px solid #30363d; color:#484f58;">夏普比率</div>
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; border-right:1px solid #30363d; color:#388bfd; text-align:center;">1.92</div>
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; color:#388bfd; text-align:center;">1.45</div>
+
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; border-right:1px solid #30363d; color:#484f58;">胜率</div>
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; border-right:1px solid #30363d; color:#d29922; text-align:center;">61.2%</div>
+                <div style="padding:5px 8px; border-bottom:1px solid #30363d; color:#d29922; text-align:center;">54.8%</div>
+
+                <div style="padding:5px 8px; border-right:1px solid #30363d; color:#484f58;">合规评分</div>
+                <div style="padding:5px 8px; border-right:1px solid #30363d; color:#3fb950; text-align:center;">92</div>
+                <div style="padding:5px 8px; color:#d29922; text-align:center;">78</div>
+              </div>
+            </div>
+            <div style="font-size:11px; color:#8b949e; margin-top:6px;">动量突破策略在各项指标上均优于均值回归策略。但均值回归策略仍在回测中 (Phase E)，实盘数据可能有所不同。</div>
+          </div>
+
+          <div class="chat-agent">
+            <div class="chat-label">&#x1F916; Strategist Agent</div>
+            <div style="color:#8b949e; margin-bottom:4px; font-size:11px;">&#x1F4C5; 待办事项提醒:</div>
+            <div style="display:flex; flex-direction:column; gap:4px; font-size:11px;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:#f85149;">&#x25CF;</span>
+                <span style="color:#c9d1d9;">波动率突破策略 v1.5 需要重新审核</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:#d29922;">&#x25CF;</span>
+                <span style="color:#c9d1d9;">配对交易策略 v1.2 草稿待完善</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:#388bfd;">&#x25CF;</span>
+                <span style="color:#c9d1d9;">多因子选股 v3.1 等待审批结果</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- Chat Input -->
+        <div style="padding:8px; border-top:1px solid #30363d;">
+          <div style="display:flex; gap:6px;">
+            <input class="filter-input" placeholder="向策略助手提问..." style="flex:1;" />
+            <button class="cmd-btn cmd-btn-primary" style="flex-shrink:0;">&#x27A4;</button>
+          </div>
+          <div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">
+            <button class="cmd-btn" style="font-size:9px; padding:2px 6px;">/compare 对比</button>
+            <button class="cmd-btn" style="font-size:9px; padding:2px 6px;">/optimize 优化</button>
+            <button class="cmd-btn" style="font-size:9px; padding:2px 6px;">/backtest 回测</button>
+            <button class="cmd-btn" style="font-size:9px; padding:2px 6px;">/report 报告</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Strategy Timeline -->
+    <div class="tui-box" style="flex-shrink:0; height:170px;">
+      <div class="tui-box-title">
+        <div class="flex items-center">
+          <span class="box-number">4</span>
+          <span>StrategyTimelineBox / 策略生命周期事件</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span style="font-size:10px; color:#484f58;">动量突破策略 v2.4 事件时间线</span>
+          <span style="font-size:10px; color:#484f58;">|</span>
+          <span style="font-size:10px; color:#8b949e;">共 12 个事件</span>
+        </div>
+      </div>
+      <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:8px 12px;">
+        <div style="display:flex; gap:0;">
+          <!-- Timeline column 1 -->
+          <div style="flex:1;">
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-green">&#x2713;</div>
+              <div>
+                <div style="font-size:11px; color:#3fb950; font-weight:500;">策略创建 / Strategy Created</div>
+                <div style="font-size:10px; color:#484f58;">2026-01-15 09:30 | 张明 | Phase A 完成</div>
+                <div style="font-size:10px; color:#8b949e;">初始化动量突破策略框架，定义基本入场/出场规则</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-green">&#x2713;</div>
+              <div>
+                <div style="font-size:11px; color:#3fb950; font-weight:500;">文档编辑完成 / Document Edited</div>
+                <div style="font-size:10px; color:#484f58;">2026-02-20 16:45 | 张明 | Phase B 完成</div>
+                <div style="font-size:10px; color:#8b949e;">策略需求文档 v2.4 定稿，增加行业集中度限制</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-green">&#x2713;</div>
+              <div>
+                <div style="font-size:11px; color:#3fb950; font-weight:500;">合规预检通过 / Compliance Passed</div>
+                <div style="font-size:10px; color:#484f58;">2026-03-01 10:15 | Compliance Agent | 评分: 92/100</div>
+                <div style="font-size:10px; color:#8b949e;">5项通过，1项警告（成交额门槛），0项失败</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-blue">&#x2713;</div>
+              <div>
+                <div style="font-size:11px; color:#388bfd; font-weight:500;">提交审批 / Submitted</div>
+                <div style="font-size:10px; color:#484f58;">2026-03-05 14:00 | 张明 | Phase C</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-blue">&#x2713;</div>
+              <div>
+                <div style="font-size:11px; color:#388bfd; font-weight:500;">审批通过 / Approved</div>
+                <div style="font-size:10px; color:#484f58;">2026-03-12 11:30 | 李芳（审批人）| Phase D</div>
+                <div style="font-size:10px; color:#8b949e;">一级审批 + 二级审批均通过，附带运行监控要求</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-yellow">&#x2713;</div>
+              <div>
+                <div style="font-size:11px; color:#d29922; font-weight:500;">回测完成 / Backtest Done</div>
+                <div style="font-size:10px; color:#484f58;">2026-04-08 09:00 | Backtest Agent | Phase E</div>
+                <div style="font-size:10px; color:#8b949e;">回测期: 2024-01 ~ 2026-03 | 年化22.3% | 最大回撤-9.8%</div>
+              </div>
+            </div>
+          </div>
+          <!-- Timeline column 2 -->
+          <div style="flex:1; border-left:1px solid #30363d; padding-left:16px;">
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-purple">&#x25B6;</div>
+              <div>
+                <div style="font-size:11px; color:#bc8cff; font-weight:500;">实盘启动 / Live Trading Started</div>
+                <div style="font-size:10px; color:#484f58;">2026-04-12 09:30 | Phase F | 初始资金: 500万</div>
+                <div style="font-size:10px; color:#8b949e;">小仓位试运行，单笔上限20%</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-green">&#x2713;</div>
+              <div>
+                <div style="font-size:11px; color:#3fb950; font-weight:500;">风控检查通过 / Risk Check OK</div>
+                <div style="font-size:10px; color:#484f58;">2026-04-20 | Risk Monitor Agent</div>
+                <div style="font-size:10px; color:#8b949e;">第一周风控报告: 未触发任何限制，运行平稳</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-yellow">&#x26A0;</div>
+              <div>
+                <div style="font-size:11px; color:#d29922; font-weight:500;">优化建议 / Optimization Suggestion</div>
+                <div style="font-size:10px; color:#484f58;">2026-04-28 15:00 | Strategist Agent</div>
+                <div style="font-size:10px; color:#8b949e;">建议增加ADX过滤条件，降低震荡市假信号</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-green">&#x2713;</div>
+              <div>
+                <div style="font-size:11px; color:#3fb950; font-weight:500;">月度合规审查通过</div>
+                <div style="font-size:10px; color:#484f58;">2026-05-05 16:00 | Compliance Agent</div>
+                <div style="font-size:10px; color:#8b949e;">4月合规报告: 全部合规，无违规交易</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-blue" style="animation: pulse 2s infinite;">&#x25CF;</div>
+              <div>
+                <div style="font-size:11px; color:#388bfd; font-weight:500;">当前: 正在运行 / Currently Running</div>
+                <div style="font-size:10px; color:#484f58;">2026-05-10 | 累计收益 +4.82% | 持仓 3只</div>
+                <div style="font-size:10px; color:#3fb950;">运行正常 | 下次审查: 2026-06-05</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <span><span class="key">1</span>-<span class="key">5</span> 聚焦Box</span>
+      <span><span class="key">Tab</span> 切换</span>
+      <span><span class="key">Enter</span> 查看</span>
+      <span><span class="key">n</span> 新建</span>
+      <span><span class="key">/</span> 命令</span>
+      <span><span class="key">q</span> <a href="00-home.html">主页</a></span>
+      <span><span class="key">F1</span> 帮助</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span>策略: <span style="color:#3fb950;">7</span></span>
+      <span style="color:#30363d;">|</span>
+      <span>运行中: <span style="color:#3fb950;">2</span></span>
+      <span style="color:#30363d;">|</span>
+      <span>待审批: <span style="color:#d29922;">1</span></span>
+      <span style="color:#30363d;">|</span>
+      <span style="color:#484f58;">SXA v2.6.0</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 #388bfd66; }
+    50% { box-shadow: 0 0 8px 4px #388bfd33; }
+  }
+</style>
+</body>
+</html>

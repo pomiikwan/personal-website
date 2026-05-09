@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - E2E全业务流程总览 | End-to-End Workflow Overview</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#38d3d7',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family: 'JetBrains Mono', 'Noto Sans SC', monospace; }
+  body { background: #0d1117; color: #c9d1d9; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  .terminal-frame { border: 1px solid #30363d; border-radius: 8px; overflow: hidden; background: #0d1117; }
+  .terminal-titlebar { background: #161b22; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #30363d; }
+  .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .terminal-dot.red { background: #f85149; }
+  .terminal-dot.yellow { background: #d29922; }
+  .terminal-dot.green { background: #3fb950; }
+
+  .tui-box { border: 1px solid #30363d; border-radius: 6px; background: #0d1117; position: relative; }
+  .tui-box.focused { border-color: #388bfd; box-shadow: 0 0 0 1px #388bfd, 0 0 12px rgba(56,139,253,0.15); }
+  .tui-box-title { background: #161b22; padding: 6px 12px; border-bottom: 1px solid #30363d; font-size: 12px; font-weight: 600; color: #c9d1d9; display: flex; align-items: center; gap: 8px; }
+  .box-number { background: #388bfd; color: #0d1117; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .key { background: #21262d; border: 1px solid #30363d; padding: 1px 6px; border-radius: 3px; font-size: 10px; color: #c9d1d9; }
+  .tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+  .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .tag-yellow { background: rgba(210,153,34,0.15); color: #d29922; }
+  .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+  .tag-blue { background: rgba(56,139,253,0.15); color: #388bfd; }
+  .tag-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+  .tag-cyan { background: rgba(56,211,215,0.15); color: #38d3d7; }
+
+  .filter-btn { background: #21262d; border: 1px solid #30363d; padding: 4px 12px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { background: #388bfd; color: #0d1117; border-color: #388bfd; }
+  .cmd-btn { background: #21262d; border: 1px solid #30363d; padding: 3px 10px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; }
+  .cmd-btn:hover { background: #30363d; }
+  .list-item { padding: 8px 10px; border-bottom: 1px solid rgba(48,54,61,0.5); cursor: pointer; transition: background 0.1s; }
+  .list-item:hover { background: #1c2128; }
+  .list-item.selected { background: rgba(56,139,253,0.1); border-left: 2px solid #388bfd; }
+
+  .chat-agent { background: rgba(56,139,253,0.08); border: 1px solid rgba(56,139,253,0.2); border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.5; }
+  .chat-user { background: rgba(188,140,255,0.08); border: 1px solid rgba(188,140,255,0.2); border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.5; }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+
+  .glow-green { text-shadow: 0 0 8px rgba(63,185,80,0.5); }
+  .glow-red { text-shadow: 0 0 8px rgba(248,81,73,0.5); }
+  .glow-blue { text-shadow: 0 0 8px rgba(56,139,253,0.5); }
+  .glow-yellow { text-shadow: 0 0 8px rgba(210,153,34,0.5); }
+
+  .nav-item { padding: 2px 8px; font-size: 10px; color: #484f58; text-decoration: none; transition: color 0.15s; }
+  .nav-item:hover { color: #c9d1d9; }
+  .nav-section { border-right: 1px solid #30363d; padding: 0 8px; }
+
+  .progress-bar { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+
+  .phase-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 14px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .phase-card:hover { border-color: #484f58; transform: translateY(-1px); }
+  .phase-card.active { border-color: #3fb950; box-shadow: 0 0 12px rgba(63,185,80,0.1); }
+  .phase-card.warning { border-color: #d29922; }
+  .phase-card.error { border-color: #f85149; }
+
+  .phase-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #30363d;
+    font-size: 20px;
+    min-width: 30px;
+  }
+
+  .timeline-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid;
+    flex-shrink: 0;
+  }
+  .timeline-line {
+    width: 2px;
+    flex-shrink: 0;
+    margin-left: 4px;
+  }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .animate-pulse-slow { animation: pulse 2s infinite; }
+</style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+<div class="terminal-frame flex flex-col h-full">
+  <!-- Title Bar -->
+  <div class="terminal-titlebar">
+    <span class="terminal-dot red"></span>
+    <span class="terminal-dot yellow"></span>
+    <span class="terminal-dot green"></span>
+    <span class="text-tui-muted text-xs ml-2"><a href="00-home.html" class="nav-item hover:text-tui-text">ESC</a></span>
+    <span class="text-tui-text text-xs font-semibold ml-2">SXA E2E Workflow</span>
+    <span class="text-tui-muted text-xs">/</span>
+    <span class="text-tui-purple text-xs">全业务流程总览</span>
+    <span class="flex-1"></span>
+    <span class="text-tui-muted text-xs">2026-05-10 09:31:42 CST</span>
+    <span class="tag tag-green ml-2">ALL SYSTEMS GO</span>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Left Column -->
+    <div class="flex flex-col flex-1 overflow-hidden">
+
+      <!-- Box 1: E2EFilterBox -->
+      <div class="tui-box focused rounded-none border-0 border-b border-tui-border">
+        <div class="tui-box-title">
+          <span class="box-number">1</span>
+          <span>E2E Filter / 流程筛选</span>
+          <span class="flex-1"></span>
+          <span class="key">Tab</span>
+          <span class="text-tui-muted text-xs">focus</span>
+        </div>
+        <div class="p-3 flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span class="text-tui-muted text-xs">流程 Workflow:</span>
+            <button class="filter-btn active">全部 All</button>
+            <button class="filter-btn">策略类</button>
+            <button class="filter-btn">风控类</button>
+            <button class="filter-btn">合规类</button>
+          </div>
+          <div class="w-px h-5 bg-tui-border"></div>
+          <div class="flex items-center gap-2">
+            <span class="text-tui-muted text-xs">时间 Time:</span>
+            <button class="filter-btn">今日</button>
+            <button class="filter-btn active">本周</button>
+            <button class="filter-btn">本月</button>
+          </div>
+          <div class="w-px h-5 bg-tui-border"></div>
+          <div class="flex items-center gap-2">
+            <span class="text-tui-muted text-xs">状态 Status:</span>
+            <button class="filter-btn active">全部</button>
+            <button class="filter-btn">进行中</button>
+            <button class="filter-btn">已完成</button>
+            <button class="filter-btn">阻塞</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Middle Section: PhaseList + PhaseFlow -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- Box 2: PhaseListBox -->
+        <div class="flex flex-col overflow-hidden" style="width:220px;min-width:220px;border-right:1px solid #30363d;">
+          <div class="tui-box-title border-t-0">
+            <span class="box-number">2</span>
+            <span>Phases / 阶段</span>
+          </div>
+          <div class="flex-1 overflow-auto scrollbar-thin">
+            <div class="list-item selected">
+              <div class="flex items-center gap-2">
+                <span class="text-tui-green text-xs font-bold">A</span>
+                <span class="text-tui-text text-xs flex-1">策略构思</span>
+                <span class="tag tag-green">3</span>
+              </div>
+              <div class="text-tui-muted text-xs ml-5">Ideation</div>
+            </div>
+            <div class="list-item">
+              <div class="flex items-center gap-2">
+                <span class="text-tui-blue text-xs font-bold">B</span>
+                <span class="text-tui-text text-xs flex-1">合规审查</span>
+                <span class="tag tag-blue">2</span>
+              </div>
+              <div class="text-tui-muted text-xs ml-5">Compliance</div>
+            </div>
+            <div class="list-item">
+              <div class="flex items-center gap-2">
+                <span class="text-tui-cyan text-xs font-bold">C</span>
+                <span class="text-tui-text text-xs flex-1">回测验证</span>
+                <span class="tag tag-cyan">1</span>
+              </div>
+              <div class="text-tui-muted text-xs ml-5">Backtest</div>
+            </div>
+            <div class="list-item">
+              <div class="flex items-center gap-2">
+                <span class="text-tui-yellow text-xs font-bold">D</span>
+                <span class="text-tui-text text-xs flex-1">审批上线</span>
+                <span class="tag tag-yellow">2</span>
+              </div>
+              <div class="text-tui-muted text-xs ml-5">Approval</div>
+            </div>
+            <div class="list-item">
+              <div class="flex items-center gap-2">
+                <span class="text-tui-purple text-xs font-bold">E</span>
+                <span class="text-tui-text text-xs flex-1">运行监控</span>
+                <span class="tag tag-purple">4</span>
+              </div>
+              <div class="text-tui-muted text-xs ml-5">Operations</div>
+            </div>
+            <div class="list-item">
+              <div class="flex items-center gap-2">
+                <span class="text-tui-green text-xs font-bold">F</span>
+                <span class="text-tui-text text-xs flex-1">评估迭代</span>
+                <span class="tag tag-green">1</span>
+              </div>
+              <div class="text-tui-muted text-xs ml-5">Evaluation</div>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="p-3 border-t border-tui-border mt-2" style="background:#161b22;">
+              <div class="text-tui-muted text-xs font-semibold mb-2">Overview / 总览</div>
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-xs">
+                  <span class="text-tui-muted">活跃策略 Active</span>
+                  <span class="text-tui-green">8</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-tui-muted">进行中流程</span>
+                  <span class="text-tui-blue">5</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-tui-muted">阻塞中 Blocked</span>
+                  <span class="text-tui-red">1</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-tui-muted">本周完成</span>
+                  <span class="text-tui-cyan">12</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-tui-muted">平均周期</span>
+                  <span class="text-tui-text">4.2 days</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Box 3: PhaseFlowBox -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <div class="tui-box-title border-t-0">
+            <span class="box-number">3</span>
+            <span>Phase Flow / 阶段流程图</span>
+            <span class="flex-1"></span>
+            <span class="text-tui-muted text-xs">6 Phases | 13 Active Workflows</span>
+          </div>
+          <div class="flex-1 overflow-auto p-4 scrollbar-thin">
+            <!-- Phase Flow Diagram -->
+            <div class="flex items-start gap-2 mb-4">
+              <!-- Phase A -->
+              <div class="phase-card active flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-tui-green font-bold text-sm">Phase A</span>
+                  <span class="tag tag-green">Active</span>
+                </div>
+                <div class="text-tui-text text-xs font-semibold mb-1">策略构思 Ideation</div>
+                <div class="progress-bar mb-2">
+                  <div class="progress-fill bg-tui-green" style="width:75%"></div>
+                </div>
+                <div class="flex justify-between text-tui-muted text-xs mb-2">
+                  <span>进度 75%</span>
+                  <span>3 策略</span>
+                </div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-blue">Strategy Agent</span></div>
+                <div class="text-xs space-y-0.5">
+                  <div class="text-tui-text">- VolBreakout V2 参数优化中</div>
+                  <div class="text-tui-text">- ESG-Alpha 新策略设计</div>
+                  <div class="text-tui-text">- MacroRotation 升级评估</div>
+                </div>
+                <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border">
+                  <a href="08-strategy-management.html" class="cmd-btn text-xs text-tui-blue">08 策略</a>
+                  <a href="09-market-overview.html" class="cmd-btn text-xs text-tui-cyan">04 行情</a>
+                </div>
+              </div>
+
+              <div class="phase-arrow">-></div>
+
+              <!-- Phase B -->
+              <div class="phase-card flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-tui-blue font-bold text-sm">Phase B</span>
+                  <span class="tag tag-blue">Review</span>
+                </div>
+                <div class="text-tui-text text-xs font-semibold mb-1">合规审查 Compliance</div>
+                <div class="progress-bar mb-2">
+                  <div class="progress-fill bg-tui-blue" style="width:50%"></div>
+                </div>
+                <div class="flex justify-between text-tui-muted text-xs mb-2">
+                  <span>进度 50%</span>
+                  <span>2 策略</span>
+                </div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-purple">Compliance Agent</span></div>
+                <div class="text-xs space-y-0.5">
+                  <div class="text-tui-text">- ESG-Alpha 合规预审中</div>
+                  <div class="text-tui-text">- MacroRotation 监管检查</div>
+                </div>
+                <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border">
+                  <a href="01-approval-center.html" class="cmd-btn text-xs text-tui-blue">01 审批</a>
+                  <a href="02-agent-collaboration.html" class="cmd-btn text-xs text-tui-purple">02 协作</a>
+                </div>
+              </div>
+
+              <div class="phase-arrow">-></div>
+
+              <!-- Phase C -->
+              <div class="phase-card flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-tui-cyan font-bold text-sm">Phase C</span>
+                  <span class="tag tag-cyan">Testing</span>
+                </div>
+                <div class="text-tui-text text-xs font-semibold mb-1">回测验证 Backtest</div>
+                <div class="progress-bar mb-2">
+                  <div class="progress-fill bg-tui-cyan" style="width:30%"></div>
+                </div>
+                <div class="flex justify-between text-tui-muted text-xs mb-2">
+                  <span>进度 30%</span>
+                  <span>1 策略</span>
+                </div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-cyan">Quant Agent</span></div>
+                <div class="text-xs space-y-0.5">
+                  <div class="text-tui-text">- VolBreakout V2 回测运行中</div>
+                  <div class="text-tui-muted">Sharpe: 1.85 | MaxDD: -6.2%</div>
+                </div>
+                <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border">
+                  <a href="10-trading-execution.html" class="cmd-btn text-xs text-tui-green">10 交易</a>
+                  <a href="11-risk-management.html" class="cmd-btn text-xs text-tui-red">11 风控</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="flex items-start gap-2">
+              <!-- Phase D -->
+              <div class="phase-card warning flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-tui-yellow font-bold text-sm">Phase D</span>
+                  <span class="tag tag-yellow">Pending</span>
+                </div>
+                <div class="text-tui-text text-xs font-semibold mb-1">审批上线 Approval</div>
+                <div class="progress-bar mb-2">
+                  <div class="progress-fill bg-tui-yellow" style="width:15%"></div>
+                </div>
+                <div class="flex justify-between text-tui-muted text-xs mb-2">
+                  <span>进度 15%</span>
+                  <span>2 待审</span>
+                </div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-yellow">Approval Agent</span></div>
+                <div class="text-xs space-y-0.5">
+                  <div class="text-tui-yellow">- VolBreakout 参数变更待批</div>
+                  <div class="text-tui-text">- ESG-Alpha 上线审批排队</div>
+                </div>
+                <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border">
+                  <a href="01-approval-center.html" class="cmd-btn text-xs text-tui-blue">01 审批</a>
+                  <a href="03-compliance-dashboard.html" class="cmd-btn text-xs text-tui-purple">03 合规</a>
+                </div>
+              </div>
+
+              <div class="phase-arrow">-></div>
+
+              <!-- Phase E -->
+              <div class="phase-card flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-tui-purple font-bold text-sm">Phase E</span>
+                  <span class="tag tag-purple">Running</span>
+                </div>
+                <div class="text-tui-text text-xs font-semibold mb-1">运行监控 Operations</div>
+                <div class="progress-bar mb-2">
+                  <div class="progress-fill bg-tui-purple" style="width:90%"></div>
+                </div>
+                <div class="flex justify-between text-tui-muted text-xs mb-2">
+                  <span>进度 90%</span>
+                  <span>4 策略运行</span>
+                </div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-green">Monitor Agent</span></div>
+                <div class="text-xs space-y-0.5">
+                  <div class="text-tui-green">- AlphaMomentum 运行正常</div>
+                  <div class="text-tui-green">- MeanRevertV3 运行正常</div>
+                  <div class="text-tui-yellow">- VolBreakout 回撤预警</div>
+                  <div class="text-tui-green">- PairTrade-I 运行正常</div>
+                </div>
+                <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border flex-wrap">
+                  <a href="03-compliance-dashboard.html" class="cmd-btn text-xs text-tui-purple">03 合规</a>
+                  <a href="02-agent-collaboration.html" class="cmd-btn text-xs">02 协作</a>
+                  <a href="15-system-monitor.html" class="cmd-btn text-xs">15 监控</a>
+                </div>
+              </div>
+
+              <div class="phase-arrow">-></div>
+
+              <!-- Phase F -->
+              <div class="phase-card flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-tui-green font-bold text-sm">Phase F</span>
+                  <span class="tag tag-green">Done</span>
+                </div>
+                <div class="text-tui-text text-xs font-semibold mb-1">评估迭代 Evaluation</div>
+                <div class="progress-bar mb-2">
+                  <div class="progress-fill bg-tui-green" style="width:100%"></div>
+                </div>
+                <div class="flex justify-between text-tui-muted text-xs mb-2">
+                  <span>进度 100%</span>
+                  <span>1 已完成</span>
+                </div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-cyan">Analytics Agent</span></div>
+                <div class="text-xs space-y-0.5">
+                  <div class="text-tui-green">- StatArb-FX Q1评估完成</div>
+                  <div class="text-tui-muted">Sharpe: 2.1 | Win: 68%</div>
+                  <div class="text-tui-muted">建议: 继续运行，增加仓位</div>
+                </div>
+                <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border flex-wrap">
+                  <a href="03-compliance-dashboard.html" class="cmd-btn text-xs">03 合规</a>
+                  <a href="08-strategy-management.html" class="cmd-btn text-xs text-tui-blue">08 策略</a>
+                  <a href="00-home.html" class="cmd-btn text-xs">Home</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Box 4: TimelineBox -->
+          <div class="border-t border-tui-border" style="background:#0d1117;max-height:160px;">
+            <div class="tui-box-title border-t-0">
+              <span class="box-number">4</span>
+              <span>Timeline / 事件时间线</span>
+              <span class="flex-1"></span>
+              <button class="cmd-btn text-xs">View All</button>
+            </div>
+            <div class="overflow-auto scrollbar-thin" style="max-height:120px;">
+              <div class="p-3 space-y-2">
+                <div class="flex items-start gap-3">
+                  <div class="flex flex-col items-center">
+                    <div class="timeline-dot" style="border-color:#3fb950;background:rgba(63,185,80,0.3);"></div>
+                    <div class="timeline-line bg-tui-border" style="height:20px;"></div>
+                  </div>
+                  <div>
+                    <div class="text-xs"><span class="text-tui-green font-semibold">Phase E</span> AlphaMomentum 执行了 600519.SH 卖出订单 (75% filled)</div>
+                    <div class="text-tui-muted text-xs">09:28:15 | <a href="10-trading-execution.html" class="text-tui-blue">Trading Panel</a></div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="flex flex-col items-center">
+                    <div class="timeline-dot" style="border-color:#f85149;background:rgba(248,81,73,0.3);"></div>
+                    <div class="timeline-line bg-tui-border" style="height:20px;"></div>
+                  </div>
+                  <div>
+                    <div class="text-xs"><span class="text-tui-red font-semibold">ALERT</span> VaR 接近限额 (78%)，Risk Agent 发出预警</div>
+                    <div class="text-tui-muted text-xs">09:25:00 | <a href="11-risk-management.html" class="text-tui-red">Risk Panel</a></div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="flex flex-col items-center">
+                    <div class="timeline-dot" style="border-color:#388bfd;background:rgba(56,139,253,0.3);"></div>
+                    <div class="timeline-line bg-tui-border" style="height:20px;"></div>
+                  </div>
+                  <div>
+                    <div class="text-xs"><span class="text-tui-blue font-semibold">Phase D</span> VolBreakout 参数修改已提交审批 (G1 PASS, G2 PASS, G3 Pending)</div>
+                    <div class="text-tui-muted text-xs">09:20:00 | <a href="01-approval-center.html" class="text-tui-blue">Approval</a></div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="flex flex-col items-center">
+                    <div class="timeline-dot" style="border-color:#bc8cff;background:rgba(188,140,255,0.3);"></div>
+                    <div class="timeline-line bg-tui-border" style="height:20px;"></div>
+                  </div>
+                  <div>
+                    <div class="text-xs"><span class="text-tui-purple font-semibold">Phase B</span> ESG-Alpha 策略通过合规预审，进入 Phase C 回测</div>
+                    <div class="text-tui-muted text-xs">09:15:00 | <a href="03-compliance-dashboard.html" class="text-tui-purple">Compliance</a></div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="flex flex-col items-center">
+                    <div class="timeline-dot" style="border-color:#3fb950;background:rgba(63,185,80,0.3);"></div>
+                    <div class="timeline-line bg-tui-border" style="height:20px;"></div>
+                  </div>
+                  <div>
+                    <div class="text-xs"><span class="text-tui-green font-semibold">Phase F</span> StatArb-FX Q1 评估报告已完成，建议增加仓位</div>
+                    <div class="text-tui-muted text-xs">09:00:00 | <a href="08-strategy-management.html" class="text-tui-green">Strategy</a></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Box 5: AgentChatBox - Right -->
+    <div class="flex flex-col overflow-hidden" style="width:320px;min-width:320px;border-left:1px solid #30363d;">
+      <div class="tui-box-title border-t-0">
+        <span class="box-number">5</span>
+        <span>System Agent / 系统助手</span>
+        <span class="flex-1"></span>
+        <span class="w-2 h-2 rounded-full bg-tui-green animate-pulse-slow"></span>
+        <span class="text-tui-green text-xs">Online</span>
+      </div>
+      <div class="flex-1 overflow-auto p-3 space-y-3 scrollbar-thin">
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
+          <div>今日 E2E 流程概览：</div>
+          <div class="mt-1 text-xs">
+            <span class="text-tui-green">5</span> 个活跃阶段<br>
+            <span class="text-tui-blue">13</span> 个运行中的工作流<br>
+            <span class="text-tui-yellow">2</span> 个待审批项<br>
+            <span class="text-tui-red">1</span> 个阻塞项 (VolBreakout G3)
+          </div>
+          <div class="text-tui-muted text-xs mt-1">09:00:00</div>
+        </div>
+        <div class="chat-user">
+          <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+          <div>VolBreakout V2 当前的完整流程状态？</div>
+          <div class="text-tui-muted text-xs mt-1">09:20:00</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
+          <div>VolBreakout V2 全流程追踪：</div>
+          <div class="mt-1 text-xs">
+            Phase A 构思 <span class="text-tui-green">DONE</span> (05/06)<br>
+            Phase B 合规 <span class="text-tui-green">DONE</span> (05/07)<br>
+            Phase C 回测 <span class="text-tui-cyan">RUNNING</span> (05/08~)<br>
+            Phase D 审批 <span class="text-tui-yellow">PENDING</span><br>
+            Phase E 运行 <span class="text-tui-muted">BLOCKED</span><br>
+            Phase F 评估 <span class="text-tui-muted">BLOCKED</span>
+          </div>
+          <div class="text-tui-cyan text-xs mt-1">当前在 Phase C: 回测进度 30%，预计 05/12 完成。</div>
+          <div class="text-tui-muted text-xs mt-1">09:20:03</div>
+        </div>
+        <div class="chat-user">
+          <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+          <div>哪些策略需要关注？</div>
+          <div class="text-tui-muted text-xs mt-1">09:25:00</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
+          <div>需要关注的策略：</div>
+          <div class="mt-1 text-xs">
+            1. <span class="text-tui-red">VolBreakout</span> - 回撤 -8.2%，接近止损线<br>
+            2. <span class="text-tui-yellow">AlphaMomentum</span> - VaR 贡献最高 (36.8%)<br>
+            3. <span class="text-tui-yellow">StatArb-FX</span> - EUR/USD 浮亏中 (-3.6%)
+          </div>
+          <div class="text-tui-muted text-xs mt-1">09:25:05</div>
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
+          <div>ESG-Alpha 新策略已于 09:15 通过 Phase B 合规审查，已自动进入 Phase C 回测验证。预计 2 个工作日内完成。</div>
+          <div class="text-tui-muted text-xs mt-1">09:15:05</div>
+        </div>
+      </div>
+      <div class="p-3 border-t border-tui-border" style="background:#161b22;">
+        <div class="flex items-center gap-2">
+          <input type="text" placeholder="输入流程查询... (Enter)" class="flex-1 bg-tui-bg border border-tui-border rounded px-3 py-1.5 text-xs text-tui-text focus:outline-none focus:border-tui-blue">
+          <button class="cmd-btn text-tui-blue">Send</button>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button class="cmd-btn text-xs">/status</button>
+          <button class="cmd-btn text-xs">/phase</button>
+          <button class="cmd-btn text-xs">/blocked</button>
+          <button class="cmd-btn text-xs">/report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="flex items-center px-3 py-1 text-xs border-t border-tui-border" style="background:#161b22;">
+    <span class="text-tui-purple font-semibold">E2E WORKFLOW</span>
+    <span class="mx-2 text-tui-border">|</span>
+    <span class="nav-section flex items-center gap-1">
+      <span class="key">1</span><span class="text-tui-muted">Filter</span>
+      <span class="key">2</span><span class="text-tui-muted">Phases</span>
+      <span class="key">3</span><span class="text-tui-muted">Flow</span>
+      <span class="key">4</span><span class="text-tui-muted">Timeline</span>
+      <span class="key">5</span><span class="text-tui-muted">Agent</span>
+    </span>
+    <span class="nav-section flex items-center gap-1 px-2">
+      <span class="key">Tab</span><span class="text-tui-muted">Cycle</span>
+      <span class="key">/</span><span class="text-tui-muted">Command</span>
+    </span>
+    <span class="flex-1"></span>
+    <span class="nav-section flex items-center gap-2 px-2 flex-wrap">
+      <a href="00-home.html" class="nav-item hover:text-tui-text">q Home</a>
+      <a href="01-approval-center.html" class="nav-item hover:text-tui-text">01 Approval</a>
+      <a href="02-agent-collaboration.html" class="nav-item hover:text-tui-text">02 Agents</a>
+      <a href="03-compliance-dashboard.html" class="nav-item hover:text-tui-text">03 Compliance</a>
+      <a href="09-market-overview.html" class="nav-item hover:text-tui-text">04 Market</a>
+      <a href="06-categorized-workflows.html" class="nav-item hover:text-tui-text">06 Workflows</a>
+      <a href="08-strategy-management.html" class="nav-item hover:text-tui-text">08 Strategy</a>
+      <a href="10-trading-execution.html" class="nav-item hover:text-tui-text">10 Trading</a>
+      <a href="11-risk-management.html" class="nav-item hover:text-tui-text">11 Risk</a>
+      <a href="15-system-monitor.html" class="nav-item hover:text-tui-text">15 Monitor</a>
+    </span>
+  </div>
+</div>
+
+</body>
+</html>

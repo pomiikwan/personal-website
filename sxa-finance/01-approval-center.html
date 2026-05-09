@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 合规审批中心 | Compliance Approval Center</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#38d3d7',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+    background: #0d1117;
+    color: #c9d1d9;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .font-sans { font-family: 'Noto Sans SC', sans-serif; }
+
+  /* Terminal Frame */
+  .terminal-frame {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .terminal-titlebar {
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .terminal-dots { display: flex; gap: 6px; }
+  .terminal-dots span { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #f85149; }
+  .dot-yellow { background: #d29922; }
+  .dot-green { background: #3fb950; }
+
+  /* TUI Box */
+  .tui-box {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s;
+  }
+  .tui-box.focused {
+    border-color: #388bfd;
+    box-shadow: 0 0 0 1px #388bfd33, 0 0 12px #388bfd15;
+  }
+  .tui-box-header {
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .tui-box-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .box-number {
+    color: #388bfd;
+    font-weight: 600;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .focus-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #388bfd;
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .tui-box-title {
+    color: #c9d1d9;
+    font-weight: 500;
+    font-size: 12px;
+  }
+
+  /* Key shortcut */
+  .key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 4px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 3px;
+    font-size: 10px;
+    color: #c9d1d9;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .tag-pending { background: #d2992233; color: #d29922; border: 1px solid #d2992244; }
+  .tag-approving { background: #388bfd33; color: #388bfd; border: 1px solid #388bfd44; }
+  .tag-approved { background: #3fb95033; color: #3fb950; border: 1px solid #3fb95044; }
+  .tag-rejected { background: #f8514933; color: #f85149; border: 1px solid #f8514944; }
+  .tag-critical { background: #f8514922; color: #f85149; border: 1px solid #f8514933; }
+  .tag-warning { background: #d2992222; color: #d29922; border: 1px solid #d2992233; }
+  .tag-info { background: #388bfd22; color: #388bfd; border: 1px solid #388bfd33; }
+
+  /* Nav items */
+  .nav-item {
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+    color: #8b949e;
+  }
+  .nav-item:hover { background: #1c2128; color: #c9d1d9; }
+  .nav-item.active { background: #388bfd22; color: #388bfd; }
+
+  /* List items */
+  .list-item {
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+  }
+  .list-item:hover { background: #1c2128; }
+  .list-item.selected { background: #161b22; border-color: #388bfd; }
+
+  /* Command button */
+  .cmd-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid;
+    font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  }
+  .cmd-btn-approve { background: #3fb95022; border-color: #3fb95044; color: #3fb950; }
+  .cmd-btn-approve:hover { background: #3fb95044; }
+  .cmd-btn-reject { background: #f8514922; border-color: #f8514944; color: #f85149; }
+  .cmd-btn-reject:hover { background: #f8514944; }
+  .cmd-btn-revise { background: #d2992222; border-color: #d2992244; color: #d29922; }
+  .cmd-btn-revise:hover { background: #d2992244; }
+  .cmd-btn-info { background: #388bfd22; border-color: #388bfd44; color: #388bfd; }
+  .cmd-btn-info:hover { background: #388bfd44; }
+
+  /* Chat */
+  .chat-agent {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+  .chat-user {
+    background: #1c3a5e;
+    border: 1px solid #264a7a;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+    margin-bottom: 6px;
+    margin-left: 20px;
+  }
+
+  /* Glow effects */
+  .glow-green { text-shadow: 0 0 6px #3fb95066; }
+  .glow-blue { text-shadow: 0 0 6px #388bfd66; }
+  .glow-red { text-shadow: 0 0 6px #f8514966; }
+  .glow-yellow { text-shadow: 0 0 6px #d2992266; }
+  .glow-cyan { text-shadow: 0 0 6px #38d3d766; }
+
+  /* Scrollbar */
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  /* Status bar */
+  .status-bar {
+    background: #161b22;
+    border-top: 1px solid #30363d;
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+    color: #8b949e;
+  }
+
+  /* Diff view */
+  .diff-add { background: #3fb95018; border-left: 2px solid #3fb950; padding: 1px 6px; }
+  .diff-remove { background: #f8514918; border-left: 2px solid #f85149; padding: 1px 6px; text-decoration: line-through; opacity: 0.7; }
+  .diff-context { padding: 1px 6px; color: #8b949e; }
+
+  /* Timeline */
+  .timeline-item {
+    display: flex;
+    gap: 10px;
+    padding: 6px 0;
+    position: relative;
+  }
+  .timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 28px;
+    bottom: -2px;
+    width: 1px;
+    background: #30363d;
+  }
+  .timeline-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+
+  /* Stage gate indicator */
+  .stage-gate {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+  }
+  .stage-node {
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    background: #161b22;
+  }
+  .stage-node.active {
+    border-color: #388bfd;
+    color: #388bfd;
+    background: #388bfd22;
+  }
+  .stage-node.completed {
+    border-color: #3fb950;
+    color: #3fb950;
+    background: #3fb95022;
+  }
+  .stage-arrow { color: #484f58; }
+
+  /* Card */
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    padding: 8px;
+    margin-bottom: 6px;
+  }
+
+  /* Pre-check */
+  .precheck-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+    font-size: 11px;
+  }
+  .precheck-pass { color: #3fb950; }
+  .precheck-fail { color: #f85149; }
+  .precheck-warn { color: #d29922; }
+</style>
+</head>
+<body>
+
+<!-- Terminal Frame -->
+<div class="terminal-frame flex flex-col h-full">
+
+  <!-- Title Bar -->
+  <div class="terminal-titlebar">
+    <div class="terminal-dots">
+      <span class="dot-red"></span>
+      <span class="dot-yellow"></span>
+      <span class="dot-green"></span>
+    </div>
+    <span class="text-tui-muted text-xs font-mono">SXA v2.4.0</span>
+    <span class="text-tui-text text-xs font-sans font-medium ml-1">合规审批中心 / Compliance Approval Center</span>
+    <div class="flex-1"></div>
+    <span class="key">ESC</span>
+    <a href="00-home.html" class="nav-item text-xs">返回主页</a>
+    <span class="text-tui-muted mx-1">|</span>
+    <a href="02-agent-collaboration.html" class="nav-item text-xs">Agent协作</a>
+    <a href="03-compliance-dashboard.html" class="nav-item text-xs">合规仪表盘</a>
+    <a href="04-document-viewer.html" class="nav-item text-xs">文档查看</a>
+    <a href="16-workflow-panel.html" class="nav-item text-xs">工作流面板</a>
+  </div>
+
+  <!-- Stage Gate Indicator -->
+  <div style="background:#161b22; border-bottom:1px solid #30363d; padding:5px 12px;">
+    <div class="flex items-center gap-3">
+      <span class="text-tui-muted text-xs font-mono">WORKFLOW</span>
+      <div class="stage-gate">
+        <span class="stage-node completed">G1 需求审查</span>
+        <span class="stage-arrow">→</span>
+        <span class="stage-node completed">G2 模型审批</span>
+        <span class="stage-arrow">→</span>
+        <span class="stage-node active">G3 参数确认</span>
+        <span class="stage-arrow">→</span>
+        <span class="stage-node">G4 上线联合审批</span>
+      </div>
+      <div class="flex-1"></div>
+      <span class="text-tui-yellow text-xs">当前阶段: G3 参数确认</span>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- Left: Pending List -->
+    <div class="tui-box focused flex flex-col" style="width:280px; margin:6px 0 6px 6px;">
+      <div class="tui-box-header">
+        <span class="box-number"><span class="focus-dot"></span> [1]</span>
+        <span class="tui-box-title font-sans">审批队列 Approval Queue</span>
+        <div class="flex-1"></div>
+        <span class="text-tui-muted text-xs">12项</span>
+      </div>
+      <!-- Filter Bar -->
+      <div style="padding:6px 8px; border-bottom:1px solid #30363d; display:flex; gap:4px; flex-wrap:wrap;">
+        <span class="tag tag-pending" style="cursor:pointer;">待审批 (5)</span>
+        <span class="tag tag-approving" style="cursor:pointer;">审批中 (3)</span>
+        <span class="tag tag-approved" style="cursor:pointer;">已通过 (3)</span>
+        <span class="tag tag-rejected" style="cursor:pointer;">已拒绝 (1)</span>
+      </div>
+      <!-- Pending List -->
+      <div class="tui-box-body scrollbar-thin" style="font-size:11px;">
+        <div class="list-item selected" style="margin-bottom:2px;">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-tui-text font-medium">APR-2026-0042</span>
+            <span class="tag tag-pending">待审批</span>
+          </div>
+          <div class="text-tui-muted text-xs">量化对冲策略v3.2 参数修订</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-tui-cyan text-xs">张明远</span>
+            <span class="text-tui-muted">·</span>
+            <span class="text-tui-muted text-xs">10分钟前</span>
+          </div>
+        </div>
+
+        <div class="list-item" style="margin-bottom:2px;">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-tui-text font-medium">APR-2026-0041</span>
+            <span class="tag tag-pending">待审批</span>
+          </div>
+          <div class="text-tui-muted text-xs">风险限额调整 - 沪深300ETF</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-tui-cyan text-xs">李思涵</span>
+            <span class="text-tui-muted">·</span>
+            <span class="text-tui-muted text-xs">25分钟前</span>
+          </div>
+        </div>
+
+        <div class="list-item" style="margin-bottom:2px;">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-tui-text font-medium">APR-2026-0040</span>
+            <span class="tag tag-approving">审批中</span>
+          </div>
+          <div class="text-tui-muted text-xs">新增衍生品交易对手方准入</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-tui-cyan text-xs">王建华</span>
+            <span class="text-tui-muted">·</span>
+            <span class="text-tui-muted text-xs">1小时前</span>
+          </div>
+        </div>
+
+        <div class="list-item" style="margin-bottom:2px;">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-tui-text font-medium">APR-2026-0039</span>
+            <span class="tag tag-approving">审批中</span>
+          </div>
+          <div class="text-tui-muted text-xs">固定收益组合久期调整方案</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-tui-cyan text-xs">陈雅婷</span>
+            <span class="text-tui-muted">·</span>
+            <span class="text-tui-muted text-xs">2小时前</span>
+          </div>
+        </div>
+
+        <div class="list-item" style="margin-bottom:2px;">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-tui-text font-medium">APR-2026-0038</span>
+            <span class="tag tag-approved">已通过</span>
+          </div>
+          <div class="text-tui-muted text-xs">CTA策略信号阈值优化</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-tui-cyan text-xs">刘志强</span>
+            <span class="text-tui-muted">·</span>
+            <span class="text-tui-muted text-xs">昨天</span>
+          </div>
+        </div>
+
+        <div class="list-item" style="margin-bottom:2px;">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-tui-text font-medium">APR-2026-0037</span>
+            <span class="tag tag-approved">已通过</span>
+          </div>
+          <div class="text-tui-muted text-xs">市场中性策略回测报告</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-tui-cyan text-xs">赵思源</span>
+            <span class="text-tui-muted">·</span>
+            <span class="text-tui-muted text-xs">昨天</span>
+          </div>
+        </div>
+
+        <div class="list-item" style="margin-bottom:2px;">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-tui-text font-medium">APR-2026-0036</span>
+            <span class="tag tag-rejected">已拒绝</span>
+          </div>
+          <div class="text-tui-muted text-xs">高频做市策略参数上线</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-tui-cyan text-xs">孙伟</span>
+            <span class="text-tui-muted">·</span>
+            <span class="text-tui-muted text-xs">2天前</span>
+          </div>
+        </div>
+
+        <div class="list-item" style="margin-bottom:2px;">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-tui-text font-medium">APR-2026-0035</span>
+            <span class="tag tag-pending">待审批</span>
+          </div>
+          <div class="text-tui-muted text-xs">跨境套利策略合规审查</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-tui-cyan text-xs">周敏</span>
+            <span class="text-tui-muted">·</span>
+            <span class="text-tui-muted text-xs">2天前</span>
+          </div>
+        </div>
+
+        <div class="list-item" style="margin-bottom:2px;">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-tui-text font-medium">APR-2026-0034</span>
+            <span class="tag tag-pending">待审批</span>
+          </div>
+          <div class="text-tui-muted text-xs">算法交易执行优化方案</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-tui-cyan text-xs">黄浩然</span>
+            <span class="text-tui-muted">·</span>
+            <span class="text-tui-muted text-xs">3天前</span>
+          </div>
+        </div>
+
+        <div class="list-item" style="margin-bottom:2px;">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-tui-text font-medium">APR-2026-0033</span>
+            <span class="tag tag-approving">审批中</span>
+          </div>
+          <div class="text-tui-muted text-xs">债券组合信用风险限额调整</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-tui-cyan text-xs">吴芳</span>
+            <span class="text-tui-muted">·</span>
+            <span class="text-tui-muted text-xs">3天前</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Detail + Actions + Timeline -->
+    <div class="flex flex-col flex-1" style="margin:6px 3px;">
+
+      <!-- Detail Box (top) -->
+      <div class="tui-box flex flex-col" style="flex:1; margin-bottom:4px;">
+        <div class="tui-box-header">
+          <span class="box-number">[2]</span>
+          <span class="tui-box-title font-sans">审批详情 Approval Detail</span>
+          <div class="flex-1"></div>
+          <span class="text-tui-muted text-xs">APR-2026-0042</span>
+        </div>
+        <div class="flex flex-1 overflow-hidden">
+          <!-- Document Info -->
+          <div style="width:300px; border-right:1px solid #30363d; padding:10px; overflow-y:auto;" class="scrollbar-thin">
+            <div class="mb-3">
+              <div class="text-tui-muted text-xs mb-1">申请编号 Application ID</div>
+              <div class="text-tui-text text-sm font-medium">APR-2026-0042</div>
+            </div>
+            <div class="mb-3">
+              <div class="text-tui-muted text-xs mb-1">申请类型 Type</div>
+              <div class="flex gap-2">
+                <span class="tag tag-warning">G3 参数确认</span>
+                <span class="tag tag-info">策略修订</span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="text-tui-muted text-xs mb-1">申请人 Applicant</div>
+              <div class="text-tui-text text-xs">张明远 <span class="text-tui-muted">/ 量化投资部</span></div>
+            </div>
+            <div class="mb-3">
+              <div class="text-tui-muted text-xs mb-1">申请时间 Submitted</div>
+              <div class="text-tui-text text-xs">2026-05-10 09:32:15</div>
+            </div>
+            <div class="mb-3">
+              <div class="text-tui-muted text-xs mb-1">策略名称 Strategy</div>
+              <div class="text-tui-text text-xs">量化对冲策略 v3.2</div>
+            </div>
+            <div class="mb-3">
+              <div class="text-tui-muted text-xs mb-1">变更描述 Description</div>
+              <div class="text-tui-text text-xs leading-relaxed">调整Alpha信号权重分配，增强动量因子权重从0.25提升至0.35，降低价值因子权重从0.30降至0.20，同时修改止损阈值从-2.5%至-3.0%，优化回撤控制逻辑。</div>
+            </div>
+            <div class="mb-3">
+              <div class="text-tui-muted text-xs mb-1">影响范围 Impact</div>
+              <div class="text-tui-text text-xs">沪深300成分股对冲组合 (约2.8亿规模)</div>
+            </div>
+
+            <div class="mb-2 mt-4" style="border-top:1px solid #30363d; padding-top:8px;">
+              <div class="text-tui-muted text-xs mb-2">附件 Documents</div>
+              <div class="card flex items-center gap-2 cursor-pointer" style="padding:4px 8px;">
+                <span class="text-tui-blue text-xs">📄</span>
+                <span class="text-tui-text text-xs flex-1">参数变更对比表_v3.2.xlsx</span>
+                <span class="text-tui-muted text-xs">128KB</span>
+              </div>
+              <div class="card flex items-center gap-2 cursor-pointer" style="padding:4px 8px;">
+                <span class="text-tui-blue text-xs">📊</span>
+                <span class="text-tui-text text-xs flex-1">回测验证报告_2026Q2.pdf</span>
+                <span class="text-tui-muted text-xs">2.3MB</span>
+              </div>
+              <div class="card flex items-center gap-2 cursor-pointer" style="padding:4px 8px;">
+                <span class="text-tui-blue text-xs">📋</span>
+                <span class="text-tui-text text-xs flex-1">风险评估备忘录.docx</span>
+                <span class="text-tui-muted text-xs">356KB</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diff View -->
+          <div class="flex-1 overflow-y-auto scrollbar-thin" style="padding:10px;">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-tui-text text-xs font-medium">参数变更对比 Parameter Diff</span>
+              <div class="flex gap-2">
+                <span class="text-tui-muted text-xs">v3.1 → v3.2</span>
+              </div>
+            </div>
+
+            <div style="background:#161b22; border:1px solid #30363d; border-radius:4px; overflow:hidden;">
+              <div style="background:#0d1117; padding:4px 8px; border-bottom:1px solid #30363d; display:flex; gap:16px;">
+                <span class="text-tui-muted text-xs" style="width:50px;">行号</span>
+                <span class="text-tui-muted text-xs">参数 / Parameters</span>
+              </div>
+              <div style="font-size:11px; font-family:'JetBrains Mono',monospace;">
+                <div class="diff-context"><span class="text-tui-muted" style="display:inline-block;width:40px;">42</span> [strategy.alpha_signal]</div>
+                <div class="diff-remove"><span style="display:inline-block;width:40px;">43</span> momentum_weight = 0.25</div>
+                <div class="diff-add"><span style="display:inline-block;width:40px;">43</span> momentum_weight = 0.35</div>
+                <div class="diff-context"><span class="text-tui-muted" style="display:inline-block;width:40px;">44</span> [strategy.alpha_signal]</div>
+                <div class="diff-remove"><span style="display:inline-block;width:40px;">45</span> value_weight = 0.30</div>
+                <div class="diff-add"><span style="display:inline-block;width:40px;">45</span> value_weight = 0.20</div>
+                <div class="diff-context"><span class="text-tui-muted" style="display:inline-block;width:40px;">46</span> [strategy.alpha_signal]</div>
+                <div class="diff-context"><span class="text-tui-muted" style="display:inline-block;width:40px;">47</span> quality_weight = 0.25  # unchanged</div>
+                <div class="diff-context"><span class="text-tui-muted" style="display:inline-block;width:40px;">48</span> [strategy.alpha_signal]</div>
+                <div class="diff-context"><span class="text-tui-muted" style="display:inline-block;width:40px;">49</span> growth_weight = 0.20  # unchanged</div>
+                <div class="diff-context" style="border-top:1px dashed #30363d; margin-top:4px; padding-top:4px;"><span class="text-tui-muted" style="display:inline-block;width:40px;">78</span> [risk_control.stop_loss]</div>
+                <div class="diff-remove"><span style="display:inline-block;width:40px;">79</span> stop_loss_threshold = -0.025</div>
+                <div class="diff-add"><span style="display:inline-block;width:40px;">79</span> stop_loss_threshold = -0.030</div>
+                <div class="diff-context"><span class="text-tui-muted" style="display:inline-block;width:40px;">80</span> [risk_control.stop_loss]</div>
+                <div class="diff-remove"><span style="display:inline-block;width:40px;">81</span> max_drawdown_limit = -0.05</div>
+                <div class="diff-add"><span style="display:inline-block;width:40px;">81</span> max_drawdown_limit = -0.06</div>
+                <div class="diff-context"><span class="text-tui-muted" style="display:inline-block;width:40px;">82</span> [risk_control.stop_loss]</div>
+                <div class="diff-add"><span style="display:inline-block;width:40px;">83</span> recovery_cooldown = 300  # NEW</div>
+              </div>
+            </div>
+
+            <!-- Impact Analysis -->
+            <div class="mt-3" style="background:#161b22; border:1px solid #30363d; border-radius:4px; padding:8px;">
+              <div class="text-tui-text text-xs font-medium mb-2">影响分析 Impact Analysis</div>
+              <div class="grid grid-cols-2 gap-2" style="font-size:11px;">
+                <div class="flex justify-between">
+                  <span class="text-tui-muted">预计年化收益变动</span>
+                  <span class="text-tui-green glow-green">+1.2%</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-muted">最大回撤变动</span>
+                  <span class="text-tui-yellow glow-yellow">+0.8%</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-muted">夏普比率变动</span>
+                  <span class="text-tui-green glow-green">+0.15</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-muted">资金利用率变动</span>
+                  <span class="text-tui-green glow-green">+3.5%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions + Timeline (bottom) -->
+      <div class="flex" style="height:220px; gap:4px;">
+        <!-- Approval Actions -->
+        <div class="tui-box flex-1">
+          <div class="tui-box-header">
+            <span class="box-number">[3]</span>
+            <span class="tui-box-title font-sans">审批操作 Approval Actions</span>
+          </div>
+          <div class="tui-box-body scrollbar-thin" style="font-size:11px;">
+            <!-- Compliance Pre-check -->
+            <div class="mb-3">
+              <div class="text-tui-muted text-xs mb-2 flex items-center gap-2">
+                <span>合规预检 Compliance Pre-check</span>
+                <span class="tag tag-approved" style="font-size:9px;">自动检测</span>
+              </div>
+              <div style="background:#161b22; border:1px solid #30363d; border-radius:4px; padding:6px;">
+                <div class="precheck-item">
+                  <span class="precheck-pass">✓</span>
+                  <span>投资比例合规检查</span>
+                  <span class="text-tui-muted ml-auto">PASS</span>
+                </div>
+                <div class="precheck-item">
+                  <span class="precheck-pass">✓</span>
+                  <span>风控阈值合规检查</span>
+                  <span class="text-tui-muted ml-auto">PASS</span>
+                </div>
+                <div class="precheck-item">
+                  <span class="precheck-pass">✓</span>
+                  <span>交易对手方限额检查</span>
+                  <span class="text-tui-muted ml-auto">PASS</span>
+                </div>
+                <div class="precheck-item">
+                  <span class="precheck-warn">⚠</span>
+                  <span>回撤限额接近阈值</span>
+                  <span class="text-tui-yellow ml-auto">WARNING</span>
+                </div>
+                <div class="precheck-item">
+                  <span class="precheck-pass">✓</span>
+                  <span>信息披露要求检查</span>
+                  <span class="text-tui-muted ml-auto">PASS</span>
+                </div>
+                <div class="precheck-item">
+                  <span class="precheck-pass">✓</span>
+                  <span>监管报备要求检查</span>
+                  <span class="text-tui-muted ml-auto">PASS</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stage Gate Info -->
+            <div class="mb-3">
+              <div class="text-tui-muted text-xs mb-1">审批节点 Approvers</div>
+              <div class="flex gap-2 flex-wrap">
+                <div style="background:#3fb95022; border:1px solid #3fb95044; border-radius:3px; padding:2px 6px; font-size:10px; color:#3fb950;">
+                  ✓ 投资经理审批
+                </div>
+                <div style="background:#388bfd22; border:1px solid #388bfd44; border-radius:3px; padding:2px 6px; font-size:10px; color:#388bfd;">
+                  ⟳ 风控经理审批
+                </div>
+                <div style="background:#21262d; border:1px solid #30363d; border-radius:3px; padding:2px 6px; font-size:10px; color:#8b949e;">
+                  ○ 合规总监审批
+                </div>
+                <div style="background:#21262d; border:1px solid #30363d; border-radius:3px; padding:2px 6px; font-size:10px; color:#8b949e;">
+                  ○ 投资总监审批
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 mt-2">
+              <button class="cmd-btn cmd-btn-approve">
+                <span>✓</span> 批准 Approve
+              </button>
+              <button class="cmd-btn cmd-btn-reject">
+                <span>✗</span> 拒绝 Reject
+              </button>
+              <button class="cmd-btn cmd-btn-revise">
+                <span>↻</span> 修订 Revise
+              </button>
+              <button class="cmd-btn cmd-btn-info">
+                <span>⤴</span> 委托 Delegate
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Approval Timeline -->
+        <div class="tui-box" style="width:360px;">
+          <div class="tui-box-header">
+            <span class="box-number">[4]</span>
+            <span class="tui-box-title font-sans">审批历史 Approval Timeline</span>
+          </div>
+          <div class="tui-box-body scrollbar-thin" style="font-size:11px;">
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:#388bfd;"></div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-tui-text">风控经理审批中</span>
+                  <span class="text-tui-muted text-xs">进行中</span>
+                </div>
+                <div class="text-tui-muted text-xs">刘静怡 / Risk Manager</div>
+                <div class="text-tui-muted text-xs">2026-05-10 10:15:00 · 等待审批意见</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:#3fb950;"></div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-tui-green">投资经理已批准</span>
+                  <span class="tag tag-approved" style="font-size:9px;">已通过</span>
+                </div>
+                <div class="text-tui-muted text-xs">陈浩 / Portfolio Manager</div>
+                <div class="text-tui-muted text-xs">2026-05-10 09:58:32</div>
+                <div class="text-tui-text text-xs mt-1" style="background:#0d1117; padding:3px 6px; border-radius:3px; border:1px solid #30363d;">参数调整方案合理，回测验证结果良好，同意提交风控审批。</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:#d29922;"></div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-tui-yellow">系统合规预检</span>
+                  <span class="tag tag-warning" style="font-size:9px;">1项警告</span>
+                </div>
+                <div class="text-tui-muted text-xs">SXA Compliance Engine</div>
+                <div class="text-tui-muted text-xs">2026-05-10 09:32:20</div>
+                <div class="text-tui-text text-xs mt-1" style="background:#0d1117; padding:3px 6px; border-radius:3px; border:1px solid #30363d;">5/6项通过。警告：max_drawdown_limit从-5%调整至-6%，接近监管阈值-8%，建议风控经理重点关注。</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:#388bfd;"></div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-tui-blue">申请已提交</span>
+                  <span class="text-tui-muted text-xs">初始</span>
+                </div>
+                <div class="text-tui-muted text-xs">张明远 / Quant Analyst</div>
+                <div class="text-tui-muted text-xs">2026-05-10 09:32:15</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Agent Chat -->
+    <div class="tui-box flex flex-col" style="width:320px; margin:6px 6px 6px 3px;">
+      <div class="tui-box-header">
+        <span class="box-number">[5]</span>
+        <span class="tui-box-title font-sans">Compliance Agent 合规助手</span>
+        <div class="flex-1"></div>
+        <span class="text-tui-green text-xs glow-green">● 在线</span>
+      </div>
+      <div class="tui-box-body scrollbar-thin flex-1" style="font-size:11px;">
+        <div class="chat-agent">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-cyan text-xs font-medium">Compliance Agent</span>
+            <span class="text-tui-muted text-xs">09:30</span>
+          </div>
+          <div class="text-tui-text text-xs">您好！当前有5项待审批任务。APR-2026-0042已通过投资经理审批，正在等待风控经理审批。需要我为您分析该审批项的合规风险吗？</div>
+        </div>
+
+        <div class="chat-user">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-blue text-xs font-medium">我</span>
+            <span class="text-tui-muted text-xs">09:31</span>
+          </div>
+          <div class="text-tui-text text-xs">分析一下APR-0042的合规风险，重点关注回撤限额调整部分。</div>
+        </div>
+
+        <div class="chat-agent">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-cyan text-xs font-medium">Compliance Agent</span>
+            <span class="text-tui-muted text-xs">09:31</span>
+          </div>
+          <div class="text-tui-text text-xs leading-relaxed">
+            <div class="mb-2">APR-2026-0042 合规风险分析：</div>
+            <div class="mb-1"><span class="text-tui-green">✓ 低风险：</span>动量因子权重提升在合理范围内</div>
+            <div class="mb-1"><span class="text-tui-yellow">⚠ 中风险：</span>价值因子权重降低可能影响分散化效果</div>
+            <div class="mb-1"><span class="text-tui-yellow">⚠ 关注：</span>max_drawdown_limit -6% 接近监管阈值-8%</div>
+            <div class="mb-1"><span class="text-tui-green">✓ 低风险：</span>止损阈值-3%调整幅度可控</div>
+            <div class="mt-2 p-2" style="background:#0d1117; border-radius:3px; border:1px solid #30363d;">
+              <span class="text-tui-cyan text-xs">建议：</span>建议风控经理审批时附加条件 — 设置回撤监控预警线为-5%，并要求每日报告回撤状态。
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-user">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-blue text-xs font-medium">我</span>
+            <span class="text-tui-muted text-xs">09:35</span>
+          </div>
+          <div class="text-tui-text text-xs">帮我生成审批意见模板，附带条件审批。</div>
+        </div>
+
+        <div class="chat-agent">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-tui-cyan text-xs font-medium">Compliance Agent</span>
+            <span class="text-tui-muted text-xs">09:35</span>
+          </div>
+          <div class="text-tui-text text-xs leading-relaxed">
+            <div>已生成审批意见模板：</div>
+            <div class="mt-1 p-2" style="background:#0d1117; border-radius:3px; border:1px solid #30363d; font-size:10px;">
+              <div>审批意见：有条件通过</div>
+              <div class="mt-1">条件1：设置回撤预警线-5%</div>
+              <div>条件2：每日回撤状态报告</div>
+              <div>条件3：两周内提交执行效果评估</div>
+              <div class="mt-1">有效期：2026-05-17前需满足</div>
+            </div>
+            <div class="mt-2 flex gap-2">
+              <button class="cmd-btn cmd-btn-approve" style="font-size:10px;">采用模板</button>
+              <button class="cmd-btn cmd-btn-info" style="font-size:10px;">修改模板</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Chat Input -->
+      <div style="border-top:1px solid #30363d; padding:6px 8px; display:flex; gap:4px; align-items:center;">
+        <span class="key" style="font-size:9px;">⌘K</span>
+        <input type="text" placeholder="输入消息或指令..." style="flex:1; background:#161b22; border:1px solid #30363d; border-radius:4px; padding:4px 8px; font-size:11px; color:#c9d1d9; outline:none; font-family:'JetBrains Mono','Noto Sans SC',monospace;" />
+        <button class="cmd-btn cmd-btn-info" style="font-size:10px;">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="flex items-center gap-1"><span class="key">1</span>-<span class="key">5</span> 焦点</span>
+    <span class="flex items-center gap-1"><span class="key">Tab</span> 切换</span>
+    <span class="flex items-center gap-1"><span class="key">⇧Tab</span> 隐藏</span>
+    <span class="flex items-center gap-1"><span class="key">/</span> 命令</span>
+    <span class="flex items-center gap-1"><span class="key">a</span> 批准</span>
+    <span class="flex items-center gap-1"><span class="key">r</span> 拒绝</span>
+    <span class="flex items-center gap-1"><span class="key">e</span> 修订</span>
+    <span class="flex items-center gap-1"><span class="key">q</span> <a href="00-home.html" class="text-tui-muted hover:text-tui-text" style="text-decoration:none;">返回主页</a></span>
+    <span class="flex items-center gap-1"><span class="key">F1</span> 帮助</span>
+    <div class="flex-1"></div>
+    <span class="text-tui-green">●</span>
+    <span class="text-tui-muted">Compliance Agent 在线</span>
+    <span class="text-tui-muted mx-1">|</span>
+    <span class="text-tui-muted">待审批: <span class="text-tui-yellow">5</span> · 审批中: <span class="text-tui-blue">3</span></span>
+    <span class="text-tui-muted mx-1">|</span>
+    <span class="text-tui-muted">2026-05-10 10:45:33 CST</span>
+  </div>
+</div>
+
+</body>
+</html>
