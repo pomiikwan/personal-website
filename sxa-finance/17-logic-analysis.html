@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SXA v3.2.1 | 逻辑分析 Logic Analysis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            tui: {
+              bg: '#0d1117',
+              surface: '#161b22',
+              border: '#30363d',
+              borderLight: '#484f58',
+              text: '#e6edf3',
+              textMuted: '#8b949e',
+              textDim: '#6e7681',
+              accent: '#58a6ff',
+              accentDim: '#1f6feb',
+              green: '#3fb950',
+              greenDim: '#238636',
+              yellow: '#d29922',
+              orange: '#db6d28',
+              red: '#f85149',
+              purple: '#bc8cff',
+              cyan: '#39d2c0',
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Noto Sans SC', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+      background: #0d1117;
+      color: #e6edf3;
+      overflow: hidden;
+      height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0d1117; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+    .box-number {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 16px; background: #30363d; border-radius: 3px;
+    font-size: 10px; color: #8b949e;
+    }
+    .tui-box.focused .box-number { background: #58a6ff; color: #fff; }
+    .box-focus { border-color: #58a6ff !important; box-shadow: 0 0 0 1px #58a6ff, 0 0 12px rgba(88,166,255,0.15); }
+    .kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 1px 6px; font-size: 11px;
+      background: #21262d; border: 1px solid #30363d; border-radius: 4px;
+      color: #8b949e; font-family: 'JetBrains Mono', monospace;
+      line-height: 1.6;
+    }
+    .blink-cursor::after {
+      content: '▊';
+      animation: blink 1s step-end infinite;
+      color: #58a6ff;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .agent-msg { padding: 8px 12px; border-radius: 8px; max-width: 90%; font-size: 12px; line-height: 1.6; }
+    .agent-msg.user { background: #1f6feb22; border: 1px solid #1f6feb44; margin-left: auto; }
+    .agent-msg.assistant { background: #161b22; border: 1px solid #30363d; }
+    .agent-msg.system { background: #bc8cff11; border: 1px solid #bc8cff33; text-align: center; font-style: italic; }
+
+    .chain-step {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 4px; font-size: 11px;
+      border: 1px solid; transition: all 0.2s;
+    }
+    .chain-step:hover { filter: brightness(1.2); }
+    .chain-arrow { color: #484f58; font-size: 12px; margin: 0 2px; }
+
+    .causal-node {
+      border: 1px solid #30363d; border-radius: 6px; padding: 6px 10px;
+      background: #161b22; font-size: 11px; position: relative;
+      transition: all 0.2s;
+    }
+    .causal-node:hover { border-color: #58a6ff; }
+    .causal-arrow { color: #484f58; font-size: 16px; }
+
+    .scenario-card {
+      border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px;
+      background: #161b22; font-size: 11px;
+      transition: all 0.2s;
+    }
+    .scenario-card:hover { border-color: #58a6ff; }
+    .scenario-card.bull { border-left: 3px solid #3fb950; }
+    .scenario-card.bear { border-left: 3px solid #f85149; }
+    .scenario-card.neutral { border-left: 3px solid #d29922; }
+
+    .target-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px; border-radius: 4px; font-size: 11px;
+      border: 1px solid transparent; cursor: pointer; transition: all 0.15s;
+    }
+    .target-item:hover { background: #21262d; border-color: #30363d; }
+    .target-item.active { background: #1f6feb22; border-color: #1f6feb44; }
+
+    .signal-tag {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 8px; border-radius: 10px; font-size: 10px;
+      font-weight: 500;
+    }
+    .signal-tag.buy { background: #3fb95018; color: #3fb950; border: 1px solid #3fb95033; }
+    .signal-tag.sell { background: #f8514918; color: #f85149; border: 1px solid #f8514933; }
+    .signal-tag.watch { background: #d2992218; color: #d29922; border: 1px solid #d2992233; }
+
+    .factor-bar {
+      height: 6px; border-radius: 3px; background: #21262d;
+      overflow: hidden; position: relative;
+    }
+    .factor-bar-fill {
+      height: 100%; border-radius: 3px; transition: width 0.5s ease;
+    }
+
+    .progress-ring {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 3px solid #30363d; position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    @keyframes flowPulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+    .flow-pulse { animation: flowPulse 2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-tui-bg text-tui-text">
+
+  <!-- ========== TITLE BAR ========== -->
+  <div class="h-8 bg-tui-surface border-b border-tui-border flex items-center px-3 select-none" style="min-height:32px;">
+    <div class="flex items-center gap-2">
+      <span class="text-tui-purple font-bold text-xs">⟁ SXA</span>
+      <span class="text-tui-textDim text-xs">v3.2.1</span>
+      <span class="text-tui-border">│</span>
+      <span class="text-tui-text text-xs font-medium">逻辑分析 Logic Analysis</span>
+      <span class="text-tui-textDim text-[10px]">— 因果推理 · 情景模拟 · Logic Agent</span>
+    </div>
+    <div class="ml-auto flex items-center gap-3 text-[10px] text-tui-textDim">
+      <span><span class="kbd">ESC</span> Home</span>
+      <span><span class="kbd">1-5</span> Focus Box</span>
+      <span><span class="kbd">Tab</span> Cycle</span>
+      <span><span class="kbd">/</span> Command</span>
+      <span><span class="kbd">F1</span> Help</span>
+      <span class="text-tui-border">│</span>
+      <span class="status-dot" style="background:#3fb950;"></span>
+      <span class="text-tui-green">Logic Agent Online</span>
+    </div>
+  </div>
+
+  <!-- ========== ANALYSIS CHAIN NAV ========== -->
+  <div class="h-7 bg-tui-bg border-b border-tui-border flex items-center px-3 gap-1" style="min-height:28px;">
+    <span class="text-[10px] text-tui-textDim mr-1">Pipeline:</span>
+    <a href="09-market-overview.html" style="text-decoration:none"><span class="chain-step" style="background:rgba(88,166,255,0.1);border-color:#58a6ff44;color:#8b949e;">Step 1: 行情</span></a>
+    <span class="chain-arrow">→</span>
+    <a href="14-macro-analysis.html" style="text-decoration:none"><span class="chain-step" style="background:rgba(88,166,255,0.1);border-color:#58a6ff44;color:#8b949e;">Step 2: 宏观</span></a>
+    <span class="chain-arrow">→</span>
+    <a href="12-sentiment-analysis.html" style="text-decoration:none"><span class="chain-step" style="background:rgba(88,166,255,0.1);border-color:#58a6ff44;color:#8b949e;">Step 3: 情绪</span></a>
+    <span class="chain-arrow">→</span>
+    <a href="13-signal-aggregation.html" style="text-decoration:none"><span class="chain-step" style="background:rgba(88,166,255,0.1);border-color:#58a6ff44;color:#8b949e;">Step 4: 信号聚合</span></a>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step" style="background:rgba(188,140,255,0.15);border-color:#bc8cff;color:#bc8cff;font-weight:600;">Step 5: 逻辑分析 ●</span>
+    <span class="chain-arrow">→</span>
+    <a href="18-signal-monitor.html" style="text-decoration:none"><span class="chain-step" style="background:rgba(57,210,192,0.1);border-color:#39d2c044;color:#8b949e;">Step 6: 信号监测</span></a>
+    <span class="chain-arrow">→</span>
+    <a href="08-strategy-management.html" style="text-decoration:none"><span class="chain-step" style="background:rgba(88,166,255,0.1);border-color:#58a6ff44;color:#8b949e;">Step 7: 策略</span></a>
+    <div class="ml-auto flex items-center gap-2">
+      <a href="13-signal-aggregation.html" class="text-[10px] text-tui-accent hover:underline">← 信号聚合</a>
+      <a href="18-signal-monitor.html" class="text-[10px] text-tui-cyan hover:underline">信号监测 →</a>
+    </div>
+  </div>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <div class="flex" style="height: calc(100vh - 32px - 28px - 24px);">
+
+    <!-- ===== LEFT COLUMN: Box2 标的池 (250px) ===== -->
+    <div class="flex flex-col border-r border-tui-border" style="width:250px;min-width:250px;">
+      <!-- Box2 Header -->
+      <div class="px-2 py-1.5 bg-tui-surface border-b border-tui-border flex items-center justify-between">
+        <span class="box-number">[2]</span>
+        <span class="tui-box-title font-sans">标的池 Target Pool</span>
+        <span class="text-[10px] text-tui-textDim"><span class="kbd">2</span></span>
+      </div>
+      <!-- Box2 Content: Target list -->
+      <div class="flex-1 overflow-y-auto p-1.5 space-y-0.5">
+        <!-- Category: 买入信号 -->
+        <div class="text-[10px] text-tui-green font-semibold px-2 py-1 flex items-center gap-1">
+          <span>●</span> 买入信号 Buy Signals
+          <span class="ml-auto text-tui-textDim font-normal">3</span>
+        </div>
+        <div class="target-item active">
+          <span class="status-dot" style="background:#3fb950;"></span>
+          <div class="flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="font-semibold">AAPL</span>
+              <span class="signal-tag buy">BUY</span>
+            </div>
+            <div class="text-[10px] text-tui-textMuted mt-0.5">Apple Inc. | 得分 87</div>
+          </div>
+          <span class="text-tui-green text-[11px]">+2.3%</span>
+        </div>
+        <div class="target-item">
+          <span class="status-dot" style="background:#3fb950;"></span>
+          <div class="flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="font-semibold">NVDA</span>
+              <span class="signal-tag buy">BUY</span>
+            </div>
+            <div class="text-[10px] text-tui-textMuted mt-0.5">NVIDIA Corp. | 得分 82</div>
+          </div>
+          <span class="text-tui-green text-[11px]">+1.8%</span>
+        </div>
+        <div class="target-item">
+          <span class="status-dot" style="background:#3fb950;"></span>
+          <div class="flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="font-semibold">TSLA</span>
+              <span class="signal-tag buy">BUY</span>
+            </div>
+            <div class="text-[10px] text-tui-textMuted mt-0.5">Tesla Inc. | 得分 74</div>
+          </div>
+          <span class="text-tui-green text-[11px]">+0.9%</span>
+        </div>
+
+        <!-- Category: 观望信号 -->
+        <div class="text-[10px] text-tui-yellow font-semibold px-2 py-1 flex items-center gap-1 mt-2">
+          <span>●</span> 观望信号 Watch
+          <span class="ml-auto text-tui-textDim font-normal">2</span>
+        </div>
+        <div class="target-item">
+          <span class="status-dot" style="background:#d29922;"></span>
+          <div class="flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="font-semibold">GOOGL</span>
+              <span class="signal-tag watch">WATCH</span>
+            </div>
+            <div class="text-[10px] text-tui-textMuted mt-0.5">Alphabet Inc. | 得分 62</div>
+          </div>
+          <span class="text-tui-yellow text-[11px]">+0.2%</span>
+        </div>
+        <div class="target-item">
+          <span class="status-dot" style="background:#d29922;"></span>
+          <div class="flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="font-semibold">MSFT</span>
+              <span class="signal-tag watch">WATCH</span>
+            </div>
+            <div class="text-[10px] text-tui-textMuted mt-0.5">Microsoft Corp. | 得分 58</div>
+          </div>
+          <span class="text-tui-yellow text-[11px]">-0.1%</span>
+        </div>
+
+        <!-- Category: 卖出信号 -->
+        <div class="text-[10px] text-tui-red font-semibold px-2 py-1 flex items-center gap-1 mt-2">
+          <span>●</span> 卖出信号 Sell Signals
+          <span class="ml-auto text-tui-textDim font-normal">1</span>
+        </div>
+        <div class="target-item">
+          <span class="status-dot" style="background:#f85149;"></span>
+          <div class="flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="font-semibold">INTC</span>
+              <span class="signal-tag sell">SELL</span>
+            </div>
+            <div class="text-[10px] text-tui-textMuted mt-0.5">Intel Corp. | 得分 35</div>
+          </div>
+          <span class="text-tui-red text-[11px]">-1.5%</span>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="mt-3 pt-2 border-t border-tui-border">
+          <div class="text-[10px] text-tui-textDim px-2 mb-1.5">标的池概览 Pool Stats</div>
+          <div class="grid grid-cols-3 gap-1 px-1">
+            <div class="text-center p-1.5 rounded bg-tui-surface">
+              <div class="text-tui-green text-sm font-bold">3</div>
+              <div class="text-[9px] text-tui-textDim">买入</div>
+            </div>
+            <div class="text-center p-1.5 rounded bg-tui-surface">
+              <div class="text-tui-yellow text-sm font-bold">2</div>
+              <div class="text-[9px] text-tui-textDim">观望</div>
+            </div>
+            <div class="text-center p-1.5 rounded bg-tui-surface">
+              <div class="text-tui-red text-sm font-bold">1</div>
+              <div class="text-[9px] text-tui-textDim">卖出</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Factor Summary -->
+        <div class="mt-2 pt-2 border-t border-tui-border px-2">
+          <div class="text-[10px] text-tui-textDim mb-1.5">综合因子权重 Factor Weights</div>
+          <div class="space-y-1.5">
+            <div>
+              <div class="flex justify-between text-[10px]"><span class="text-tui-textMuted">市场面</span><span class="text-tui-accent">35%</span></div>
+              <div class="factor-bar"><div class="factor-bar-fill" style="width:35%;background:#58a6ff;"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[10px]"><span class="text-tui-textMuted">资金流</span><span class="text-tui-purple">28%</span></div>
+              <div class="factor-bar"><div class="factor-bar-fill" style="width:28%;background:#bc8cff;"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[10px]"><span class="text-tui-textMuted">新闻面</span><span class="text-tui-cyan">22%</span></div>
+              <div class="factor-bar"><div class="factor-bar-fill" style="width:22%;background:#39d2c0;"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[10px]"><span class="text-tui-textMuted">技术面</span><span class="text-tui-yellow">15%</span></div>
+              <div class="factor-bar"><div class="factor-bar-fill" style="width:15%;background:#d29922;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CENTER COLUMN: Box3 + Box4 ===== -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- Box3: 因果推理链 Causal Reasoning Chain (Top Center) -->
+      <div class="flex-[6] border-b border-tui-border flex flex-col min-h-0">
+        <div class="px-3 py-1.5 bg-tui-surface border-b border-tui-border flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="box-number">[3]</span>
+            <span class="tui-box-title font-sans">因果推理链 Causal Reasoning Chain</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">AAPL</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-tui-textDim">置信度 Confidence</span>
+            <span class="text-tui-green text-[11px] font-bold">87.3%</span>
+            <span class="text-[10px] text-tui-textDim"><span class="kbd">3</span></span>
+          </div>
+        </div>
+        <div class="flex-1 overflow-auto p-3">
+          <!-- Causal Chain Visualization -->
+          <div class="mb-3">
+            <div class="text-[10px] text-tui-textDim mb-2 flex items-center gap-1">
+              <span>🔗</span> 因果推理链条 Causal Chain — 市场面 Market
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="causal-node" style="border-color:#58a6ff44;background:rgba(88,166,255,0.05);">
+                <div class="text-[10px] text-tui-accent font-semibold">美联储利率决议</div>
+                <div class="text-[9px] text-tui-textMuted">Fed Rate Decision · 降息25bp</div>
+                <div class="text-[9px] text-tui-green mt-0.5">↑ 利好科技股</div>
+              </div>
+              <span class="causal-arrow flow-pulse">→</span>
+              <div class="causal-node" style="border-color:#bc8cff44;background:rgba(188,140,255,0.05);">
+                <div class="text-[10px] text-tui-purple font-semibold">市场风险偏好↑</div>
+                <div class="text-[9px] text-tui-textMuted">Risk Appetite Rising</div>
+                <div class="text-[9px] text-tui-green mt-0.5">VIX: 14.2 → 12.8</div>
+              </div>
+              <span class="causal-arrow flow-pulse">→</span>
+              <div class="causal-node" style="border-color:#3fb95044;background:rgba(63,185,80,0.05);">
+                <div class="text-[10px] text-tui-green font-semibold">AAPL 资金流入↑</div>
+                <div class="text-[9px] text-tui-textMuted">Net Inflow: +$2.3B</div>
+                <div class="text-[9px] text-tui-green mt-0.5">机构净买入 +1.8%</div>
+              </div>
+              <span class="causal-arrow flow-pulse">→</span>
+              <div class="causal-node" style="border-color:#3fb95066;background:rgba(63,185,80,0.08);">
+                <div class="text-[10px] text-tui-green font-bold">结论: 看涨 AAPL</div>
+                <div class="text-[9px] text-tui-textMuted">Target: $198-205</div>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span class="signal-tag buy" style="font-size:9px;">BUY</span>
+                  <span class="text-[9px] text-tui-green">87% 置信度</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fund Flow Chain -->
+          <div class="mb-3">
+            <div class="text-[10px] text-tui-textDim mb-2 flex items-center gap-1">
+              <span>🔗</span> 因果推理链条 Causal Chain — 资金流 Fund Flow
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="causal-node" style="border-color:#39d2c044;background:rgba(57,210,192,0.05);">
+                <div class="text-[10px] text-tui-cyan font-semibold">北向资金连续3日净流入</div>
+                <div class="text-[9px] text-tui-textMuted">Northbound: +¥18.5B 3d</div>
+                <div class="text-[9px] text-tui-green mt-0.5">偏好消费电子</div>
+              </div>
+              <span class="causal-arrow flow-pulse">→</span>
+              <div class="causal-node" style="border-color:#d2992244;background:rgba(210,153,34,0.05);">
+                <div class="text-[10px] text-tui-yellow font-semibold">板块轮动活跃</div>
+                <div class="text-[9px] text-tui-textMuted">Sector Rotation: Tech > Value</div>
+                <div class="text-[9px] text-tui-green mt-0.5">科技板块净流入 +3.2%</div>
+              </div>
+              <span class="causal-arrow flow-pulse">→</span>
+              <div class="causal-node" style="border-color:#3fb95044;background:rgba(63,185,80,0.05);">
+                <div class="text-[10px] text-tui-green font-semibold">AAPL 机构持仓↑</div>
+                <div class="text-[9px] text-tui-textMuted">Inst. Holdings: +0.5%</div>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span class="signal-tag buy" style="font-size:9px;">BUY</span>
+                  <span class="text-[9px] text-tui-green">支撑力增强</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- News Sentiment Chain -->
+          <div class="mb-3">
+            <div class="text-[10px] text-tui-textDim mb-2 flex items-center gap-1">
+              <span>🔗</span> 因果推理链条 Causal Chain — 新闻面 News
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="causal-node" style="border-color:#d2992244;background:rgba(210,153,34,0.05);">
+                <div class="text-[10px] text-tui-yellow font-semibold">WWDC 2026 即将召开</div>
+                <div class="text-[9px] text-tui-textMuted">AI Integration Catalyst</div>
+                <div class="text-[9px] text-tui-green mt-0.5">预期发布新一代AI芯片</div>
+              </div>
+              <span class="causal-arrow flow-pulse">→</span>
+              <div class="causal-node" style="border-color:#3fb95044;background:rgba(63,185,80,0.05);">
+                <div class="text-[10px] text-tui-green font-semibold">分析师上调评级</div>
+                <div class="text-[9px] text-tui-textMuted">3 analysts: Buy upgrade</div>
+                <div class="text-[9px] text-tui-green mt-0.5">Target avg: $205</div>
+              </div>
+              <span class="causal-arrow flow-pulse">→</span>
+              <div class="causal-node" style="border-color:#58a6ff44;background:rgba(88,166,255,0.05);">
+                <div class="text-[10px] text-tui-accent font-semibold">趋势可逆性评估</div>
+                <div class="text-[9px] text-tui-textMuted">Reversibility: LOW</div>
+                <div class="text-[9px] text-tui-green mt-0.5">上涨趋势稳定，回调风险低</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reasoning Summary -->
+          <div class="mt-2 p-2.5 rounded-lg border border-tui-border bg-tui-surface">
+            <div class="text-[10px] text-tui-purple font-semibold mb-1.5">📊 Logic Agent 推理总结 Reasoning Summary</div>
+            <div class="grid grid-cols-4 gap-2 text-center text-[10px]">
+              <div class="p-1.5 rounded" style="background:rgba(63,185,80,0.08);">
+                <div class="text-tui-green font-bold text-sm">87%</div>
+                <div class="text-tui-textMuted">综合置信度</div>
+              </div>
+              <div class="p-1.5 rounded" style="background:rgba(88,166,255,0.08);">
+                <div class="text-tui-accent font-bold text-sm">3/3</div>
+                <div class="text-tui-textMuted">链路一致</div>
+              </div>
+              <div class="p-1.5 rounded" style="background:rgba(188,140,255,0.08);">
+                <div class="text-tui-purple font-bold text-sm">LOW</div>
+                <div class="text-tui-textMuted">趋势可逆性</div>
+              </div>
+              <div class="p-1.5 rounded" style="background:rgba(57,210,192,0.08);">
+                <div class="text-tui-cyan font-bold text-sm">$198-205</div>
+                <div class="text-tui-textMuted">目标区间</div>
+              </div>
+            </div>
+            <div class="mt-2 text-[10px] text-tui-textMuted leading-relaxed">
+              <span class="text-tui-purple">Logic:</span> 三条因果链（市场面/资金流/新闻面）均指向看涨 AAPL，无矛盾信号。
+              美联储降息 + 北向资金流入 + WWDC催化剂 三重利好叠加，建议 BUY 信号置信度 87%。
+              关键监测点：VIX 突破 18 / 北向资金连续净流出 / WWDC 低于预期。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box4: 多情景模拟 Multi-Scenario Simulation (Bottom Center) -->
+      <div class="flex-[4] flex flex-col min-h-0">
+        <div class="px-3 py-1.5 bg-tui-surface border-b border-tui-border flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="box-number">[4]</span>
+            <span class="tui-box-title font-sans">多情景模拟 Scenario Simulation</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-cyan bg-opacity-15 text-tui-cyan">3 Scenarios</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="text-[10px] px-2 py-0.5 rounded border border-tui-border text-tui-textMuted hover:text-tui-text hover:border-tui-accent transition-colors">+ 新增情景</button>
+            <span class="text-[10px] text-tui-textDim"><span class="kbd">4</span></span>
+          </div>
+        </div>
+        <div class="flex-1 overflow-auto p-3">
+          <div class="grid grid-cols-3 gap-2.5 h-full">
+            <!-- Scenario 1: Bull -->
+            <div class="scenario-card bull flex flex-col">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-tui-green text-sm">🐂</span>
+                  <span class="text-[11px] font-semibold text-tui-green">牛市情景 Bull</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">概率 40%</span>
+              </div>
+              <div class="space-y-1.5 text-[10px] flex-1">
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">触发条件</span>
+                  <span class="text-tui-text">WWDC超预期 + VIX<15</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">目标价</span>
+                  <span class="text-tui-green font-bold">$205-215</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">预期收益</span>
+                  <span class="text-tui-green font-bold">+8.5~13.8%</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">止损位</span>
+                  <span class="text-tui-red">$188 (-2.1%)</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">风险收益比</span>
+                  <span class="text-tui-accent">1:4.2</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">关键信号</span>
+                  <span class="text-tui-green">AAPL突破$198</span>
+                </div>
+              </div>
+              <div class="mt-2 pt-1.5 border-t border-tui-border">
+                <div class="flex items-center gap-1">
+                  <span class="text-[9px] text-tui-textDim">行动:</span>
+                  <span class="signal-tag buy" style="font-size:9px;">建仓 40%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scenario 2: Neutral -->
+            <div class="scenario-card neutral flex flex-col">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-tui-yellow text-sm">🦉</span>
+                  <span class="text-[11px] font-semibold text-tui-yellow">中性情景 Neutral</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-yellow bg-opacity-15 text-tui-yellow">概率 35%</span>
+              </div>
+              <div class="space-y-1.5 text-[10px] flex-1">
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">触发条件</span>
+                  <span class="text-tui-text">WWDC符合预期</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">目标价</span>
+                  <span class="text-tui-yellow font-bold">$195-200</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">预期收益</span>
+                  <span class="text-tui-yellow font-bold">+1.0~3.6%</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">止损位</span>
+                  <span class="text-tui-red">$185 (-3.1%)</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">风险收益比</span>
+                  <span class="text-tui-accent">1:1.2</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">关键信号</span>
+                  <span class="text-tui-yellow">维持在$192-196</span>
+                </div>
+              </div>
+              <div class="mt-2 pt-1.5 border-t border-tui-border">
+                <div class="flex items-center gap-1">
+                  <span class="text-[9px] text-tui-textDim">行动:</span>
+                  <span class="signal-tag watch" style="font-size:9px;">观望/轻仓 20%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scenario 3: Bear -->
+            <div class="scenario-card bear flex flex-col">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-tui-red text-sm">🐻</span>
+                  <span class="text-[11px] font-semibold text-tui-red">熊市情景 Bear</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-red bg-opacity-15 text-tui-red">概率 25%</span>
+              </div>
+              <div class="space-y-1.5 text-[10px] flex-1">
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">触发条件</span>
+                  <span class="text-tui-text">VIX>22 + WWDC低于预期</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">目标价</span>
+                  <span class="text-tui-red font-bold">$175-185</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">预期收益</span>
+                  <span class="text-tui-red font-bold">-7.4~-2.1%</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">止损位</span>
+                  <span class="text-tui-red">$180 (-4.7%)</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">风险收益比</span>
+                  <span class="text-tui-red">N/A</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-tui-textMuted">关键信号</span>
+                  <span class="text-tui-red">跌破$190</span>
+                </div>
+              </div>
+              <div class="mt-2 pt-1.5 border-t border-tui-border">
+                <div class="flex items-center gap-1">
+                  <span class="text-[9px] text-tui-textDim">行动:</span>
+                  <span class="signal-tag sell" style="font-size:9px;">回避/对冲</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scenario Comparison Bar -->
+          <div class="mt-3 p-2 rounded-lg border border-tui-border bg-tui-surface">
+            <div class="flex items-center gap-3 text-[10px]">
+              <span class="text-tui-textMuted">期望收益 Expected Return:</span>
+              <div class="flex items-center gap-1">
+                <div class="w-24 h-3 rounded-full bg-tui-bg overflow-hidden flex">
+                  <div style="width:40%;background:#3fb950;" class="h-full"></div>
+                  <div style="width:35%;background:#d29922;" class="h-full"></div>
+                  <div style="width:25%;background:#f85149;" class="h-full"></div>
+                </div>
+                <span class="text-tui-green font-bold ml-1">+4.2%</span>
+              </div>
+              <span class="text-tui-border">│</span>
+              <span class="text-tui-textMuted">综合信号:</span>
+              <span class="signal-tag buy">BUY 建仓</span>
+              <span class="text-tui-textMuted">建议仓位: 30-40%</span>
+              <span class="text-tui-border">│</span>
+              <span class="text-tui-textMuted">监测触发 →</span>
+              <a href="18-signal-monitor.html" class="text-tui-cyan hover:underline">信号监测页</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RIGHT COLUMN: Box5 Logic Agent (320px) ===== -->
+    <div class="flex flex-col border-l border-tui-border" style="width:320px;min-width:320px;">
+      <!-- Box5 Header -->
+      <div class="px-3 py-1.5 bg-tui-surface border-b border-tui-border flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="status-dot" style="background:#bc8cff;"></span>
+          <span class="box-number">[5]</span>
+          <span class="tui-box-title font-sans">Logic Agent</span>
+        </div>
+        <span class="text-[10px] text-tui-textDim"><span class="kbd">5</span></span>
+      </div>
+      <!-- Agent Chat Area -->
+      <div class="flex-1 overflow-y-auto p-2.5 space-y-2.5">
+        <!-- System message -->
+        <div class="agent-msg system text-[10px]">
+          <span class="text-tui-purple">⟁ Logic Agent</span> 已就绪 · 因果推理模式 · Causal Reasoning Mode
+        </div>
+
+        <!-- Agent analysis message -->
+        <div class="agent-msg assistant">
+          <div class="text-[10px] text-tui-purple font-semibold mb-1">Logic Agent</div>
+          <div class="text-[11px] text-tui-text leading-relaxed">
+            已完成 <span class="text-tui-accent">AAPL</span> 的因果推理分析：
+          </div>
+          <div class="mt-1.5 space-y-1 text-[10px]">
+            <div class="flex items-start gap-1.5">
+              <span class="text-tui-green">✓</span>
+              <span><span class="text-tui-accent">市场链</span>: 美联储降息 → 风险偏好↑ → 科技股受益 → AAPL利好</span>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="text-tui-green">✓</span>
+              <span><span class="text-tui-cyan">资金链</span>: 北向资金流入 → 板块轮动 → 机构增持AAPL</span>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="text-tui-green">✓</span>
+              <span><span class="text-tui-yellow">新闻链</span>: WWDC催化剂 → 分析师上调 → 趋势稳固</span>
+            </div>
+          </div>
+          <div class="mt-2 p-1.5 rounded text-[10px]" style="background:rgba(63,185,80,0.08);">
+            <span class="text-tui-green font-semibold">结论:</span> 三链一致看涨，综合置信度 <span class="text-tui-green font-bold">87.3%</span>
+          </div>
+        </div>
+
+        <!-- User query -->
+        <div class="agent-msg user">
+          <div class="text-[10px] text-tui-accent font-semibold mb-0.5">You</div>
+          <div class="text-[11px]">如果VIX突然突破18，熊市情景的概率如何变化？</div>
+        </div>
+
+        <!-- Agent response -->
+        <div class="agent-msg assistant">
+          <div class="text-[10px] text-tui-purple font-semibold mb-1">Logic Agent</div>
+          <div class="text-[11px] text-tui-text leading-relaxed">
+            如果 VIX 突破 18：
+          </div>
+          <div class="mt-1.5 text-[10px] space-y-1">
+            <div class="p-1.5 rounded" style="background:rgba(248,81,73,0.08);">
+              <div class="flex justify-between">
+                <span>🐻 熊市情景</span>
+                <span class="text-tui-red font-bold">25% → 45%</span>
+              </div>
+            </div>
+            <div class="p-1.5 rounded" style="background:rgba(210,153,34,0.08);">
+              <div class="flex justify-between">
+                <span>🦉 中性情景</span>
+                <span class="text-tui-yellow font-bold">35% → 30%</span>
+              </div>
+            </div>
+            <div class="p-1.5 rounded" style="background:rgba(63,185,80,0.08);">
+              <div class="flex justify-between">
+                <span>🐂 牛市情景</span>
+                <span class="text-tui-green font-bold">40% → 25%</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2 text-[10px] text-tui-textMuted">
+            ⚠️ 建议将 <span class="text-tui-cyan">VIX > 18</span> 设为关键监测点 →
+            <a href="18-signal-monitor.html" class="text-tui-cyan hover:underline">前往信号监测页设置</a>
+          </div>
+        </div>
+
+        <!-- User query 2 -->
+        <div class="agent-msg user">
+          <div class="text-[10px] text-tui-accent font-semibold mb-0.5">You</div>
+          <div class="text-[11px]">帮我设置 AAPL 的关键信号监测点</div>
+        </div>
+
+        <!-- Agent response 2 -->
+        <div class="agent-msg assistant">
+          <div class="text-[10px] text-tui-purple font-semibold mb-1">Logic Agent</div>
+          <div class="text-[11px] text-tui-text leading-relaxed">
+            已根据因果推理链识别 <span class="text-tui-accent">5个关键信号监测点</span>：
+          </div>
+          <div class="mt-1.5 space-y-1 text-[10px]">
+            <div class="flex items-center gap-1.5 p-1 rounded" style="background:#0d1117;">
+              <span class="text-tui-red">●</span>
+              <span class="text-tui-text">VIX > 18</span>
+              <span class="text-tui-textDim ml-auto">风险偏好</span>
+            </div>
+            <div class="flex items-center gap-1.5 p-1 rounded" style="background:#0d1117;">
+              <span class="text-tui-red">●</span>
+              <span class="text-tui-text">北向资金连续2日净流出</span>
+              <span class="text-tui-textDim ml-auto">资金流</span>
+            </div>
+            <div class="flex items-center gap-1.5 p-1 rounded" style="background:#0d1117;">
+              <span class="text-tui-yellow">●</span>
+              <span class="text-tui-text">AAPL 跌破 $190</span>
+              <span class="text-tui-textDim ml-auto">技术面</span>
+            </div>
+            <div class="flex items-center gap-1.5 p-1 rounded" style="background:#0d1117;">
+              <span class="text-tui-yellow">●</span>
+              <span class="text-tui-text">WWDC 低于预期</span>
+              <span class="text-tui-textDim ml-auto">新闻面</span>
+            </div>
+            <div class="flex items-center gap-1.5 p-1 rounded" style="background:#0d1117;">
+              <span class="text-tui-green">●</span>
+              <span class="text-tui-text">AAPL 突破 $198</span>
+              <span class="text-tui-textDim ml-auto">突破确认</span>
+            </div>
+          </div>
+          <div class="mt-2 flex gap-2">
+            <button class="text-[10px] px-2 py-1 rounded bg-tui-purple bg-opacity-20 text-tui-purple border border-tui-purple border-opacity-30 hover:bg-opacity-30 transition-colors">
+              ✅ 确认并推送到信号监测
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent Input -->
+      <div class="p-2 border-t border-tui-border bg-tui-surface">
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] text-tui-purple">Logic&gt;</span>
+          <div class="flex-1 flex items-center bg-tui-bg border border-tui-border rounded px-2 py-1">
+            <span class="text-[11px] text-tui-textDim blink-cursor">询问因果推理或调整情景参数...</span>
+          </div>
+          <button class="text-[10px] px-2 py-1 rounded bg-tui-purple bg-opacity-20 text-tui-purple border border-tui-purple border-opacity-30">发送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== BOX 1: TOP FILTER BAR ========== -->
+  <!-- Actually Box 1 is embedded as a filter bar between Chain Nav and Main Content -->
+
+  <!-- ========== STATUS BAR ========== -->
+  <div class="h-6 bg-tui-surface border-t border-tui-border flex items-center px-3 text-[10px] text-tui-textDim select-none" style="min-height:24px; position:fixed; bottom:0; left:0; right:0;">
+    <div class="flex items-center gap-3">
+      <span class="flex items-center gap-1"><span class="status-dot" style="background:#3fb950;"></span> Connected</span>
+      <span class="text-tui-border">│</span>
+      <span>标的: <span class="text-tui-accent">AAPL</span></span>
+      <span class="text-tui-border">│</span>
+      <span>信号: <span class="text-tui-green">3 Buy</span> · <span class="text-tui-yellow">2 Watch</span> · <span class="text-tui-red">1 Sell</span></span>
+      <span class="text-tui-border">│</span>
+      <span>置信度: <span class="text-tui-green">87.3%</span></span>
+      <span class="text-tui-border">│</span>
+      <span>情景: <span class="text-tui-green">Bull 40%</span> · <span class="text-tui-yellow">Neutral 35%</span> · <span class="text-tui-red">Bear 25%</span></span>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      <span>Box <span class="text-tui-accent">3</span> Focused</span>
+      <span class="text-tui-border">│</span>
+      <span>2026-05-11 15:32:18 CST</span>
+      <span class="text-tui-border">│</span>
+      <a href="00-home.html" class="text-tui-accent hover:underline">Home</a>
+    </div>
+  </div>
+
+  <!-- ========== BOX 1 OVERLAY: TOP FILTER ========== -->
+  <div id="filterOverlay" style="display:none; position:fixed; top:60px; left:250px; right:320px; z-index:50;">
+    <div class="mx-3 p-3 rounded-lg border border-tui-accent bg-tui-surface" style="box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+      <div class="flex items-center justify-between mb-2">
+        <span class="box-number">[1]</span>
+        <span class="tui-box-title font-sans">筛选过滤器 Filter</span>
+        <button onclick="document.getElementById('filterOverlay').style.display='none'" class="text-[10px] text-tui-textDim hover:text-tui-text">✕ 关闭</button>
+      </div>
+      <div class="grid grid-cols-4 gap-2 text-[10px]">
+        <div>
+          <div class="text-tui-textMuted mb-1">市场 Market</div>
+          <select class="w-full bg-tui-bg border border-tui-border rounded px-2 py-1 text-tui-text text-[10px]">
+            <option>US 美股</option>
+            <option>CN A股</option>
+            <option>HK 港股</option>
+          </select>
+        </div>
+        <div>
+          <div class="text-tui-textMuted mb-1">板块 Sector</div>
+          <select class="w-full bg-tui-bg border border-tui-border rounded px-2 py-1 text-tui-text text-[10px]">
+            <option>Technology 科技</option>
+            <option>Healthcare 医疗</option>
+            <option>Finance 金融</option>
+          </select>
+        </div>
+        <div>
+          <div class="text-tui-textMuted mb-1">信号类型 Signal</div>
+          <select class="w-full bg-tui-bg border border-tui-border rounded px-2 py-1 text-tui-text text-[10px]">
+            <option>ALL 全部</option>
+            <option>BUY 买入</option>
+            <option>SELL 卖出</option>
+            <option>WATCH 观望</option>
+          </select>
+        </div>
+        <div>
+          <div class="text-tui-textMuted mb-1">置信度 > Confidence</div>
+          <select class="w-full bg-tui-bg border border-tui-border rounded px-2 py-1 text-tui-text text-[10px]">
+            <option>80%+</option>
+            <option>60%+</option>
+            <option>40%+</option>
+            <option>ALL</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 mt-2">
+        <button class="px-3 py-1 rounded bg-tui-accent bg-opacity-20 text-tui-accent border border-tui-accent border-opacity-30 text-[10px]">应用筛选</button>
+        <button class="px-3 py-1 rounded bg-tui-bg text-tui-textMuted border border-tui-border text-[10px]">重置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter trigger button (always visible) -->
+  <div style="position:fixed; top:60px; left:254px; z-index:40;">
+    <button onclick="document.getElementById('filterOverlay').style.display='block'" class="flex items-center gap-1 px-2 py-1 rounded text-[10px] bg-tui-surface border border-tui-border text-tui-textMuted hover:text-tui-accent hover:border-tui-accent transition-colors">
+      <span class="kbd" style="font-size:9px;">1</span>
+      <span>🔍 筛选 Filter</span>
+    </button>
+  </div>
+
+  <script>
+    // Global keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        window.location.href = '00-home.html';
+      } else if (e.key === 'q') {
+        window.location.href = '00-home.html';
+      } else if (e.key === '1') {
+        document.getElementById('filterOverlay').style.display = 'block';
+      } else if (e.key === 'F1') {
+        e.preventDefault();
+        alert('帮助：\nESC/q - 返回主页\n1 - 筛选面板 (Box 1)\n2 - 标的池 (Box 2)\n3 - 因果推理链 (Box 3)\n4 - 多情景模拟 (Box 4)\n5 - Logic Agent (Box 5)\nTab - 切换焦点\n/ - 命令模式');
+      }
+    });
+  </script>
+</body>
+</html>

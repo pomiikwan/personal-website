@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 实时对价盘 | Real-time Order Book</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-orange': '#db6d28',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#39d2c0',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-purple': '#bc8cff',
+        'tui-accent': '#58a6ff',
+      },
+      fontFamily: {
+        'mono': ['JetBrains Mono', 'monospace'],
+        'sans': ['Noto Sans SC', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0d1117; color:#c9d1d9; font-family:'Noto Sans SC','JetBrains Mono',monospace; overflow:hidden; height:100vh; }
+.tui-box { background:#0d1117; border:1px solid #30363d; border-radius:4px; overflow:hidden; display:flex; flex-direction:column; }
+.tui-box.focused { border-color:#58a6ff; box-shadow:0 0 0 1px #58a6ff; }
+.box-number { display:inline-flex; width:18px; height:15px; background:#30363d; border-radius:3px; font-size:10px; color:#8b949e; align-items:center; justify-content:center; font-weight:700; }
+.tui-box.focused .box-number { background:#58a6ff; color:#fff; }
+.kbd { display:inline-block; background:#21262d; border:1px solid #30363d; border-radius:3px; padding:0 5px; font-size:10px; color:#8b949e; font-family:'JetBrains Mono',monospace; line-height:1.6; }
+.tag { display:inline-block; padding:1px 6px; border-radius:3px; font-size:9px; font-family:'JetBrains Mono',monospace; }
+.tag-green { background:rgba(63,185,80,0.15); color:#3fb950; }
+.tag-red { background:rgba(248,81,73,0.15); color:#f85149; }
+.tag-blue { background:rgba(88,166,255,0.15); color:#58a6ff; }
+.tag-yellow { background:rgba(210,153,34,0.15); color:#d29922; }
+.tag-purple { background:rgba(188,140,255,0.15); color:#bc8cff; }
+.tag-cyan { background:rgba(57,210,192,0.15); color:#39d2c0; }
+.nav-tab { padding:3px 10px; font-size:11px; color:#8b949e; text-decoration:none; border-radius:3px; transition:all 0.15s; }
+.nav-tab:hover { color:#c9d1d9; background:#21262d; }
+.nav-tab.active { color:#58a6ff; background:rgba(88,166,255,0.12); border:1px solid rgba(88,166,255,0.3); }
+
+/* Compact skill buttons - single line controls */
+.sk { background:#21262d; border:1px solid #30363d; color:#8b949e; padding:0px 5px; border-radius:2px; font-size:9px; cursor:pointer; font-family:'JetBrains Mono',monospace; line-height:1.5; white-space:nowrap; }
+.sk:hover { background:#30363d; color:#c9d1d9; }
+.sk.buy { background:rgba(248,81,73,0.2); border-color:#f85149; color:#f85149; }
+.sk.sell { background:rgba(63,185,80,0.2); border-color:#3fb950; color:#3fb950; }
+.sk.on { background:rgba(88,166,255,0.2); border-color:#58a6ff; color:#58a6ff; }
+
+/* Legacy skill-btn kept for Box1 and Box8 */
+.skill-btn { background:#21262d; border:1px solid #30363d; color:#8b949e; padding:1px 6px; border-radius:3px; font-size:9px; cursor:pointer; font-family:'JetBrains Mono',monospace; }
+.skill-btn:hover { background:#30363d; }
+.skill-btn.active-buy { background:rgba(248,81,73,0.2); border-color:#f85149; color:#f85149; }
+.skill-btn.active-sell { background:rgba(63,185,80,0.2); border-color:#3fb950; color:#3fb950; }
+.skill-btn.active { background:rgba(88,166,255,0.2); border-color:#58a6ff; color:#58a6ff; }
+
+.chat-agent { background:#161b22; border-left:2px solid #58a6ff; padding:6px 8px; margin:3px 6px; border-radius:0 4px 4px 0; font-size:10px; line-height:1.5; }
+.chat-user { background:#1c2128; border-left:2px solid #bc8cff; padding:6px 8px; margin:3px 6px; border-radius:0 4px 4px 0; font-size:10px; line-height:1.5; }
+.cmd-btn { background:#21262d; border:1px solid #30363d; color:#8b949e; padding:2px 8px; border-radius:3px; font-size:9px; cursor:pointer; text-decoration:none; display:inline-block; }
+.cmd-btn:hover { background:#30363d; color:#c9d1d9; }
+
+/* Symbol input - inline in header */
+.sym-input { width:52px; background:#0d1117; border:1px solid #30363d; border-radius:2px; padding:0 3px; font-size:10px; color:#e6edf3; font-family:'JetBrains Mono',monospace; outline:none; text-align:center; text-transform:uppercase; }
+.sym-input:focus { border-color:#58a6ff; }
+
+/* Order book table */
+.ob-row { display:flex; justify-content:space-between; align-items:center; padding:0 4px; line-height:1.55; }
+.ob-row.bid { background:rgba(63,185,80,0.06); }
+.ob-row.bid:nth-child(2) { background:rgba(63,185,80,0.05); }
+.ob-row.bid:nth-child(3) { background:rgba(63,185,80,0.04); }
+.ob-row.bid:nth-child(4) { background:rgba(63,185,80,0.03); }
+.ob-row.bid:nth-child(5) { background:rgba(63,185,80,0.02); }
+.ob-row.ask { background:rgba(248,81,73,0.02); }
+.ob-row.ask:nth-child(2) { background:rgba(248,81,73,0.03); }
+.ob-row.ask:nth-child(3) { background:rgba(248,81,73,0.04); }
+.ob-row.ask:nth-child(4) { background:rgba(248,81,73,0.05); }
+.ob-row.ask:nth-child(5) { background:rgba(248,81,73,0.06); }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:#0d1117; }
+::-webkit-scrollbar-thumb { background:#30363d; border-radius:2px; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.pulse { animation:pulse 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.blink-cursor { animation:blink 1s step-end infinite; }
+</style>
+</head>
+<body>
+<div class="flex flex-col h-screen">
+
+  <!-- Title Bar -->
+  <div class="flex items-center justify-between px-4 py-1.5 bg-tui-header border-b border-tui-border flex-shrink-0" style="height:36px;">
+    <div class="flex items-center gap-2">
+      <div class="flex gap-1.5">
+        <a href="00-home.html" style="text-decoration:none;"><div style="width:11px;height:11px;border-radius:50%;background:#f85149;"></div></a>
+        <div style="width:11px;height:11px;border-radius:50%;background:#d29922;"></div>
+        <div style="width:11px;height:11px;border-radius:50%;background:#3fb950;"></div>
+      </div>
+      <span class="text-tui-textDim text-xs ml-2 font-mono">SXA v3.2.1</span>
+      <span class="text-tui-text text-xs font-mono">| 实时对价盘 Real-time Order Book</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <span class="kbd">ESC</span><span class="text-tui-textDim">主页</span>
+      <span class="kbd">1-8</span><span class="text-tui-textDim">聚焦</span>
+      <span class="kbd">Tab</span><span class="text-tui-textDim">切换</span>
+      <span class="kbd">F1</span><span class="text-tui-textDim">帮助</span>
+    </div>
+    <div class="flex items-center gap-3 text-xs text-tui-textMuted font-mono">
+      <span id="clock">00:00:00</span>
+      <span class="text-tui-green">●</span><span>ONLINE</span>
+    </div>
+  </div>
+
+  <!-- Sub-navigation -->
+  <div class="flex items-center gap-2 px-4 py-1 bg-tui-header border-b border-tui-border flex-shrink-0" style="height:30px;">
+    <a href="24-realtime-orderbook.html" class="nav-tab active">📊 实时对价盘</a>
+    <a href="25-realtime-pricechart.html" class="nav-tab">📈 实时价格图</a>
+    <div style="width:1px;height:16px;background:#30363d;margin:0 4px;"></div>
+    <a href="10-trading-execution.html" class="nav-tab">💹 交易执行</a>
+    <a href="11-risk-management.html" class="nav-tab">⚠️ 风险管理</a>
+    <div style="flex:1;"></div>
+    <a href="00-home.html" class="cmd-btn">← 返回主页</a>
+  </div>
+
+  <!-- Box 1: Strategy Targets Overview -->
+  <div class="tui-box focused flex-shrink-0 mx-1 mt-1" style="height:48px;">
+    <div class="flex items-center justify-between px-3 py-1 bg-tui-header border-b border-tui-border">
+      <div class="flex items-center gap-2">
+        <span class="box-number">1</span>
+        <span class="text-xs font-semibold text-tui-text">策略标的概览</span>
+        <span class="text-[9px] text-tui-textDim">Strategy Targets</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="tag tag-green">动量策略 Momentum</span>
+        <span class="tag tag-blue">6/8 标的</span>
+        <span class="tag tag-green">+5.2%</span>
+        <div style="width:1px;height:14px;background:#30363d;margin:0 2px;"></div>
+        <button class="skill-btn active">全部</button>
+        <button class="skill-btn">持仓</button>
+        <button class="skill-btn">待执行</button>
+        <button class="skill-btn">已完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content: Boxes 2-7 grid + Box 8 Agent -->
+  <div class="flex-1 flex overflow-hidden mx-1 mt-1 mb-1 gap-1">
+
+    <!-- Left: 3x2 Orderbook Grid -->
+    <div class="flex-1 flex flex-col gap-1 overflow-hidden">
+
+      <!-- Row 1: Box 2 + Box 3 -->
+      <div class="flex-1 flex gap-1 overflow-hidden">
+
+        <!-- ══════════════════════════════════════════════════ -->
+        <!-- Box 2: AAPL (Optimized Layout) -->
+        <!-- ══════════════════════════════════════════════════ -->
+        <div class="flex-1 tui-box overflow-hidden">
+          <!-- Header: 标的输入(内联) + 价格 + 状态 -->
+          <div class="flex items-center justify-between px-2 py-0.5 bg-tui-header border-b border-tui-border" style="height:22px;">
+            <div class="flex items-center gap-1">
+              <span class="box-number">2</span>
+              <input type="text" value="AAPL" class="sym-input" title="输入代码切换标的">
+              <span class="text-tui-green font-mono" style="font-size:11px;font-weight:600;">175.43</span>
+              <span class="text-tui-green" style="font-size:9px;">+1.25%</span>
+            </div>
+            <span class="text-tui-green" style="font-size:9px;">●</span>
+          </div>
+          <!-- Control Bar: 方向 | 方案 | 区间 → 单行横排 -->
+          <div class="flex items-center gap-1 px-2 py-0.5 border-b border-tui-border" style="height:20px;background:#0d1117;font-size:9px;">
+            <button class="sk buy">买</button>
+            <button class="sk">卖</button>
+            <span style="color:#30363d;">|</span>
+            <button class="sk on">市价</button>
+            <button class="sk">限价</button>
+            <button class="sk">拆单</button>
+            <span style="color:#30363d;">|</span>
+            <span style="color:#f85149;font-family:'JetBrains Mono',monospace;">168.50</span>
+            <span style="color:#484f58;">~</span>
+            <span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">185.00</span>
+          </div>
+          <!-- Order Book: 5-level bid/ask (MAXIMIZED SPACE) -->
+          <div class="flex-1 flex gap-0.5 px-1.5 py-1 overflow-hidden" style="font-size:11px;font-family:'JetBrains Mono',monospace;">
+            <!-- Bid Side -->
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row bid"><span style="color:#3fb950;">175.38</span><span style="color:#6e7681;font-size:9px;">2,400</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">175.35</span><span style="color:#6e7681;font-size:9px;">1,100</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">175.32</span><span style="color:#6e7681;font-size:9px;">3,200</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">175.30</span><span style="color:#6e7681;font-size:9px;">1,800</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">175.28</span><span style="color:#6e7681;font-size:9px;">950</span></div>
+            </div>
+            <!-- Ask Side -->
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row ask"><span style="color:#f85149;">175.45</span><span style="color:#6e7681;font-size:9px;">800</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">175.48</span><span style="color:#6e7681;font-size:9px;">1,500</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">175.50</span><span style="color:#6e7681;font-size:9px;">2,100</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">175.52</span><span style="color:#6e7681;font-size:9px;">960</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">175.55</span><span style="color:#6e7681;font-size:9px;">1,300</span></div>
+            </div>
+          </div>
+          <!-- Footer: 指标 + 已完成 → 单行 -->
+          <div class="flex items-center justify-between px-2 py-0.5 border-t border-tui-border" style="height:18px;background:#0d1117;font-size:9px;">
+            <div class="flex items-center gap-2">
+              <span style="color:#6e7681;">盈亏比</span><span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">2.3:1</span>
+              <span style="color:#30363d;">|</span>
+              <span style="color:#6e7681;">成交</span><span style="color:#c9d1d9;font-family:'JetBrains Mono',monospace;">12.5万/50.0万</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span style="color:#6e7681;">已3笔</span>
+              <button class="sk" style="font-size:8px;">查看</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════ -->
+        <!-- Box 3: MSFT -->
+        <!-- ══════════════════════════════════════════════════ -->
+        <div class="flex-1 tui-box overflow-hidden">
+          <div class="flex items-center justify-between px-2 py-0.5 bg-tui-header border-b border-tui-border" style="height:22px;">
+            <div class="flex items-center gap-1">
+              <span class="box-number">3</span>
+              <input type="text" value="MSFT" class="sym-input" title="输入代码切换标的">
+              <span class="text-tui-green font-mono" style="font-size:11px;font-weight:600;">428.65</span>
+              <span class="text-tui-green" style="font-size:9px;">+0.87%</span>
+            </div>
+            <span class="text-tui-green" style="font-size:9px;">●</span>
+          </div>
+          <div class="flex items-center gap-1 px-2 py-0.5 border-b border-tui-border" style="height:20px;background:#0d1117;font-size:9px;">
+            <button class="sk">买</button>
+            <button class="sk sell">卖</button>
+            <span style="color:#30363d;">|</span>
+            <button class="sk">市价</button>
+            <button class="sk on">限价</button>
+            <button class="sk">拆单</button>
+            <span style="color:#30363d;">|</span>
+            <span style="color:#f85149;font-family:'JetBrains Mono',monospace;">415.00</span>
+            <span style="color:#484f58;">~</span>
+            <span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">445.00</span>
+          </div>
+          <div class="flex-1 flex gap-0.5 px-1.5 py-1 overflow-hidden" style="font-size:11px;font-family:'JetBrains Mono',monospace;">
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row bid"><span style="color:#3fb950;">428.60</span><span style="color:#6e7681;font-size:9px;">1,800</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">428.55</span><span style="color:#6e7681;font-size:9px;">2,400</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">428.50</span><span style="color:#6e7681;font-size:9px;">3,100</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">428.45</span><span style="color:#6e7681;font-size:9px;">1,500</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">428.40</span><span style="color:#6e7681;font-size:9px;">920</span></div>
+            </div>
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row ask"><span style="color:#f85149;">428.70</span><span style="color:#6e7681;font-size:9px;">600</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">428.75</span><span style="color:#6e7681;font-size:9px;">1,200</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">428.80</span><span style="color:#6e7681;font-size:9px;">2,000</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">428.85</span><span style="color:#6e7681;font-size:9px;">880</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">428.90</span><span style="color:#6e7681;font-size:9px;">1,500</span></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between px-2 py-0.5 border-t border-tui-border" style="height:18px;background:#0d1117;font-size:9px;">
+            <div class="flex items-center gap-2">
+              <span style="color:#6e7681;">盈亏比</span><span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">1.8:1</span>
+              <span style="color:#30363d;">|</span>
+              <span style="color:#6e7681;">成交</span><span style="color:#c9d1d9;font-family:'JetBrains Mono',monospace;">8.2万/35.0万</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span style="color:#6e7681;">已2笔</span>
+              <button class="sk" style="font-size:8px;">查看</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Box 4 + Box 5 -->
+      <div class="flex-1 flex gap-1 overflow-hidden">
+
+        <!-- ══════════════════════════════════════════════════ -->
+        <!-- Box 4: GOOGL -->
+        <!-- ══════════════════════════════════════════════════ -->
+        <div class="flex-1 tui-box overflow-hidden">
+          <div class="flex items-center justify-between px-2 py-0.5 bg-tui-header border-b border-tui-border" style="height:22px;">
+            <div class="flex items-center gap-1">
+              <span class="box-number">4</span>
+              <input type="text" value="GOOGL" class="sym-input" title="输入代码切换标的">
+              <span class="text-tui-red font-mono" style="font-size:11px;font-weight:600;">178.32</span>
+              <span class="text-tui-red" style="font-size:9px;">-0.42%</span>
+            </div>
+            <span class="text-tui-green" style="font-size:9px;">●</span>
+          </div>
+          <div class="flex items-center gap-1 px-2 py-0.5 border-b border-tui-border" style="height:20px;background:#0d1117;font-size:9px;">
+            <button class="sk buy">买</button>
+            <button class="sk">卖</button>
+            <span style="color:#30363d;">|</span>
+            <button class="sk on">市价</button>
+            <button class="sk">限价</button>
+            <button class="sk">拆单</button>
+            <span style="color:#30363d;">|</span>
+            <span style="color:#f85149;font-family:'JetBrains Mono',monospace;">172.00</span>
+            <span style="color:#484f58;">~</span>
+            <span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">188.00</span>
+          </div>
+          <div class="flex-1 flex gap-0.5 px-1.5 py-1 overflow-hidden" style="font-size:11px;font-family:'JetBrains Mono',monospace;">
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row bid"><span style="color:#3fb950;">178.28</span><span style="color:#6e7681;font-size:9px;">1,600</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">178.25</span><span style="color:#6e7681;font-size:9px;">2,100</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">178.20</span><span style="color:#6e7681;font-size:9px;">1,400</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">178.15</span><span style="color:#6e7681;font-size:9px;">980</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">178.10</span><span style="color:#6e7681;font-size:9px;">750</span></div>
+            </div>
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row ask"><span style="color:#f85149;">178.35</span><span style="color:#6e7681;font-size:9px;">900</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">178.38</span><span style="color:#6e7681;font-size:9px;">1,300</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">178.42</span><span style="color:#6e7681;font-size:9px;">1,800</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">178.45</span><span style="color:#6e7681;font-size:9px;">1,100</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">178.50</span><span style="color:#6e7681;font-size:9px;">2,200</span></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between px-2 py-0.5 border-t border-tui-border" style="height:18px;background:#0d1117;font-size:9px;">
+            <div class="flex items-center gap-2">
+              <span style="color:#6e7681;">盈亏比</span><span style="color:#d29922;font-family:'JetBrains Mono',monospace;">1.5:1</span>
+              <span style="color:#30363d;">|</span>
+              <span style="color:#6e7681;">成交</span><span style="color:#c9d1d9;font-family:'JetBrains Mono',monospace;">5.3万/25.0万</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span style="color:#6e7681;">已1笔</span>
+              <button class="sk" style="font-size:8px;">查看</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════ -->
+        <!-- Box 5: TSLA -->
+        <!-- ══════════════════════════════════════════════════ -->
+        <div class="flex-1 tui-box overflow-hidden">
+          <div class="flex items-center justify-between px-2 py-0.5 bg-tui-header border-b border-tui-border" style="height:22px;">
+            <div class="flex items-center gap-1">
+              <span class="box-number">5</span>
+              <input type="text" value="TSLA" class="sym-input" title="输入代码切换标的">
+              <span class="text-tui-green font-mono" style="font-size:11px;font-weight:600;">248.50</span>
+              <span class="text-tui-green" style="font-size:9px;">+2.15%</span>
+            </div>
+            <span class="text-tui-green" style="font-size:9px;">●</span>
+          </div>
+          <div class="flex items-center gap-1 px-2 py-0.5 border-b border-tui-border" style="height:20px;background:#0d1117;font-size:9px;">
+            <button class="sk buy">买</button>
+            <button class="sk">卖</button>
+            <span style="color:#30363d;">|</span>
+            <button class="sk">市价</button>
+            <button class="sk">限价</button>
+            <button class="sk on">拆单</button>
+            <span style="color:#30363d;">|</span>
+            <span style="color:#f85149;font-family:'JetBrains Mono',monospace;">235.00</span>
+            <span style="color:#484f58;">~</span>
+            <span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">265.00</span>
+          </div>
+          <div class="flex-1 flex gap-0.5 px-1.5 py-1 overflow-hidden" style="font-size:11px;font-family:'JetBrains Mono',monospace;">
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row bid"><span style="color:#3fb950;">248.45</span><span style="color:#6e7681;font-size:9px;">3,200</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">248.40</span><span style="color:#6e7681;font-size:9px;">2,800</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">248.35</span><span style="color:#6e7681;font-size:9px;">4,100</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">248.30</span><span style="color:#6e7681;font-size:9px;">1,900</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">248.25</span><span style="color:#6e7681;font-size:9px;">2,500</span></div>
+            </div>
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row ask"><span style="color:#f85149;">248.55</span><span style="color:#6e7681;font-size:9px;">1,500</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">248.60</span><span style="color:#6e7681;font-size:9px;">2,200</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">248.65</span><span style="color:#6e7681;font-size:9px;">3,400</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">248.70</span><span style="color:#6e7681;font-size:9px;">1,800</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">248.75</span><span style="color:#6e7681;font-size:9px;">2,600</span></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between px-2 py-0.5 border-t border-tui-border" style="height:18px;background:#0d1117;font-size:9px;">
+            <div class="flex items-center gap-2">
+              <span style="color:#6e7681;">盈亏比</span><span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">3.1:1</span>
+              <span style="color:#30363d;">|</span>
+              <span style="color:#6e7681;">成交</span><span style="color:#c9d1d9;font-family:'JetBrains Mono',monospace;">18.7万/60.0万</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span style="color:#6e7681;">已5笔</span>
+              <button class="sk" style="font-size:8px;">查看</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Box 6 + Box 7 -->
+      <div class="flex-1 flex gap-1 overflow-hidden">
+
+        <!-- ══════════════════════════════════════════════════ -->
+        <!-- Box 6: NVDA -->
+        <!-- ══════════════════════════════════════════════════ -->
+        <div class="flex-1 tui-box overflow-hidden">
+          <div class="flex items-center justify-between px-2 py-0.5 bg-tui-header border-b border-tui-border" style="height:22px;">
+            <div class="flex items-center gap-1">
+              <span class="box-number">6</span>
+              <input type="text" value="NVDA" class="sym-input" title="输入代码切换标的">
+              <span class="text-tui-green font-mono" style="font-size:11px;font-weight:600;">875.28</span>
+              <span class="text-tui-green" style="font-size:9px;">+3.42%</span>
+            </div>
+            <span class="text-tui-green" style="font-size:9px;">●</span>
+          </div>
+          <div class="flex items-center gap-1 px-2 py-0.5 border-b border-tui-border" style="height:20px;background:#0d1117;font-size:9px;">
+            <button class="sk buy">买</button>
+            <button class="sk">卖</button>
+            <span style="color:#30363d;">|</span>
+            <button class="sk on">市价</button>
+            <button class="sk">限价</button>
+            <button class="sk">拆单</button>
+            <span style="color:#30363d;">|</span>
+            <span style="color:#f85149;font-family:'JetBrains Mono',monospace;">840.00</span>
+            <span style="color:#484f58;">~</span>
+            <span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">920.00</span>
+          </div>
+          <div class="flex-1 flex gap-0.5 px-1.5 py-1 overflow-hidden" style="font-size:11px;font-family:'JetBrains Mono',monospace;">
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row bid"><span style="color:#3fb950;">875.20</span><span style="color:#6e7681;font-size:9px;">800</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">875.10</span><span style="color:#6e7681;font-size:9px;">1,200</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">875.00</span><span style="color:#6e7681;font-size:9px;">1,600</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">874.90</span><span style="color:#6e7681;font-size:9px;">950</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">874.80</span><span style="color:#6e7681;font-size:9px;">700</span></div>
+            </div>
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row ask"><span style="color:#f85149;">875.35</span><span style="color:#6e7681;font-size:9px;">500</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">875.50</span><span style="color:#6e7681;font-size:9px;">900</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">875.65</span><span style="color:#6e7681;font-size:9px;">1,400</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">875.80</span><span style="color:#6e7681;font-size:9px;">1,100</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">876.00</span><span style="color:#6e7681;font-size:9px;">1,800</span></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between px-2 py-0.5 border-t border-tui-border" style="height:18px;background:#0d1117;font-size:9px;">
+            <div class="flex items-center gap-2">
+              <span style="color:#6e7681;">盈亏比</span><span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">2.8:1</span>
+              <span style="color:#30363d;">|</span>
+              <span style="color:#6e7681;">成交</span><span style="color:#c9d1d9;font-family:'JetBrains Mono',monospace;">22.3万/80.0万</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span style="color:#6e7681;">已4笔</span>
+              <button class="sk" style="font-size:8px;">查看</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════ -->
+        <!-- Box 7: META -->
+        <!-- ══════════════════════════════════════════════════ -->
+        <div class="flex-1 tui-box overflow-hidden">
+          <div class="flex items-center justify-between px-2 py-0.5 bg-tui-header border-b border-tui-border" style="height:22px;">
+            <div class="flex items-center gap-1">
+              <span class="box-number">7</span>
+              <input type="text" value="META" class="sym-input" title="输入代码切换标的">
+              <span class="text-tui-green font-mono" style="font-size:11px;font-weight:600;">505.75</span>
+              <span class="text-tui-green" style="font-size:9px;">+1.68%</span>
+            </div>
+            <span class="text-tui-yellow" style="font-size:9px;">◐</span>
+          </div>
+          <div class="flex items-center gap-1 px-2 py-0.5 border-b border-tui-border" style="height:20px;background:#0d1117;font-size:9px;">
+            <button class="sk">买</button>
+            <button class="sk sell">卖</button>
+            <span style="color:#30363d;">|</span>
+            <button class="sk">市价</button>
+            <button class="sk on">限价</button>
+            <button class="sk on">拆单</button>
+            <span style="color:#30363d;">|</span>
+            <span style="color:#f85149;font-family:'JetBrains Mono',monospace;">485.00</span>
+            <span style="color:#484f58;">~</span>
+            <span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">530.00</span>
+          </div>
+          <div class="flex-1 flex gap-0.5 px-1.5 py-1 overflow-hidden" style="font-size:11px;font-family:'JetBrains Mono',monospace;">
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row bid"><span style="color:#3fb950;">505.70</span><span style="color:#6e7681;font-size:9px;">1,100</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">505.65</span><span style="color:#6e7681;font-size:9px;">1,500</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">505.60</span><span style="color:#6e7681;font-size:9px;">2,000</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">505.55</span><span style="color:#6e7681;font-size:9px;">1,300</span></div>
+              <div class="ob-row bid"><span style="color:#3fb950;">505.50</span><span style="color:#6e7681;font-size:9px;">880</span></div>
+            </div>
+            <div class="flex-1 flex flex-col justify-around">
+              <div class="ob-row ask"><span style="color:#f85149;">505.80</span><span style="color:#6e7681;font-size:9px;">700</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">505.85</span><span style="color:#6e7681;font-size:9px;">1,100</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">505.90</span><span style="color:#6e7681;font-size:9px;">1,600</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">505.95</span><span style="color:#6e7681;font-size:9px;">900</span></div>
+              <div class="ob-row ask"><span style="color:#f85149;">506.00</span><span style="color:#6e7681;font-size:9px;">2,100</span></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between px-2 py-0.5 border-t border-tui-border" style="height:18px;background:#0d1117;font-size:9px;">
+            <div class="flex items-center gap-2">
+              <span style="color:#6e7681;">盈亏比</span><span style="color:#3fb950;font-family:'JetBrains Mono',monospace;">2.1:1</span>
+              <span style="color:#30363d;">|</span>
+              <span style="color:#6e7681;">成交</span><span style="color:#c9d1d9;font-family:'JetBrains Mono',monospace;">9.8万/40.0万</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span style="color:#6e7681;">已2笔</span>
+              <button class="sk" style="font-size:8px;">查看</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Box 8 - Trader Agent Chat -->
+    <div class="flex-shrink-0 tui-box overflow-hidden" style="width:280px;">
+      <div class="flex items-center justify-between px-2 py-1 bg-tui-header border-b border-tui-border">
+        <div class="flex items-center gap-1.5">
+          <span class="box-number">8</span>
+          <span class="text-[10px] font-semibold text-tui-text">Trader Agent</span>
+          <span class="pulse" style="width:5px;height:5px;background:#3fb950;border-radius:50%;display:inline-block;"></span>
+          <span class="text-[9px] text-tui-green">在线</span>
+        </div>
+        <span class="kbd">8</span>
+      </div>
+      <div class="flex-1 overflow-y-auto p-2 space-y-2">
+        <div class="chat-agent">
+          <div class="text-tui-textDim text-[8px] mb-0.5">Trader Agent 15:07</div>
+          交易执行助手已就绪。当前策略[动量策略]运行正常，6个标的均处于可操作区间。实时盈亏比均大于2:1，建议维持当前执行计划。
+        </div>
+        <div class="chat-user">
+          <div class="text-tui-textDim text-[8px] mb-0.5 text-right">You 15:08</div>
+          检查AAPL止损位
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-textDim text-[8px] mb-0.5">Trader Agent 15:08</div>
+          <div>AAPL当前价 <span class="text-tui-green">175.43</span>，止损位 <span class="text-tui-red">168.50</span>(距离-3.95%)，止盈位 <span class="text-tui-green">185.00</span>(距离+5.46%)。</div>
+          <div class="mt-1">当前盈亏比 <span class="text-tui-yellow">1.38:1</span>，建议关注价格波动。</div>
+        </div>
+        <div class="chat-user">
+          <div class="text-tui-textDim text-[8px] mb-0.5 text-right">You 15:10</div>
+          NVDA的成交进度如何？
+        </div>
+        <div class="chat-agent">
+          <div class="text-tui-textDim text-[8px] mb-0.5">Trader Agent 15:10</div>
+          NVDA已成交4笔，累计 <span class="text-tui-green">22.3万/80.0万</span> (27.9%)。盈亏比2.8:1表现优异，建议继续执行拆单策略。
+        </div>
+        <div class="chat-agent" style="opacity:0.6;">
+          <div class="text-tui-textDim text-[8px] mb-0.5">Trader Agent</div>
+          <span class="blink-cursor">▌</span> 正在分析TSLA拆单进度...
+        </div>
+      </div>
+      <!-- Quick Commands -->
+      <div class="px-2 py-1 border-t border-tui-border flex flex-wrap gap-1">
+        <button class="cmd-btn">/status</button>
+        <button class="cmd-btn">/position</button>
+        <button class="cmd-btn">/stoploss</button>
+        <button class="cmd-btn">/execute</button>
+      </div>
+      <!-- Input -->
+      <div class="px-2 py-1.5 border-t border-tui-border">
+        <div class="flex items-center gap-1">
+          <div class="flex-1 flex items-center bg-tui-bg border border-tui-border rounded px-2 py-1">
+            <span class="text-[9px] text-tui-textDim mr-1">/</span>
+            <span class="text-[9px] text-tui-textMuted blink-cursor">输入命令或对话...</span>
+          </div>
+          <button class="px-2 py-1 bg-tui-blue text-tui-bg text-[9px] rounded hover:opacity-80 font-mono">发送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="flex items-center justify-between px-4 py-1 bg-tui-header border-t border-tui-border text-[10px] text-tui-textDim font-mono flex-shrink-0" style="height:26px;">
+    <div class="flex items-center gap-3">
+      <span><span class="kbd">1</span>-<span class="kbd">8</span> 聚焦Box</span>
+      <span><span class="kbd">Tab</span> 切换</span>
+      <span><span class="kbd">ESC</span> 主页</span>
+      <span><span class="kbd">F1</span> 帮助</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span>SXA v3.2.1</span>
+      <span>|</span>
+      <span>延迟: <span class="text-tui-green">8ms</span></span>
+      <span>|</span>
+      <span>连接: <span class="text-tui-green">● 6/6</span></span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    [now.getHours(), now.getMinutes(), now.getSeconds()]
+    .map(n => String(n).padStart(2,'0')).join(':');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Box focus
+const totalBoxes = 8;
+let activeBox = 1;
+const boxes = document.querySelectorAll('.tui-box');
+
+function focusBox(n) {
+  boxes.forEach(b => b.classList.remove('focused'));
+  activeBox = n;
+  if (boxes[n-1]) boxes[n-1].classList.add('focused');
+}
+
+document.addEventListener('keydown', e => {
+  const num = parseInt(e.key);
+  if (num >= 1 && num <= totalBoxes) {
+    e.preventDefault();
+    focusBox(num);
+  }
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    focusBox((activeBox % totalBoxes) + 1);
+  }
+  if (e.key === 'Escape' || e.key === 'q') {
+    window.location.href = '00-home.html';
+  }
+  if (e.key === 'F1') {
+    e.preventDefault();
+    alert('帮助 | Help\n\n[1] 策略标的概览\n[2] AAPL 对价盘\n[3] MSFT 对价盘\n[4] GOOGL 对价盘\n[5] TSLA 对价盘\n[6] NVDA 对价盘\n[7] META 对价盘\n[8] Trader Agent\n\n快捷键:\n1-8 聚焦Box\nTab 切换Box\nESC/q 返回主页\n\n提示:\n- 头部标的代码可直接编辑切换\n- 买卖五档实时刷新\n- 盈亏比根据策略止损止盈位实时计算');
+  }
+});
+
+// localStorage sync
+function syncInterval() {
+  const interval = localStorage.getItem('sxa_pricechart_interval');
+  if (interval) console.log('PriceChart interval synced:', interval);
+}
+window.addEventListener('storage', syncInterval);
+syncInterval();
+</script>
+</body>
+</html>

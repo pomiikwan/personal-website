@@ -229,10 +229,20 @@ tailwind.config = {
             <div class="list-item">
               <div class="flex items-center gap-2">
                 <span class="text-tui-green text-xs font-bold">F</span>
-                <span class="text-tui-text text-xs flex-1">评估迭代</span>
-                <span class="tag tag-green">1</span>
+                <span class="text-tui-text text-xs flex-1">投后管理</span>
+                <span class="tag tag-cyan">4</span>
+                <span class="tag tag-green" style="font-size:8px;">NEW</span>
               </div>
-              <div class="text-tui-muted text-xs ml-5">Evaluation</div>
+              <div class="text-tui-muted text-xs ml-5">Post-trade</div>
+            </div>
+            <div class="list-item">
+              <div class="flex items-center gap-2">
+                <span class="text-tui-green text-xs font-bold">G</span>
+                <span class="text-tui-text text-xs flex-1">交付报告</span>
+                <span class="tag tag-green">2</span>
+                <span class="tag tag-green" style="font-size:8px;">NEW</span>
+              </div>
+              <div class="text-tui-muted text-xs ml-5">Delivery</div>
             </div>
 
             <!-- Summary Stats -->
@@ -270,7 +280,7 @@ tailwind.config = {
             <span class="box-number">3</span>
             <span>Phase Flow / 阶段流程图</span>
             <span class="flex-1"></span>
-            <span class="text-tui-muted text-xs">6 Phases | 13 Active Workflows</span>
+            <span class="text-tui-muted text-xs">8 Phases (A-G + Loop) | 13 Active Workflows</span>
           </div>
           <div class="flex-1 overflow-auto p-4 scrollbar-thin">
             <!-- Phase Flow Diagram -->
@@ -407,38 +417,88 @@ tailwind.config = {
                   <div class="text-tui-green">- PairTrade-I 运行正常</div>
                 </div>
                 <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border flex-wrap">
-                  <a href="03-compliance-dashboard.html" class="cmd-btn text-xs text-tui-purple">03 合规</a>
-                  <a href="02-agent-collaboration.html" class="cmd-btn text-xs">02 协作</a>
+                  <a href="10-trading-execution.html" class="cmd-btn text-xs text-tui-green">10 交易</a>
+                  <a href="11-risk-management.html" class="cmd-btn text-xs text-tui-red">11 风控</a>
                   <a href="15-system-monitor.html" class="cmd-btn text-xs">15 监控</a>
                 </div>
               </div>
 
               <div class="phase-arrow">-></div>
 
-              <!-- Phase F -->
-              <div class="phase-card flex-1 min-w-0">
+              <!-- Phase F: 投后管理（新增） -->
+              <div class="phase-card flex-1 min-w-0" style="border-color:#39d2c0;">
                 <div class="flex items-center gap-2 mb-2">
-                  <span class="text-tui-green font-bold text-sm">Phase F</span>
-                  <span class="tag tag-green">Done</span>
+                  <span class="text-tui-cyan font-bold text-sm">Phase F</span>
+                  <span class="tag tag-cyan">Post-trade</span>
+                  <span class="tag tag-green" style="font-size:9px;">NEW</span>
                 </div>
-                <div class="text-tui-text text-xs font-semibold mb-1">评估迭代 Evaluation</div>
+                <div class="text-tui-text text-xs font-semibold mb-1">投后管理 Post-trade</div>
                 <div class="progress-bar mb-2">
-                  <div class="progress-fill bg-tui-green" style="width:100%"></div>
+                  <div class="progress-fill bg-tui-cyan" style="width:60%"></div>
                 </div>
                 <div class="flex justify-between text-tui-muted text-xs mb-2">
-                  <span>进度 100%</span>
-                  <span>1 已完成</span>
+                  <span>进度 60%</span>
+                  <span>4 组合</span>
                 </div>
-                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-cyan">Analytics Agent</span></div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-cyan">Portfolio Agent</span></div>
                 <div class="text-xs space-y-0.5">
-                  <div class="text-tui-green">- StatArb-FX Q1评估完成</div>
-                  <div class="text-tui-muted">Sharpe: 2.1 | Win: 68%</div>
-                  <div class="text-tui-muted">建议: 继续运行，增加仓位</div>
+                  <div class="text-tui-green">- 量化Alpha组合 +12.3%</div>
+                  <div class="text-tui-green">- 固收增强组合 +4.2%</div>
+                  <div class="text-tui-yellow">- 跨境对冲组合 -2.1%</div>
+                  <div class="text-tui-green">- 宏观轮动组合 +8.7%</div>
                 </div>
                 <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border flex-wrap">
-                  <a href="03-compliance-dashboard.html" class="cmd-btn text-xs">03 合规</a>
-                  <a href="08-strategy-management.html" class="cmd-btn text-xs text-tui-blue">08 策略</a>
-                  <a href="00-home.html" class="cmd-btn text-xs">Home</a>
+                  <a href="19-portfolio-management.html" class="cmd-btn text-xs text-tui-cyan">19 组合</a>
+                  <a href="20-performance-attribution.html" class="cmd-btn text-xs text-tui-blue">20 归因</a>
+                  <a href="21-sensitivity-analysis.html" class="cmd-btn text-xs text-tui-purple">21 敏感</a>
+                  <a href="22-strategy-runtime.html" class="cmd-btn text-xs">22 策略</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3: Phase G 交付 + 反馈循环 -->
+            <div class="flex items-start gap-2 mt-2">
+              <!-- Phase G: 交付报告（新增） -->
+              <div class="phase-card flex-1 min-w-0" style="border-color:#3fb950;">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-tui-green font-bold text-sm">Phase G</span>
+                  <span class="tag tag-green">Delivery</span>
+                  <span class="tag tag-green" style="font-size:9px;">NEW</span>
+                </div>
+                <div class="text-tui-text text-xs font-semibold mb-1">交付报告 Delivery & Reports</div>
+                <div class="progress-bar mb-2">
+                  <div class="progress-fill bg-tui-green" style="width:40%"></div>
+                </div>
+                <div class="flex justify-between text-tui-muted text-xs mb-2">
+                  <span>进度 40%</span>
+                  <span>2 待交付</span>
+                </div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-green">Report Agent</span></div>
+                <div class="text-xs space-y-0.5">
+                  <div class="text-tui-green">- 量化Alpha周报W19 已生成</div>
+                  <div class="text-tui-yellow">- Q1投后总结 待生成</div>
+                  <div class="text-tui-muted">- 15份历史报告已完成</div>
+                </div>
+                <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border flex-wrap">
+                  <a href="23-delivery-report.html" class="cmd-btn text-xs text-tui-green">23 交付</a>
+                  <a href="04-document-viewer.html" class="cmd-btn text-xs text-tui-purple">04 文档</a>
+                </div>
+              </div>
+
+              <div class="phase-arrow">-></div>
+
+              <!-- 反馈循环 -->
+              <div class="phase-card flex-1 min-w-0" style="border-color:#bc8cff; background:rgba(188,140,255,0.03);">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-tui-purple font-bold text-sm">↺ Loop</span>
+                  <span class="tag tag-purple">Feedback</span>
+                </div>
+                <div class="text-tui-text text-xs font-semibold mb-1">反馈循环 Feedback Loop</div>
+                <div class="text-xs space-y-1 mt-2 text-tui-textMuted">
+                  <div>投后管理 → <a href="17-logic-analysis.html" class="text-tui-purple">逻辑分析</a>(重新评估)</div>
+                  <div>业绩归因 → <a href="18-signal-monitor.html" class="text-tui-cyan">信号监测</a>(调整监测点)</div>
+                  <div>敏感度分析 → <a href="08-strategy-management.html" class="text-tui-blue">策略管理</a>(参数优化)</div>
+                  <div>交付报告 → <a href="00-home.html" class="text-tui-text">Home</a>(新周期)</div>
                 </div>
               </div>
             </div>

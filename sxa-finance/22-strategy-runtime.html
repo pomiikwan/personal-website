@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SXA v3.2.1 | 策略运行状态 Strategy Runtime</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            tui: {
+              bg: '#0d1117',
+              surface: '#161b22',
+              border: '#30363d',
+              borderLight: '#484f58',
+              text: '#e6edf3',
+              textMuted: '#8b949e',
+              textDim: '#6e7681',
+              accent: '#58a6ff',
+              accentDim: '#1f6feb',
+              green: '#3fb950',
+              greenDim: '#238636',
+              yellow: '#d29922',
+              orange: '#db6d28',
+              red: '#f85149',
+              purple: '#bc8cff',
+              cyan: '#39d2c0',
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Noto Sans SC', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+      background: #0d1117;
+      color: #e6edf3;
+      overflow: hidden;
+      height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0d1117; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+    .box-number {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 16px; background: #30363d; border-radius: 3px;
+      font-size: 10px; color: #8b949e;
+    }
+    .tui-box.focused .box-number { background: #58a6ff; color: #fff; }
+    .box-focus { border-color: #58a6ff !important; box-shadow: 0 0 0 1px #58a6ff, 0 0 12px rgba(88,166,255,0.15); }
+    .kbd {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 1px 6px; font-size: 11px;
+      background: #21262d; border: 1px solid #30363d; border-radius: 4px;
+      color: #8b949e; font-family: 'JetBrains Mono', monospace;
+      line-height: 1.6;
+    }
+    .blink-cursor::after {
+      content: '▊';
+      animation: blink 1s step-end infinite;
+      color: #58a6ff;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .agent-msg { padding: 8px 12px; border-radius: 8px; max-width: 90%; font-size: 12px; line-height: 1.6; }
+    .agent-msg.user { background: #1f6feb22; border: 1px solid #1f6feb44; margin-left: auto; }
+    .agent-msg.assistant { background: #161b22; border: 1px solid #30363d; }
+
+    .nav-tab { padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+    .nav-tab:hover { background: rgba(88,166,255,0.1); }
+    .nav-tab.active { background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb55; }
+
+    .chain-step {
+      display: flex; align-items: center; gap: 6px;
+      padding: 3px 8px; border-radius: 4px; font-size: 10px;
+      background: #161b22; border: 1px solid #30363d;
+      white-space: nowrap;
+    }
+    .chain-step.active { border-color: #39d2c055; background: #39d2c010; color: #39d2c0; }
+    .chain-step.completed { border-color: #3fb95055; background: #3fb95010; color: #3fb950; }
+    .chain-arrow { color: #484f58; font-size: 10px; }
+
+    .strategy-row { transition: background 0.15s; cursor: pointer; }
+    .strategy-row:hover { background: rgba(88,166,255,0.06); }
+    .strategy-row.selected { background: rgba(88,166,255,0.1); }
+
+    .event-line { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; font-size: 11px; line-height: 1.5; }
+    .event-line .ts { color: #6e7681; min-width: 68px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+
+    .metric-mini {
+      background: #161b22; border: 1px solid #30363d; border-radius: 5px;
+      padding: 8px 10px; text-align: center;
+    }
+
+    .perf-bar {
+      display: flex; align-items: center; gap: 4px; font-size: 10px;
+    }
+    .perf-bar .track {
+      flex: 1; height: 4px; background: #30363d; border-radius: 2px; position: relative;
+    }
+    .perf-bar .fill {
+      position: absolute; top: 0; left: 0; height: 100%; border-radius: 2px;
+    }
+    .perf-bar .marker {
+      position: absolute; top: -2px; height: 8px; width: 2px;
+      background: #58a6ff; border-radius: 1px;
+    }
+
+    .trade-entry {
+      display: grid; grid-template-columns: 60px 36px 1fr 80px 60px;
+      gap: 6px; align-items: center; padding: 4px 0;
+      border-bottom: 1px solid #21262d; font-size: 11px;
+    }
+    .trade-entry:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div class="flex flex-col h-screen">
+
+    <!-- Title Bar -->
+    <div class="flex items-center justify-between px-4 py-2 border-b border-tui-border bg-tui-surface">
+      <div class="flex items-center gap-3">
+        <div class="flex gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-tui-red opacity-80"></span>
+          <span class="w-3 h-3 rounded-full bg-tui-yellow opacity-80"></span>
+          <span class="w-3 h-3 rounded-full bg-tui-green opacity-80"></span>
+        </div>
+        <span class="text-tui-accent font-semibold text-sm">SXA v3.2.1</span>
+        <span class="text-tui-textMuted text-sm">|</span>
+        <span class="text-tui-text text-sm">策略运行状态 Strategy Runtime</span>
+      </div>
+      <div class="flex items-center gap-2 text-tui-textMuted text-xs">
+        <span class="kbd">ESC</span><span>Home</span>
+        <span class="kbd">q</span><span>退出</span>
+        <span class="kbd">F1</span><span>帮助</span>
+        <span class="kbd">/</span><span>命令</span>
+      </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="flex items-center gap-1 px-4 py-1.5 border-b border-tui-border bg-tui-bg text-xs">
+      <span class="text-tui-textMuted mr-2">投后管理</span>
+      <a href="19-portfolio-management.html" class="nav-tab text-tui-textMuted hover:text-tui-accent">组合 <span class="text-tui-textDim">19</span></a>
+      <span class="text-tui-textDim">|</span>
+      <a href="20-performance-attribution.html" class="nav-tab text-tui-textMuted hover:text-tui-accent">归因 <span class="text-tui-textDim">20</span></a>
+      <span class="text-tui-textDim">|</span>
+      <a href="21-sensitivity-analysis.html" class="nav-tab text-tui-textMuted hover:text-tui-accent">敏感度 <span class="text-tui-textDim">21</span></a>
+      <span class="text-tui-textDim">|</span>
+      <span class="nav-tab active text-tui-cyan font-medium">策略 <span class="text-tui-cyan">22</span></span>
+      <span class="text-tui-textDim">|</span>
+      <a href="23-delivery-report.html" class="nav-tab text-tui-textMuted hover:text-tui-accent">交付 <span class="text-tui-textDim">23</span></a>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-2">
+        <span class="chain-step completed"><span class="status-dot bg-tui-green" style="width:5px;height:5px;"></span> Signal Agg</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-step active"><span class="status-dot bg-tui-cyan" style="width:5px;height:5px;"></span> Strategy Runtime</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-step"><span class="text-tui-textDim">Risk Check</span></span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-step"><span class="text-tui-textDim">Execution</span></span>
+      </div>
+    </div>
+
+    <!-- Main Content: 3-Box Layout -->
+    <div class="flex-1 flex overflow-hidden">
+
+      <!-- Left Column: Box1 + Box3 -->
+      <div class="flex-[55] flex flex-col overflow-hidden border-r border-tui-border">
+
+        <!-- Box 1: Strategy List (策略列表) -->
+        <div class="flex-[55] flex flex-col overflow-hidden border-b border-tui-border box-focus">
+          <!-- Box Header -->
+          <div class="flex items-center justify-between px-3 py-1.5 border-b border-tui-border bg-tui-surface">
+            <div class="flex items-center gap-2">
+              <span class="box-number">1</span>
+              <span class="tui-box-title font-sans text-xs font-medium text-tui-text">策略列表</span>
+              <span class="text-tui-textDim text-[10px]">Strategy List</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] text-tui-green">Running: 4</span>
+              <span class="text-tui-textDim text-[10px]">|</span>
+              <span class="text-[10px] text-tui-yellow">Paused: 1</span>
+              <span class="text-tui-textDim text-[10px]">|</span>
+              <span class="kbd">1</span>
+            </div>
+          </div>
+          <!-- Table Header -->
+          <div class="grid grid-cols-[1.4fr_0.6fr_0.8fr_0.6fr_0.6fr_0.6fr] gap-1 px-3 py-1.5 border-b border-tui-border bg-tui-bg text-[10px] text-tui-textMuted">
+            <span>策略名称</span>
+            <span class="text-center">状态</span>
+            <span class="text-center">信号源</span>
+            <span class="text-right">P&L</span>
+            <span class="text-right">胜率</span>
+            <span class="text-right">回撤</span>
+          </div>
+          <!-- Table Rows -->
+          <div class="flex-1 overflow-y-auto">
+            <!-- Strategy 1: AAPL-MOM-01 (Selected) -->
+            <div class="strategy-row selected grid grid-cols-[1.4fr_0.6fr_0.8fr_0.6fr_0.6fr_0.6fr] gap-1 px-3 py-2 border-b border-tui-border items-center">
+              <div class="flex items-center gap-2">
+                <span class="status-dot bg-tui-green" style="width:6px;height:6px;"></span>
+                <div>
+                  <div class="text-xs font-medium text-tui-text">AAPL-MOM-01</div>
+                  <div class="text-[10px] text-tui-textMuted">动量策略</div>
+                </div>
+              </div>
+              <div class="text-center">
+                <span class="inline-block px-1.5 py-0.5 text-[10px] rounded bg-tui-greenDim bg-opacity-30 text-tui-green border border-tui-green border-opacity-30">Running</span>
+              </div>
+              <div class="text-center text-[11px] text-tui-accent">Logic Agent</div>
+              <div class="text-right text-xs font-medium text-tui-green">+5.2%</div>
+              <div class="text-right text-[11px] text-tui-text">68%</div>
+              <div class="text-right text-[11px] text-tui-textMuted">-2.1%</div>
+            </div>
+            <!-- Strategy 2: NVDA-BREAK-02 -->
+            <div class="strategy-row grid grid-cols-[1.4fr_0.6fr_0.8fr_0.6fr_0.6fr_0.6fr] gap-1 px-3 py-2 border-b border-tui-border items-center">
+              <div class="flex items-center gap-2">
+                <span class="status-dot bg-tui-green" style="width:6px;height:6px;"></span>
+                <div>
+                  <div class="text-xs font-medium text-tui-text">NVDA-BREAK-02</div>
+                  <div class="text-[10px] text-tui-textMuted">突破策略</div>
+                </div>
+              </div>
+              <div class="text-center">
+                <span class="inline-block px-1.5 py-0.5 text-[10px] rounded bg-tui-greenDim bg-opacity-30 text-tui-green border border-tui-green border-opacity-30">Running</span>
+              </div>
+              <div class="text-center text-[11px] text-tui-accent">Signal Agg</div>
+              <div class="text-right text-xs font-medium text-tui-green">+3.8%</div>
+              <div class="text-right text-[11px] text-tui-text">62%</div>
+              <div class="text-right text-[11px] text-tui-textMuted">-1.5%</div>
+            </div>
+            <!-- Strategy 3: TSLA-MEAN-03 (Paused) -->
+            <div class="strategy-row grid grid-cols-[1.4fr_0.6fr_0.8fr_0.6fr_0.6fr_0.6fr] gap-1 px-3 py-2 border-b border-tui-border items-center">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-tui-yellow flex-shrink-0" style="animation: pulse-dot 2s ease-in-out infinite;"></span>
+                <div>
+                  <div class="text-xs font-medium text-tui-yellow">TSLA-MEAN-03</div>
+                  <div class="text-[10px] text-tui-textMuted">均值回归</div>
+                </div>
+              </div>
+              <div class="text-center">
+                <span class="inline-block px-1.5 py-0.5 text-[10px] rounded bg-tui-yellow bg-opacity-15 text-tui-yellow border border-tui-yellow border-opacity-30">Paused</span>
+              </div>
+              <div class="text-center text-[11px] text-tui-accent">Logic Agent</div>
+              <div class="text-right text-xs font-medium text-tui-red">-0.8%</div>
+              <div class="text-right text-[11px] text-tui-textMuted">55%</div>
+              <div class="text-right text-[11px] text-tui-red">-3.2%</div>
+            </div>
+            <!-- Strategy 4: PORT-RISK-04 -->
+            <div class="strategy-row grid grid-cols-[1.4fr_0.6fr_0.8fr_0.6fr_0.6fr_0.6fr] gap-1 px-3 py-2 border-b border-tui-border items-center">
+              <div class="flex items-center gap-2">
+                <span class="status-dot bg-tui-green" style="width:6px;height:6px;"></span>
+                <div>
+                  <div class="text-xs font-medium text-tui-text">PORT-RISK-04</div>
+                  <div class="text-[10px] text-tui-textMuted">风险对冲</div>
+                </div>
+              </div>
+              <div class="text-center">
+                <span class="inline-block px-1.5 py-0.5 text-[10px] rounded bg-tui-greenDim bg-opacity-30 text-tui-green border border-tui-green border-opacity-30">Running</span>
+              </div>
+              <div class="text-center text-[11px] text-tui-purple">Risk Agent</div>
+              <div class="text-right text-xs font-medium text-tui-green">+1.2%</div>
+              <div class="text-right text-[11px] text-tui-text">71%</div>
+              <div class="text-right text-[11px] text-tui-textMuted">-0.8%</div>
+            </div>
+            <!-- Strategy 5: SECTOR-ROT-05 -->
+            <div class="strategy-row grid grid-cols-[1.4fr_0.6fr_0.8fr_0.6fr_0.6fr_0.6fr] gap-1 px-3 py-2 border-b border-tui-border items-center">
+              <div class="flex items-center gap-2">
+                <span class="status-dot bg-tui-green" style="width:6px;height:6px;"></span>
+                <div>
+                  <div class="text-xs font-medium text-tui-text">SECTOR-ROT-05</div>
+                  <div class="text-[10px] text-tui-textMuted">板块轮动</div>
+                </div>
+              </div>
+              <div class="text-center">
+                <span class="inline-block px-1.5 py-0.5 text-[10px] rounded bg-tui-greenDim bg-opacity-30 text-tui-green border border-tui-green border-opacity-30">Running</span>
+              </div>
+              <div class="text-center text-[11px] text-tui-orange">Macro Agent</div>
+              <div class="text-right text-xs font-medium text-tui-green">+2.1%</div>
+              <div class="text-right text-[11px] text-tui-text">59%</div>
+              <div class="text-right text-[11px] text-tui-textMuted">-1.8%</div>
+            </div>
+          </div>
+          <!-- Box Footer Summary -->
+          <div class="px-3 py-1.5 border-t border-tui-border bg-tui-surface text-[10px] flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-tui-textMuted">总策略: <span class="text-tui-text">5</span></span>
+              <span class="text-tui-green">运行: 4</span>
+              <span class="text-tui-yellow">暂停: 1</span>
+              <span class="text-tui-textDim">停止: 0</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-tui-textMuted">累计 P&L:</span>
+              <span class="text-tui-green font-medium">+11.5%</span>
+              <span class="text-tui-textDim">|</span>
+              <span class="text-tui-textMuted">平均胜率:</span>
+              <span class="text-tui-text">63%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Box 3: Runtime Events (运行事件流) -->
+        <div class="flex-[45] flex flex-col overflow-hidden">
+          <!-- Box Header -->
+          <div class="flex items-center justify-between px-3 py-1.5 border-b border-tui-border bg-tui-surface">
+            <div class="flex items-center gap-2">
+              <span class="box-number">3</span>
+              <span class="tui-box-title font-sans text-xs font-medium text-tui-text">运行事件流</span>
+              <span class="text-tui-textDim text-[10px]">Runtime Events</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="status-dot bg-tui-green" style="width:6px;height:6px;"></span>
+              <span class="text-[10px] text-tui-green">Live</span>
+              <span class="text-tui-textDim text-[10px]">|</span>
+              <span class="kbd">3</span>
+            </div>
+          </div>
+          <!-- Events List -->
+          <div class="flex-1 overflow-y-auto px-3 py-2 space-y-0">
+            <!-- Event 1: Signal Confirmation -->
+            <div class="event-line">
+              <span class="ts">[15:32:18]</span>
+              <span class="text-tui-green flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">AAPL-MOM-01</span>
+                <span class="text-tui-textMuted">: 信号确认</span>
+                <span class="text-tui-green font-medium"> BUY</span>
+                <span class="text-tui-text"> AAPL</span>
+                <span class="text-tui-textMuted"> @ </span>
+                <span class="text-tui-text">$192.50</span>
+                <span class="text-tui-green"> ✓</span>
+              </div>
+            </div>
+            <!-- Event 2: Risk Check Pass -->
+            <div class="event-line">
+              <span class="ts">[15:28:05]</span>
+              <span class="text-tui-cyan flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">PORT-RISK-04</span>
+                <span class="text-tui-textMuted">: 风险检查通过，组合VaR</span>
+                <span class="text-tui-text"> 2.1%</span>
+                <span class="text-tui-textMuted"> &lt; 限值</span>
+                <span class="text-tui-text"> 3%</span>
+                <span class="text-tui-green"> ✓</span>
+              </div>
+            </div>
+            <!-- Event 3: Stop Loss Adjustment -->
+            <div class="event-line">
+              <span class="ts">[15:15:42]</span>
+              <span class="text-tui-yellow flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">NVDA-BREAK-02</span>
+                <span class="text-tui-textMuted">: 止损位调整</span>
+                <span class="text-tui-text"> $125.00</span>
+                <span class="text-tui-textMuted"> → </span>
+                <span class="text-tui-yellow">$126.50</span>
+              </div>
+            </div>
+            <!-- Event 4: Strategy Paused -->
+            <div class="event-line">
+              <span class="ts">[14:55:10]</span>
+              <span class="text-tui-red flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-yellow">TSLA-MEAN-03</span>
+                <span class="text-tui-textMuted">: 策略暂停 - 信号置信度不足 (&lt; 60%)</span>
+                <span class="text-tui-red"> ⚠</span>
+              </div>
+            </div>
+            <!-- Event 5: Signal Update -->
+            <div class="event-line">
+              <span class="ts">[14:32:18]</span>
+              <span class="text-tui-purple flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">AAPL-MOM-01</span>
+                <span class="text-tui-textMuted">: Logic Agent推送信号更新 - VIX</span>
+                <span class="text-tui-text"> 14.8</span>
+              </div>
+            </div>
+            <!-- Event 6: Sector Rotation Signal -->
+            <div class="event-line">
+              <span class="ts">[14:00:00]</span>
+              <span class="text-tui-orange flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">SECTOR-ROT-05</span>
+                <span class="text-tui-textMuted">: 板块轮动信号 - 科技</span>
+                <span class="text-tui-text">&gt;消费</span>
+                <span class="text-tui-textMuted"> 切换权重</span>
+              </div>
+            </div>
+            <!-- Event 7: Earlier event -->
+            <div class="event-line">
+              <span class="ts">[13:45:22]</span>
+              <span class="text-tui-green flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">AAPL-MOM-01</span>
+                <span class="text-tui-textMuted">: 订单执行完成 BUY 200 AAPL @ $190.20 - 滑点</span>
+                <span class="text-tui-text"> 0.02%</span>
+                <span class="text-tui-green"> ✓</span>
+              </div>
+            </div>
+            <!-- Event 8: Earlier event -->
+            <div class="event-line">
+              <span class="ts">[13:30:05]</span>
+              <span class="text-tui-cyan flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">PORT-RISK-04</span>
+                <span class="text-tui-textMuted">: 定期风控扫描完成 - 组合Beta</span>
+                <span class="text-tui-text"> 0.92</span>
+                <span class="text-tui-textMuted"> | 相关性矩阵已更新</span>
+              </div>
+            </div>
+            <!-- Event 9 -->
+            <div class="event-line">
+              <span class="ts">[12:15:38]</span>
+              <span class="text-tui-yellow flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">NVDA-BREAK-02</span>
+                <span class="text-tui-textMuted">: 突破信号触发 NVDA &gt; 上轨 $128.50，等待确认...</span>
+              </div>
+            </div>
+            <!-- Event 10 -->
+            <div class="event-line">
+              <span class="ts">[11:48:02]</span>
+              <span class="text-tui-purple flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">AAPL-MOM-01</span>
+                <span class="text-tui-textMuted">: Logic Agent更新市场状态 - 趋势强度</span>
+                <span class="text-tui-green"> 72/100</span>
+                <span class="text-tui-textMuted"> (强)</span>
+              </div>
+            </div>
+            <!-- Event 11 -->
+            <div class="event-line">
+              <span class="ts">[10:30:00]</span>
+              <span class="text-tui-green flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-textMuted">[系统]</span>
+                <span class="text-tui-textMuted"> 每日策略启动完成 - 5/5策略已初始化 | 数据源连接正常</span>
+              </div>
+            </div>
+            <!-- Event 12 -->
+            <div class="event-line">
+              <span class="ts">[09:30:00]</span>
+              <span class="text-tui-cyan flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-textMuted">[系统]</span>
+                <span class="text-tui-textMuted"> 市场开盘 - 纳斯达克正常交易 | 所有Agent连接就绪</span>
+              </div>
+            </div>
+          </div>
+          <!-- Box Footer -->
+          <div class="px-3 py-1.5 border-t border-tui-border bg-tui-surface text-[10px] flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-tui-textMuted">事件数:</span>
+              <span class="text-tui-text">12</span>
+              <span class="text-tui-textDim">|</span>
+              <span class="text-tui-green">信号 4</span>
+              <span class="text-tui-yellow">预警 2</span>
+              <span class="text-tui-cyan">风控 3</span>
+              <span class="text-tui-textDim">系统 3</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-tui-textMuted">最新: 15:32:18</span>
+              <span class="text-tui-textDim">|</span>
+              <button class="text-tui-accent hover:underline">查看全部</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Box2 (策略详情 - full height) -->
+      <div class="flex-[45] flex flex-col overflow-hidden">
+        <!-- Box 2: Strategy Detail Panel (策略详情) -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <!-- Box Header -->
+          <div class="flex items-center justify-between px-3 py-1.5 border-b border-tui-border bg-tui-surface">
+            <div class="flex items-center gap-2">
+              <span class="box-number">2</span>
+              <span class="tui-box-title font-sans text-xs font-medium text-tui-text">策略详情</span>
+              <span class="text-tui-textDim text-[10px]">Strategy Detail</span>
+              <span class="px-1.5 py-0.5 text-[10px] rounded bg-tui-greenDim bg-opacity-30 text-tui-green border border-tui-green border-opacity-30">AAPL-MOM-01</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="kbd">2</span>
+              <span class="text-tui-textDim text-[10px]">动量策略</span>
+            </div>
+          </div>
+          <!-- Detail Content -->
+          <div class="flex-1 overflow-y-auto p-3 space-y-3">
+
+            <!-- Performance Mini Cards -->
+            <div>
+              <div class="text-[10px] font-medium text-tui-textMuted mb-1.5 flex items-center gap-1">
+                <span class="w-0.5 h-3 bg-tui-green rounded"></span>
+                运行指标
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="metric-mini">
+                  <div class="text-[9px] text-tui-textMuted">累计 P&L</div>
+                  <div class="text-sm font-bold text-tui-green mt-0.5">+5.2%</div>
+                  <div class="text-[9px] text-tui-greenDim">年化 +18.6%</div>
+                </div>
+                <div class="metric-mini">
+                  <div class="text-[9px] text-tui-textMuted">胜率 / 盈亏比</div>
+                  <div class="text-sm font-bold text-tui-text mt-0.5">68%</div>
+                  <div class="text-[9px] text-tui-accent">P/L Ratio 1.85</div>
+                </div>
+                <div class="metric-mini">
+                  <div class="text-[9px] text-tui-textMuted">最大回撤</div>
+                  <div class="text-sm font-bold text-tui-yellow mt-0.5">-2.1%</div>
+                  <div class="text-[9px] text-tui-textDim">阈值 -5.0%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Parameters -->
+            <div>
+              <div class="text-[10px] font-medium text-tui-textMuted mb-1.5 flex items-center gap-1">
+                <span class="w-0.5 h-3 bg-tui-purple rounded"></span>
+                策略参数
+              </div>
+              <div class="bg-tui-surface border border-tui-border rounded p-2 space-y-1.5">
+                <div class="perf-bar">
+                  <span class="text-tui-textMuted w-16 shrink-0">ATR周期</span>
+                  <span class="text-tui-text w-6 text-right">14</span>
+                  <div class="track">
+                    <div class="fill bg-tui-green" style="width:56%"></div>
+                    <div class="marker" style="left:54%"></div>
+                  </div>
+                  <span class="text-tui-green text-[9px] w-10 shrink-0">OK 13-15</span>
+                </div>
+                <div class="perf-bar">
+                  <span class="text-tui-textMuted w-16 shrink-0">动量窗口</span>
+                  <span class="text-tui-text w-6 text-right">20</span>
+                  <div class="track">
+                    <div class="fill bg-tui-green" style="width:66%"></div>
+                    <div class="marker" style="left:63%"></div>
+                  </div>
+                  <span class="text-tui-green text-[9px] w-10 shrink-0">OK 18-22</span>
+                </div>
+                <div class="perf-bar">
+                  <span class="text-tui-textMuted w-16 shrink-0">止盈比例</span>
+                  <span class="text-tui-accent w-6 text-right">5.0</span>
+                  <div class="track">
+                    <div class="fill bg-tui-accent" style="width:83%"></div>
+                    <div class="marker" style="left:75%"></div>
+                  </div>
+                  <span class="text-tui-yellow text-[9px] w-10 shrink-0">偏高!</span>
+                </div>
+                <div class="perf-bar">
+                  <span class="text-tui-textMuted w-16 shrink-0">仓位系数</span>
+                  <span class="text-tui-text w-6 text-right">0.8</span>
+                  <div class="track">
+                    <div class="fill bg-tui-green" style="width:80%"></div>
+                    <div class="marker" style="left:70%"></div>
+                  </div>
+                  <span class="text-tui-green text-[9px] w-10 shrink-0">OK 0.7-0.9</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Performance Chart Placeholder -->
+            <div>
+              <div class="text-[10px] font-medium text-tui-textMuted mb-1.5 flex items-center gap-1">
+                <span class="w-0.5 h-3 bg-tui-cyan rounded"></span>
+                净值曲线 (30日)
+              </div>
+              <div class="bg-tui-surface border border-tui-border rounded p-2 h-[100px] relative overflow-hidden">
+                <!-- Y axis -->
+                <div class="absolute left-0 top-0 bottom-0 w-[32px] flex flex-col justify-between text-[8px] text-tui-textDim py-1">
+                  <span>+6%</span>
+                  <span>+3%</span>
+                  <span>0%</span>
+                  <span>-3%</span>
+                </div>
+                <!-- Grid + Chart area -->
+                <div class="ml-9 h-full relative">
+                  <div class="absolute w-full border-t border-tui-border border-dashed opacity-40" style="top:0%"></div>
+                  <div class="absolute w-full border-t border-tui-border border-dashed opacity-40" style="top:33%"></div>
+                  <div class="absolute w-full border-t border-tui-accent opacity-30" style="top:50%"></div>
+                  <div class="absolute w-full border-t border-tui-border border-dashed opacity-40" style="top:66%"></div>
+                  <div class="absolute w-full border-t border-tui-border border-dashed opacity-40" style="top:100%"></div>
+                  <!-- Equity curve SVG -->
+                  <svg class="absolute inset-0 w-full h-full" style="pointer-events:none;">
+                    <defs>
+                      <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#3fb950" stop-opacity="0.3"/>
+                        <stop offset="100%" stop-color="#3fb950" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <polyline points="0,48 15,46 30,42 45,44 60,38 75,35 90,40 105,32 120,28 135,30 150,25 165,22 180,26 195,20 210,18 225,22 240,16 255,14 270,18 285,12 300,10 315,14 330,8 345,6 360,10 375,8 390,4 405,6 420,3 435,5 450,2"
+                      fill="none" stroke="#3fb950" stroke-width="1.5" opacity="0.8"/>
+                    <polyline points="0,48 15,46 30,42 45,44 60,38 75,35 90,40 105,32 120,28 135,30 150,25 165,22 180,26 195,20 210,18 225,22 240,16 255,14 270,18 285,12 300,10 315,14 330,8 345,6 360,10 375,8 390,4 405,6 420,3 435,5 450,2 450,80 0,80"
+                      fill="url(#eqGrad)" stroke="none"/>
+                    <!-- Benchmark line -->
+                    <polyline points="0,48 75,47 150,46 225,47 300,45 375,44 450,43"
+                      fill="none" stroke="#484f58" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>
+                    <!-- Current point -->
+                    <circle cx="450" cy="2" r="3" fill="#3fb950" stroke="#0d1117" stroke-width="1"/>
+                  </svg>
+                </div>
+                <div class="absolute bottom-1 right-2 text-[9px] text-tui-textDim flex items-center gap-2">
+                  <span class="flex items-center gap-1"><span class="inline-block w-3 h-0.5 bg-tui-green rounded"></span>策略</span>
+                  <span class="flex items-center gap-1"><span class="inline-block w-3 h-0.5 bg-tui-border rounded" style="border-top:1px dashed #484f58;"></span>基准</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Trades -->
+            <div>
+              <div class="text-[10px] font-medium text-tui-textMuted mb-1.5 flex items-center gap-1">
+                <span class="w-0.5 h-3 bg-tui-orange rounded"></span>
+                最近交易
+              </div>
+              <div class="bg-tui-surface border border-tui-border rounded p-2">
+                <div class="trade-entry">
+                  <span class="text-tui-textDim">15:32:18</span>
+                  <span class="text-tui-green font-medium">BUY</span>
+                  <span class="text-tui-text">AAPL</span>
+                  <span class="text-tui-textMuted">200 @ $192.50</span>
+                  <span class="text-tui-green">+1.2%</span>
+                </div>
+                <div class="trade-entry">
+                  <span class="text-tui-textDim">14:18:42</span>
+                  <span class="text-tui-red font-medium">SELL</span>
+                  <span class="text-tui-text">AAPL</span>
+                  <span class="text-tui-textMuted">150 @ $191.80</span>
+                  <span class="text-tui-green">+0.8%</span>
+                </div>
+                <div class="trade-entry">
+                  <span class="text-tui-textDim">11:05:10</span>
+                  <span class="text-tui-green font-medium">BUY</span>
+                  <span class="text-tui-text">AAPL</span>
+                  <span class="text-tui-textMuted">100 @ $190.20</span>
+                  <span class="text-tui-green">+2.3%</span>
+                </div>
+                <div class="trade-entry">
+                  <span class="text-tui-textDim">05-10 15:22</span>
+                  <span class="text-tui-red font-medium">SELL</span>
+                  <span class="text-tui-text">AAPL</span>
+                  <span class="text-tui-textMuted">200 @ $188.90</span>
+                  <span class="text-tui-red">-0.4%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Agent Sources -->
+            <div>
+              <div class="text-[10px] font-medium text-tui-textMuted mb-1.5 flex items-center gap-1">
+                <span class="w-0.5 h-3 bg-tui-yellow rounded"></span>
+                信号链路
+              </div>
+              <div class="flex items-center gap-1 flex-wrap">
+                <span class="chain-step completed">Logic Agent</span>
+                <span class="chain-arrow">→</span>
+                <span class="chain-step active">Signal Confirm</span>
+                <span class="chain-arrow">→</span>
+                <span class="chain-step">Risk Check</span>
+                <span class="chain-arrow">→</span>
+                <span class="chain-step">Execute</span>
+              </div>
+            </div>
+
+            <!-- Action Links -->
+            <div class="flex gap-3 pt-1 pb-1">
+              <a href="08-strategy-management.html" class="text-[11px] text-tui-accent hover:underline flex items-center gap-1">
+                <span>→</span> 调整参数
+              </a>
+              <a href="11-risk-management.html" class="text-[11px] text-tui-accent hover:underline flex items-center gap-1">
+                <span>→</span> 风控详情
+              </a>
+              <a href="13-signal-aggregation.html" class="text-[11px] text-tui-accent hover:underline flex items-center gap-1">
+                <span>→</span> 信号聚合
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Status Bar -->
+    <div class="flex items-center justify-between px-4 py-1.5 border-t border-tui-border bg-tui-surface text-[10px]">
+      <div class="flex items-center gap-3 text-tui-textMuted">
+        <span class="flex items-center gap-1"><span class="status-dot bg-tui-green" style="width:5px;height:5px;"></span> Connected</span>
+        <span class="text-tui-textDim">|</span>
+        <span>Active: <span class="text-tui-green font-medium">4</span></span>
+        <span class="text-tui-textDim">|</span>
+        <span>Total P&L: <span class="text-tui-green font-medium">+11.5%</span></span>
+        <span class="text-tui-textDim">|</span>
+        <span>Running: <span class="text-tui-green">4</span> Paused: <span class="text-tui-yellow">1</span></span>
+      </div>
+      <div class="flex items-center gap-3 text-tui-textMuted">
+        <span>Focus: <span class="kbd">1</span> <span class="text-tui-accent">策略列表</span></span>
+        <span class="text-tui-textDim">|</span>
+        <span>2026-05-11 15:33:18 EDT</span>
+        <span class="text-tui-textDim">|</span>
+        <a href="00-home.html" class="text-tui-accent hover:underline">Home</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        window.location.href = '00-home.html';
+      } else if (e.key === 'q') {
+        window.location.href = '00-home.html';
+      } else if (e.key === 'F1') {
+        e.preventDefault();
+        alert('帮助：\nESC/q - 返回主页\n1 - 策略列表 (Box 1)\n2 - 策略详情 (Box 2)\n3 - 运行事件流 (Box 3)\nTab - 切换焦点\n/ - 命令模式\nj/k - 上下选择策略');
+      }
+    });
+  </script>
+</body>
+</html>

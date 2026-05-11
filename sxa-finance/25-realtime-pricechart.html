@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 实时价格图 | Real-time Price Chart</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-border': '#30363d',
+        'tui-header': '#161b22',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-green-dim': '#238636',
+        'tui-yellow': '#d29922',
+        'tui-orange': '#db6d28',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-blue-dim': '#1f6feb',
+        'tui-cyan': '#39d2c0',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-text-dim': '#6e7681',
+        'tui-purple': '#bc8cff',
+        'tui-accent': '#58a6ff',
+        'tui-surface': '#161b22',
+      },
+      fontFamily: {
+        'mono': ['JetBrains Mono', 'monospace'],
+        'sans': ['Noto Sans SC', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0d1117; color:#e6edf3; font-family:'JetBrains Mono','Noto Sans SC',monospace; overflow:hidden; height:100vh; }
+
+  .terminal-frame { border:1px solid #30363d; border-radius:8px; overflow:hidden; height:100vh; display:flex; flex-direction:column; }
+  .terminal-titlebar { background:#161b22; border-bottom:1px solid #30363d; padding:6px 16px; display:flex; align-items:center; gap:8px; }
+  .terminal-dots { display:flex; gap:6px; }
+  .terminal-dots span { width:12px; height:12px; border-radius:50%; cursor:pointer; }
+  .dot-red { background:#f85149; }
+  .dot-yellow { background:#d29922; }
+  .dot-green { background:#3fb950; }
+  .terminal-title { color:#e6edf3; font-family:'JetBrains Mono',monospace; font-size:13px; margin-left:12px; }
+
+  /* Sub navigation */
+  .sub-nav { background:#161b22; border-bottom:1px solid #30363d; padding:0 16px; display:flex; align-items:center; gap:0; font-size:12px; }
+  .sub-nav-item { padding:7px 14px; color:#6e7681; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.15s; text-decoration:none; display:inline-block; }
+  .sub-nav-item:hover { color:#e6edf3; background:#1c2128; }
+  .sub-nav-item.active { color:#58a6ff; border-bottom-color:#58a6ff; background:rgba(88,166,255,0.06); }
+  .sub-nav-arrow { color:#30363d; margin:0 2px; }
+
+  /* TUI Box */
+  .tui-box { background:#0d1117; border:1px solid #30363d; border-radius:6px; overflow:hidden; display:flex; flex-direction:column; }
+  .tui-box.focused { border-color:#58a6ff; box-shadow:0 0 0 1px #58a6ff, 0 0 12px rgba(88,166,255,0.15); }
+  .tui-box-title { background:#161b22; border-bottom:1px solid #30363d; padding:5px 10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#e6edf3; display:flex; align-items:center; gap:6px; }
+  .box-number { display:inline-flex; width:20px; height:16px; background:#30363d; border-radius:3px; font-size:10px; color:#8b949e; align-items:center; justify-content:center; font-weight:600; }
+  .tui-box.focused .box-number { background:#58a6ff; color:#0d1117; }
+
+  /* Keyboard shortcuts */
+  .kbd { display:inline-block; background:#21262d; border:1px solid #30363d; border-radius:3px; padding:1px 6px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#c9d1d9; }
+
+  /* Tags */
+  .tag { display:inline-block; padding:2px 8px; border-radius:3px; font-size:10px; font-family:'JetBrains Mono',monospace; }
+  .tag-green { background:rgba(63,185,80,0.15); color:#3fb950; }
+  .tag-red { background:rgba(248,81,73,0.15); color:#f85149; }
+  .tag-yellow { background:rgba(210,153,34,0.15); color:#d29922; }
+  .tag-blue { background:rgba(88,166,255,0.15); color:#58a6ff; }
+  .tag-purple { background:rgba(188,140,255,0.15); color:#bc8cff; }
+  .tag-cyan { background:rgba(57,210,192,0.15); color:#39d2c0; }
+
+  /* Filter buttons */
+  .filter-btn { background:#21262d; border:1px solid #30363d; color:#8b949e; padding:3px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all 0.15s; }
+  .filter-btn:hover { background:#30363d; color:#e6edf3; }
+  .filter-btn.active { background:rgba(88,166,255,0.2); border-color:#58a6ff; color:#58a6ff; }
+
+  /* Stock tag buttons */
+  .stock-tag { background:#21262d; border:1px solid #30363d; color:#8b949e; padding:2px 8px; border-radius:3px; font-size:10px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all 0.15s; }
+  .stock-tag:hover { background:#30363d; color:#e6edf3; }
+  .stock-tag.active { background:rgba(88,166,255,0.2); border-color:#58a6ff; color:#58a6ff; }
+
+  /* Command buttons */
+  .cmd-btn { background:#21262d; border:1px solid #30363d; color:#e6edf3; padding:3px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all 0.15s; text-decoration:none; display:inline-block; }
+  .cmd-btn:hover { background:#30363d; border-color:#484f58; }
+  .cmd-btn-sm { background:#21262d; border:1px solid #30363d; color:#8b949e; padding:1px 6px; border-radius:3px; font-size:10px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all 0.15s; }
+  .cmd-btn-sm:hover { background:#30363d; color:#e6edf3; }
+  .cmd-btn-sm.active { background:rgba(63,185,80,0.2); border-color:#3fb950; color:#3fb950; }
+
+  /* Chart canvas area */
+  .chart-area { position:relative; flex:1; overflow:hidden; background:#0d1117; }
+  .chart-grid-line { position:absolute; left:0; right:32px; border-top:1px solid rgba(48,54,61,0.4); }
+  .chart-grid-line-v { position:absolute; top:0; bottom:20px; border-left:1px solid rgba(48,54,61,0.3); }
+  .chart-price-label { position:absolute; right:0; font-size:9px; color:#6e7681; font-family:'JetBrains Mono',monospace; padding:0 3px; line-height:1; transform:translateY(-50%); }
+  .chart-time-label { position:absolute; bottom:0; font-size:8px; color:#6e7681; font-family:'JetBrains Mono',monospace; transform:translateX(-50%); }
+
+  /* Candlestick */
+  .candle { position:absolute; }
+  .candle-body { position:absolute; border-radius:1px; }
+  .candle-wick { position:absolute; width:1px; left:50%; transform:translateX(-50%); }
+
+  /* Volume bar */
+  .vol-bar { position:absolute; bottom:0; border-radius:1px 1px 0 0; opacity:0.6; }
+
+  /* MA line overlay */
+  .ma-line { position:absolute; pointer-events:none; }
+
+  /* Dashed line overlays (stop loss, take profit, cost) */
+  .dashed-line { position:absolute; left:0; right:32px; border-top:1px dashed; pointer-events:none; z-index:5; }
+  .dashed-line-label { position:absolute; right:32px; font-size:8px; padding:0 3px; font-family:'JetBrains Mono',monospace; z-index:5; transform:translateY(-50%); }
+
+  /* Status bar */
+  .status-bar { background:#161b22; border-top:1px solid #30363d; padding:4px 16px; display:flex; align-items:center; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:11px; color:#484f58; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width:4px; height:4px; }
+  ::-webkit-scrollbar-track { background:#0d1117; }
+  ::-webkit-scrollbar-thumb { background:#30363d; border-radius:2px; }
+  ::-webkit-scrollbar-thumb:hover { background:#484f58; }
+
+  /* Glow effects */
+  .glow-green { text-shadow:0 0 6px rgba(63,185,80,0.4); }
+  .glow-red { text-shadow:0 0 6px rgba(248,81,73,0.4); }
+
+  @keyframes pulse-slow { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .pulse-slow { animation: pulse-slow 2s ease-in-out infinite; }
+
+  /* Toggle switch */
+  .toggle-track { display:inline-block; width:28px; height:14px; border-radius:7px; background:#30363d; position:relative; cursor:pointer; vertical-align:middle; transition:background 0.15s; }
+  .toggle-track.on { background:#238636; }
+  .toggle-thumb { position:absolute; top:1px; left:1px; width:12px; height:12px; border-radius:50%; background:#e6edf3; transition:left 0.15s; }
+  .toggle-track.on .toggle-thumb { left:15px; }
+
+  /* Help overlay */
+  .help-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; }
+  .help-overlay.visible { display:flex; }
+</style>
+</head>
+<body>
+<div class="terminal-frame" id="app">
+  <!-- Title Bar -->
+  <div class="terminal-titlebar">
+    <div class="terminal-dots">
+      <a href="00-home.html" style="text-decoration:none"><span class="dot-red"></span></a>
+      <span class="dot-yellow"></span>
+      <span class="dot-green"></span>
+    </div>
+    <span class="terminal-title">SXA v2.1.0 | 实时价格图 | Real-time Price Chart</span>
+    <div style="flex:1"></div>
+    <span class="pulse-slow" style="width:6px;height:6px;background:#3fb950;border-radius:50%;display:inline-block;"></span>
+    <span class="tag tag-green" style="font-size:9px;">LIVE</span>
+    <span style="color:#6e7681; font-size:11px; font-family:'JetBrains Mono',monospace; margin-left:12px;">
+      <span class="kbd">ESC</span> Home &nbsp;
+      <span class="kbd">1-8</span> Focus &nbsp;
+      <span class="kbd">Tab</span> Cycle &nbsp;
+      <span class="kbd">F1</span> Help
+    </span>
+  </div>
+
+  <!-- Sub Navigation -->
+  <div class="sub-nav">
+    <a href="00-home.html" class="sub-nav-item" style="color:#6e7681;font-size:11px;">
+      <span style="color:#30363d;">&#8592;</span> 返回主页
+    </a>
+    <span style="color:#30363d; margin:0 6px;">|</span>
+    <a href="#" class="sub-nav-item" onclick="return false">
+      实时对价盘
+      <span style="font-size:9px;color:#6e7681;margin-left:2px;">&#8594;24</span>
+    </a>
+    <a href="#" class="sub-nav-item active" onclick="return false">实时价格图</a>
+    <a href="10-trading-execution.html" class="sub-nav-item">
+      交易执行
+      <span style="font-size:9px;color:#6e7681;margin-left:2px;">&#8594;10</span>
+    </a>
+    <a href="11-risk-management.html" class="sub-nav-item">
+      风险管理
+      <span style="font-size:9px;color:#6e7681;margin-left:2px;">&#8594;11</span>
+    </a>
+  </div>
+
+  <!-- Main Content -->
+  <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+
+    <!-- Box 1: Control Bar -->
+    <div class="tui-box focused" data-box="1" style="margin:6px 8px 3px 8px; flex-shrink:0;">
+      <div class="tui-box-title">
+        <span class="box-number">[1]</span>
+        <span>ControlBar | 控制栏</span>
+        <span class="tag tag-cyan" style="margin-left:2px;">
+          <span style="font-size:9px;">&#128279;</span> 联动对价盘: 已连接
+        </span>
+        <div style="flex:1"></div>
+        <span style="color:#6e7681; font-size:10px;">刷新: 1s</span>
+      </div>
+      <div style="padding:6px 10px; display:flex; align-items:center; gap:10px; flex-wrap:nowrap; overflow-x:auto;">
+        <!-- View mode -->
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span style="color:#6e7681; font-size:10px;">视图:</span>
+          <button class="filter-btn active" id="btnMultiStock" onclick="setViewMode('multi-stock')">多股同列</button>
+          <button class="filter-btn" id="btnMultiPeriod" onclick="setViewMode('multi-period')">多周期同列</button>
+        </div>
+        <div style="width:1px; height:18px; background:#30363d; flex-shrink:0;"></div>
+        <!-- Stock selector -->
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span style="color:#6e7681; font-size:10px;">标的:</span>
+          <button class="stock-tag active" id="stk-AAPL" onclick="selectStock('AAPL')">AAPL</button>
+          <button class="stock-tag" id="stk-MSFT" onclick="selectStock('MSFT')">MSFT</button>
+          <button class="stock-tag" id="stk-GOOGL" onclick="selectStock('GOOGL')">GOOGL</button>
+          <button class="stock-tag" id="stk-TSLA" onclick="selectStock('TSLA')">TSLA</button>
+          <button class="stock-tag" id="stk-NVDA" onclick="selectStock('NVDA')">NVDA</button>
+          <button class="stock-tag" id="stk-META" onclick="selectStock('META')">META</button>
+        </div>
+        <div style="width:1px; height:18px; background:#30363d; flex-shrink:0;"></div>
+        <!-- Period selector -->
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span style="color:#6e7681; font-size:10px;">周期:</span>
+          <button class="cmd-btn-sm" onclick="selectPeriod('1m')">1min</button>
+          <button class="cmd-btn-sm" onclick="selectPeriod('5m')">5min</button>
+          <button class="cmd-btn-sm" onclick="selectPeriod('15m')">15min</button>
+          <button class="cmd-btn-sm" onclick="selectPeriod('30m')">30min</button>
+          <button class="cmd-btn-sm" onclick="selectPeriod('60m')">60min</button>
+          <button class="cmd-btn-sm active" id="period-daily" onclick="selectPeriod('daily')">日K</button>
+          <button class="cmd-btn-sm" onclick="selectPeriod('weekly')">周K</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid: 3 rows x 2 cols -->
+    <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr 1fr; gap:3px; padding:0 8px; overflow:hidden;">
+
+      <!-- Box 2: AAPL Chart -->
+      <div class="tui-box" data-box="2" id="chart-box-2">
+        <div class="tui-box-title">
+          <span class="box-number">[2]</span>
+          <span style="color:#58a6ff;">AAPL</span>
+          <span style="color:#3fb950; font-weight:600;">198.45</span>
+          <span class="tag tag-green" style="font-size:9px;">+2.31%</span>
+          <span style="color:#6e7681; font-size:9px;">日K</span>
+          <div style="flex:1"></div>
+          <span style="color:#484f58; font-size:9px;">Vol 3.24M</span>
+        </div>
+        <div class="chart-area" id="chart-2"></div>
+      </div>
+
+      <!-- Box 3: MSFT Chart -->
+      <div class="tui-box" data-box="3" id="chart-box-3">
+        <div class="tui-box-title">
+          <span class="box-number">[3]</span>
+          <span style="color:#58a6ff;">MSFT</span>
+          <span style="color:#3fb950; font-weight:600;">425.80</span>
+          <span class="tag tag-green" style="font-size:9px;">+1.45%</span>
+          <span style="color:#6e7681; font-size:9px;">日K</span>
+          <div style="flex:1"></div>
+          <span style="color:#484f58; font-size:9px;">Vol 2.18M</span>
+        </div>
+        <div class="chart-area" id="chart-3"></div>
+      </div>
+
+      <!-- Box 4: GOOGL Chart -->
+      <div class="tui-box" data-box="4" id="chart-box-4">
+        <div class="tui-box-title">
+          <span class="box-number">[4]</span>
+          <span style="color:#58a6ff;">GOOGL</span>
+          <span style="color:#f85149; font-weight:600;">174.22</span>
+          <span class="tag tag-red" style="font-size:9px;">-0.87%</span>
+          <span style="color:#6e7681; font-size:9px;">日K</span>
+          <div style="flex:1"></div>
+          <span style="color:#484f58; font-size:9px;">Vol 1.92M</span>
+        </div>
+        <div class="chart-area" id="chart-4"></div>
+      </div>
+
+      <!-- Box 5: TSLA Chart -->
+      <div class="tui-box" data-box="5" id="chart-box-5">
+        <div class="tui-box-title">
+          <span class="box-number">[5]</span>
+          <span style="color:#58a6ff;">TSLA</span>
+          <span style="color:#3fb950; font-weight:600;">278.65</span>
+          <span class="tag tag-green" style="font-size:9px;">+3.78%</span>
+          <span style="color:#6e7681; font-size:9px;">日K</span>
+          <div style="flex:1"></div>
+          <span style="color:#484f58; font-size:9px;">Vol 5.67M</span>
+        </div>
+        <div class="chart-area" id="chart-5"></div>
+      </div>
+
+      <!-- Box 6: NVDA Chart -->
+      <div class="tui-box" data-box="6" id="chart-box-6">
+        <div class="tui-box-title">
+          <span class="box-number">[6]</span>
+          <span style="color:#58a6ff;">NVDA</span>
+          <span style="color:#3fb950; font-weight:600;">135.40</span>
+          <span class="tag tag-green" style="font-size:9px;">+4.12%</span>
+          <span style="color:#6e7681; font-size:9px;">日K</span>
+          <div style="flex:1"></div>
+          <span style="color:#484f58; font-size:9px;">Vol 8.34M</span>
+        </div>
+        <div class="chart-area" id="chart-6"></div>
+      </div>
+
+      <!-- Box 7: META Chart -->
+      <div class="tui-box" data-box="7" id="chart-box-7">
+        <div class="tui-box-title">
+          <span class="box-number">[7]</span>
+          <span style="color:#58a6ff;">META</span>
+          <span style="color:#f85149; font-weight:600;">512.30</span>
+          <span class="tag tag-red" style="font-size:9px;">-1.23%</span>
+          <span style="color:#6e7681; font-size:9px;">日K</span>
+          <div style="flex:1"></div>
+          <span style="color:#484f58; font-size:9px;">Vol 1.45M</span>
+        </div>
+        <div class="chart-area" id="chart-7"></div>
+      </div>
+
+    </div>
+
+    <!-- Box 8: Linkage & Indicators Panel -->
+    <div class="tui-box" data-box="8" style="margin:3px 8px 6px 8px; flex-shrink:0;">
+      <div class="tui-box-title">
+        <span class="box-number">[8]</span>
+        <span>LinkagePanel | 联动设置 & 技术指标</span>
+        <div style="flex:1"></div>
+        <span style="color:#6e7681; font-size:9px;">
+          <span class="kbd">F2</span> 同步区间 &nbsp;
+          <span class="kbd">F3</span> 从对价盘同步
+        </span>
+      </div>
+      <div style="padding:6px 10px; display:flex; align-items:flex-start; gap:16px; font-size:11px;">
+        <!-- Left: Linkage settings -->
+        <div style="display:flex; flex-direction:column; gap:4px; min-width:240px;">
+          <div style="color:#6e7681; font-size:10px; margin-bottom:2px; font-weight:600;">联动设置 Linkage</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="toggle-track on" onclick="toggleSwitch(this)"><span class="toggle-thumb"></span></span>
+            <span style="color:#8b949e; font-size:10px;">与实时对价盘联动</span>
+          </div>
+          <div style="display:flex; gap:12px; margin-top:2px;">
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span class="toggle-track on" onclick="toggleSwitch(this)"><span class="toggle-thumb"></span></span>
+              <span style="color:#f85149; font-size:10px;">止损线</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span class="toggle-track on" onclick="toggleSwitch(this)"><span class="toggle-thumb"></span></span>
+              <span style="color:#3fb950; font-size:10px;">止盈线</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span class="toggle-track on" onclick="toggleSwitch(this)"><span class="toggle-thumb"></span></span>
+              <span style="color:#58a6ff; font-size:10px;">成本线</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:6px; margin-top:3px;">
+            <button class="cmd-btn" style="font-size:10px; padding:2px 8px;" onclick="syncToOrderbook()">同步区间到对价盘</button>
+            <button class="cmd-btn" style="font-size:10px; padding:2px 8px;" onclick="syncFromOrderbook()">从对价盘同步</button>
+          </div>
+        </div>
+
+        <div style="width:1px; height:55px; background:#30363d; flex-shrink:0;"></div>
+
+        <!-- Right: Technical Indicators -->
+        <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+          <div style="color:#6e7681; font-size:10px; margin-bottom:2px; font-weight:600;">技术指标 Indicators</div>
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span style="color:#6e7681; font-size:10px;">MA:</span>
+            <button class="cmd-btn-sm active" onclick="toggleIndicator(this)">5</button>
+            <button class="cmd-btn-sm active" onclick="toggleIndicator(this)">10</button>
+            <button class="cmd-btn-sm active" onclick="toggleIndicator(this)">20</button>
+            <div style="width:1px; height:12px; background:#30363d;"></div>
+            <span style="color:#6e7681; font-size:10px;">BOLL:</span>
+            <button class="cmd-btn-sm" onclick="toggleIndicator(this)">OFF</button>
+            <div style="width:1px; height:12px; background:#30363d;"></div>
+            <span style="color:#6e7681; font-size:10px;">MACD:</span>
+            <button class="cmd-btn-sm" onclick="toggleIndicator(this)">OFF</button>
+            <div style="width:1px; height:12px; background:#30363d;"></div>
+            <span style="color:#6e7681; font-size:10px;">KDJ:</span>
+            <button class="cmd-btn-sm" onclick="toggleIndicator(this)">OFF</button>
+            <div style="width:1px; height:12px; background:#30363d;"></div>
+            <span style="color:#6e7681; font-size:10px;">RSI:</span>
+            <button class="cmd-btn-sm active" onclick="toggleIndicator(this)">14</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:2px;">
+            <span style="color:#6e7681; font-size:10px;">MA线型:</span>
+            <span style="font-size:9px;"><span style="color:#d29922;">&#9644;</span> MA5</span>
+            <span style="font-size:9px;"><span style="color:#bc8cff;">&#9644;</span> MA10</span>
+            <span style="font-size:9px;"><span style="color:#58a6ff;">&#9644;</span> MA20</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span>SXA Terminal v2.1.0</span>
+      <span style="color:#30363d;">|</span>
+      <span style="color:#3fb950;">&#9679;</span>
+      <span>市场连接正常</span>
+      <span style="color:#30363d;">|</span>
+      <span>延迟: <span style="color:#3fb950;">12ms</span></span>
+      <span style="color:#30363d;">|</span>
+      <span>焦点: Box <span id="focus-display" style="color:#58a6ff;">1</span></span>
+      <span style="color:#30363d;">|</span>
+      <span>模式: <span id="mode-display" style="color:#58a6ff;">多股同列</span></span>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span id="clock">--:--:--</span>
+      <span style="color:#30363d;">|</span>
+      <span>CST</span>
+      <span style="color:#30363d;">|</span>
+      <span>美股交易时段</span>
+    </div>
+  </div>
+</div>
+
+<!-- Help Overlay -->
+<div class="help-overlay" id="helpOverlay">
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:8px; padding:24px; max-width:500px; width:90%;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <span style="font-size:14px; font-weight:600; color:#58a6ff;">键盘快捷键 Keyboard Shortcuts</span>
+      <button onclick="toggleHelp()" style="background:none;border:none;color:#6e7681;cursor:pointer;font-size:18px;">&times;</button>
+    </div>
+    <div style="display:grid; grid-template-columns:auto 1fr; gap:6px 16px; font-size:12px;">
+      <span class="kbd">ESC</span><span style="color:#8b949e;">返回主页 (00-home.html)</span>
+      <span class="kbd">q</span><span style="color:#8b949e;">返回主页</span>
+      <span class="kbd">1-8</span><span style="color:#8b949e;">聚焦对应 Box</span>
+      <span class="kbd">Tab</span><span style="color:#8b949e;">循环切换焦点</span>
+      <span class="kbd">F1</span><span style="color:#8b949e;">显示/隐藏帮助</span>
+      <span class="kbd">F2</span><span style="color:#8b949e;">同步区间到对价盘</span>
+      <span class="kbd">F3</span><span style="color:#8b949e;">从对价盘同步</span>
+      <span class="kbd">v</span><span style="color:#8b949e;">切换视图模式</span>
+      <span class="kbd">&larr;&rarr;</span><span style="color:#8b949e;">切换标的</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Configuration & State
+// ============================================================
+const TOTAL_BOXES = 8;
+let currentFocus = 1;
+let viewMode = 'multi-stock'; // 'multi-stock' or 'multi-period'
+let selectedStock = 'AAPL';
+
+const stocks = [
+  { symbol:'AAPL', price:198.45, change:2.31, vol:'3.24M', color:'#3fb950' },
+  { symbol:'MSFT', price:425.80, change:1.45, vol:'2.18M', color:'#3fb950' },
+  { symbol:'GOOGL', price:174.22, change:-0.87, vol:'1.92M', color:'#f85149' },
+  { symbol:'TSLA', price:278.65, change:3.78, vol:'5.67M', color:'#3fb950' },
+  { symbol:'NVDA', price:135.40, change:4.12, vol:'8.34M', color:'#3fb950' },
+  { symbol:'META', price:512.30, change:-1.23, vol:'1.45M', color:'#f85149' },
+];
+
+// Pre-generated price data for each stock (simulated candlestick data)
+const chartData = {};
+stocks.forEach(s => {
+  chartData[s.symbol] = generateCandleData(s.price, 25);
+});
+
+function generateCandleData(basePrice, count) {
+  const data = [];
+  let price = basePrice * (0.92 + Math.random()*0.08);
+  for (let i = 0; i < count; i++) {
+    const volatility = basePrice * 0.015;
+    const open = price;
+    const direction = Math.random() > 0.45 ? 1 : -1;
+    const bodySize = (Math.random() * volatility + volatility * 0.1) * direction;
+    const close = open + bodySize;
+    const highExtra = Math.random() * volatility * 0.6;
+    const lowExtra = Math.random() * volatility * 0.6;
+    const high = Math.max(open, close) + highExtra;
+    const low = Math.min(open, close) - lowExtra;
+    const vol = 0.3 + Math.random() * 0.7;
+    price = close;
+    data.push({ open, close, high, low, vol, isUp: close >= open });
+  }
+  return data;
+}
+
+// ============================================================
+// Chart Rendering
+// ============================================================
+function renderAllCharts() {
+  for (let i = 2; i <= 7; i++) {
+    renderChart(i);
+  }
+}
+
+function renderChart(boxNum) {
+  const container = document.getElementById('chart-' + boxNum);
+  if (!container) return;
+
+  const stockIdx = boxNum - 2;
+  const stock = stocks[stockIdx];
+  const data = chartData[stock.symbol];
+
+  const rect = container.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height;
+  if (W < 10 || H < 10) return;
+
+  const rightMargin = 36;
+  const bottomMargin = 16;
+  const topMargin = 4;
+  const chartW = W - rightMargin;
+  const chartH = H - bottomMargin - topMargin;
+  const volHeight = chartH * 0.18;
+  const priceH = chartH - volHeight;
+
+  // Find price range
+  let minP = Infinity, maxP = -Infinity, maxVol = 0;
+  data.forEach(d => {
+    minP = Math.min(minP, d.low);
+    maxP = Math.max(maxP, d.high);
+    maxVol = Math.max(maxVol, d.vol);
+  });
+  const priceRange = maxP - minP || 1;
+  const pricePad = priceRange * 0.08;
+  minP -= pricePad;
+  maxP += pricePad;
+  const totalRange = maxP - minP;
+
+  const candleCount = data.length;
+  const slotW = chartW / candleCount;
+  const candleW = Math.max(2, slotW * 0.65);
+
+  let html = '';
+
+  // Grid lines (horizontal)
+  const gridLines = 5;
+  for (let i = 0; i <= gridLines; i++) {
+    const y = topMargin + (priceH / gridLines) * i;
+    const price = maxP - (totalRange / gridLines) * i;
+    html += `<div class="chart-grid-line" style="top:${y}px;"></div>`;
+    html += `<div class="chart-price-label" style="top:${y}px; right:0;">${price.toFixed(1)}</div>`;
+  }
+
+  // Grid lines (vertical)
+  const vGridCount = Math.floor(candleCount / 5);
+  for (let i = 1; i <= vGridCount; i++) {
+    const x = slotW * (i * 5);
+    if (x < chartW - 5) {
+      html += `<div class="chart-grid-line-v" style="left:${x}px; height:${chartH}px;"></div>`;
+    }
+  }
+
+  // Volume separator line
+  const volTop = topMargin + priceH;
+  html += `<div style="position:absolute; left:0; right:${rightMargin}px; top:${volTop}px; border-top:1px solid rgba(48,54,61,0.5);"></div>`;
+
+  // Draw candles and volume bars
+  data.forEach((d, idx) => {
+    const x = idx * slotW + slotW / 2;
+    const upColor = '#3fb950';
+    const downColor = '#f85149';
+    const color = d.isUp ? upColor : downColor;
+
+    // Price Y mapping
+    const highY = topMargin + ((maxP - d.high) / totalRange) * priceH;
+    const lowY = topMargin + ((maxP - d.low) / totalRange) * priceH;
+    const openY = topMargin + ((maxP - d.open) / totalRange) * priceH;
+    const closeY = topMargin + ((maxP - d.close) / totalRange) * priceH;
+
+    const bodyTop = Math.min(openY, closeY);
+    const bodyH = Math.max(1, Math.abs(closeY - openY));
+
+    // Wick
+    html += `<div class="candle-wick" style="left:${x}px; top:${highY}px; height:${lowY - highY}px; background:${color};"></div>`;
+
+    // Body
+    html += `<div class="candle-body" style="left:${x - candleW/2}px; top:${bodyTop}px; width:${candleW}px; height:${bodyH}px; background:${color};"></div>`;
+
+    // Volume bar
+    const volBarH = (d.vol / maxVol) * volHeight * 0.85;
+    const volBarY = volTop + volHeight - volBarH;
+    const volColor = d.isUp ? 'rgba(63,185,80,0.35)' : 'rgba(248,81,73,0.35)';
+    html += `<div class="vol-bar" style="left:${x - candleW/2}px; top:${volBarY}px; width:${candleW}px; height:${volBarH}px; background:${volColor};"></div>`;
+  });
+
+  // MA lines using SVG polyline
+  const ma5 = computeMA(data, 5);
+  const ma10 = computeMA(data, 10);
+  const ma20 = computeMA(data, 20);
+
+  html += drawMALine(ma5, data.length, slotW, topMargin, maxP, totalRange, priceH, '#d29922', chartW);
+  html += drawMALine(ma10, data.length, slotW, topMargin, maxP, totalRange, priceH, '#bc8cff', chartW);
+  html += drawMALine(ma20, data.length, slotW, topMargin, maxP, totalRange, priceH, '#58a6ff', chartW);
+
+  // Dashed lines: stop loss, take profit, cost
+  const lastClose = data[data.length-1].close;
+  const stopLossY = topMargin + ((maxP - (lastClose * 0.96)) / totalRange) * priceH;
+  const takeProfitY = topMargin + ((maxP - (lastClose * 1.06)) / totalRange) * priceH;
+  const costY = topMargin + ((maxP - (lastClose * 0.99)) / totalRange) * priceH;
+
+  html += `<div class="dashed-line" style="top:${stopLossY}px; border-color:rgba(248,81,73,0.5);"></div>`;
+  html += `<div class="dashed-line-label" style="top:${stopLossY}px; color:#f85149; right:0;">止损 ${(lastClose*0.96).toFixed(1)}</div>`;
+
+  html += `<div class="dashed-line" style="top:${takeProfitY}px; border-color:rgba(63,185,80,0.5);"></div>`;
+  html += `<div class="dashed-line-label" style="top:${takeProfitY}px; color:#3fb950; right:0;">止盈 ${(lastClose*1.06).toFixed(1)}</div>`;
+
+  html += `<div class="dashed-line" style="top:${costY}px; border-color:rgba(88,166,255,0.4);"></div>`;
+  html += `<div class="dashed-line-label" style="top:${costY}px; color:#58a6ff; right:0;">成本 ${(lastClose*0.99).toFixed(1)}</div>`;
+
+  // Time labels at bottom
+  const timeLabels = ['09:30','','','10:00','','','10:30','','','11:00','','','11:30','','','13:00','','','14:00','','','15:00'];
+  const labelStep = Math.max(1, Math.floor(candleCount / 8));
+  for (let i = 0; i < candleCount; i += labelStep) {
+    const x = i * slotW + slotW / 2;
+    const label = timeLabels[i % timeLabels.length] || '';
+    if (label) {
+      html += `<div class="chart-time-label" style="left:${x}px; bottom:0;">${label}</div>`;
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+function computeMA(data, period) {
+  const result = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      result.push(null);
+    } else {
+      let sum = 0;
+      for (let j = i - period + 1; j <= i; j++) {
+        sum += data[j].close;
+      }
+      result.push(sum / period);
+    }
+  }
+  return result;
+}
+
+function drawMALine(maData, count, slotW, topMargin, maxP, totalRange, priceH, color, chartW) {
+  let points = '';
+  let started = false;
+  for (let i = 0; i < count; i++) {
+    if (maData[i] === null) continue;
+    const x = i * slotW + slotW / 2;
+    const y = topMargin + ((maxP - maData[i]) / totalRange) * priceH;
+    if (!started) {
+      points += `M${x.toFixed(1)},${y.toFixed(1)}`;
+      started = true;
+    } else {
+      points += ` L${x.toFixed(1)},${y.toFixed(1)}`;
+    }
+  }
+  if (!points) return '';
+  return `<svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:3;">
+    <path d="${points}" fill="none" stroke="${color}" stroke-width="1.2" opacity="0.7"/>
+  </svg>`;
+}
+
+// ============================================================
+// View Mode Switching
+// ============================================================
+function setViewMode(mode) {
+  viewMode = mode;
+  document.getElementById('btnMultiStock').classList.toggle('active', mode === 'multi-stock');
+  document.getElementById('btnMultiPeriod').classList.toggle('active', mode === 'multi-period');
+  document.getElementById('mode-display').textContent = mode === 'multi-stock' ? '多股同列' : '多周期同列';
+
+  if (mode === 'multi-stock') {
+    // Each chart shows a different stock
+    for (let i = 2; i <= 7; i++) {
+      const stockIdx = i - 2;
+      updateChartHeader(i, stocks[stockIdx]);
+    }
+  } else {
+    // All charts show the same stock, different periods
+    const periods = ['1min','5min','15min','30min','60min','日K'];
+    const stock = stocks.find(s => s.symbol === selectedStock) || stocks[0];
+    for (let i = 2; i <= 7; i++) {
+      updateChartHeader(i, stock, periods[i-2]);
+    }
+  }
+
+  // Regenerate chart data for new mode
+  if (mode === 'multi-period') {
+    stocks.forEach(s => {
+      chartData[s.symbol] = generateCandleData(s.price, 25);
+    });
+  }
+
+  // Store mode
+  localStorage.setItem('sxa_pricechart_interval', mode);
+  renderAllCharts();
+}
+
+function updateChartHeader(boxNum, stock, period) {
+  const box = document.getElementById('chart-box-' + boxNum);
+  if (!box) return;
+  const title = box.querySelector('.tui-box-title');
+  const isUp = stock.change >= 0;
+  const color = isUp ? '#3fb950' : '#f85149';
+  const tagClass = isUp ? 'tag-green' : 'tag-red';
+  const sign = isUp ? '+' : '';
+  const periodLabel = period || '日K';
+  title.innerHTML = `
+    <span class="box-number">[${boxNum}]</span>
+    <span style="color:#58a6ff;">${stock.symbol}</span>
+    <span style="color:${color}; font-weight:600;">${stock.price.toFixed(2)}</span>
+    <span class="tag ${tagClass}" style="font-size:9px;">${sign}${stock.change.toFixed(2)}%</span>
+    <span style="color:#6e7681; font-size:9px;">${periodLabel}</span>
+    <div style="flex:1"></div>
+    <span style="color:#484f58; font-size:9px;">Vol ${stock.vol}</span>
+  `;
+}
+
+function selectStock(symbol) {
+  selectedStock = symbol;
+  document.querySelectorAll('.stock-tag').forEach(el => el.classList.remove('active'));
+  document.getElementById('stk-' + symbol).classList.add('active');
+  if (viewMode === 'multi-period') {
+    setViewMode('multi-period');
+  }
+}
+
+function selectPeriod(period) {
+  document.querySelectorAll('[id^="period-"], .cmd-btn-sm').forEach(el => {
+    // Only target period buttons in control bar
+  });
+  if (viewMode === 'multi-period') {
+    setViewMode('multi-period');
+  }
+}
+
+// ============================================================
+// Toggle helpers
+// ============================================================
+function toggleSwitch(el) {
+  el.classList.toggle('on');
+  // Re-render to show/hide dashed lines
+  renderAllCharts();
+}
+
+function toggleIndicator(btn) {
+  if (btn.classList.contains('active')) {
+    btn.classList.remove('active');
+  } else {
+    btn.classList.add('active');
+  }
+}
+
+function toggleHelp() {
+  const overlay = document.getElementById('helpOverlay');
+  overlay.classList.toggle('visible');
+}
+
+// ============================================================
+// Focus Management
+// ============================================================
+function setFocus(boxNum) {
+  if (boxNum < 1 || boxNum > TOTAL_BOXES) return;
+  currentFocus = boxNum;
+  document.querySelectorAll('.tui-box').forEach(el => {
+    const bNum = parseInt(el.getAttribute('data-box'));
+    if (bNum === boxNum) {
+      el.classList.add('focused');
+    } else {
+      el.classList.remove('focused');
+    }
+  });
+  document.getElementById('focus-display').textContent = boxNum;
+}
+
+// ============================================================
+// Keyboard Handling
+// ============================================================
+document.addEventListener('keydown', function(e) {
+  // Help overlay toggle
+  if (e.key === 'F1') {
+    e.preventDefault();
+    toggleHelp();
+    return;
+  }
+
+  // Close help on Escape when visible
+  if (e.key === 'Escape') {
+    const overlay = document.getElementById('helpOverlay');
+    if (overlay.classList.contains('visible')) {
+      toggleHelp();
+      return;
+    }
+    window.location.href = '00-home.html';
+    return;
+  }
+
+  // Number keys 1-8 for focus
+  if (e.key >= '1' && e.key <= '8') {
+    setFocus(parseInt(e.key));
+    return;
+  }
+
+  // Tab for cycling
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const next = e.shiftKey
+      ? (currentFocus - 1 < 1 ? TOTAL_BOXES : currentFocus - 1)
+      : (currentFocus + 1 > TOTAL_BOXES ? 1 : currentFocus + 1);
+    setFocus(next);
+    return;
+  }
+
+  // q for home
+  if (e.key === 'q' || e.key === 'Q') {
+    window.location.href = '00-home.html';
+    return;
+  }
+
+  // v for view mode toggle
+  if (e.key === 'v' || e.key === 'V') {
+    setViewMode(viewMode === 'multi-stock' ? 'multi-period' : 'multi-stock');
+    return;
+  }
+
+  // F2 sync to orderbook
+  if (e.key === 'F2') {
+    e.preventDefault();
+    syncToOrderbook();
+    return;
+  }
+
+  // F3 sync from orderbook
+  if (e.key === 'F3') {
+    e.preventDefault();
+    syncFromOrderbook();
+    return;
+  }
+});
+
+// ============================================================
+// Clock
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+// localStorage Linkage
+// ============================================================
+function syncToOrderbook() {
+  const interval = viewMode;
+  localStorage.setItem('sxa_pricechart_interval', interval);
+  localStorage.setItem('sxa_pricechart_stock', selectedStock);
+  // Visual feedback
+  showToast('已同步区间到对价盘');
+}
+
+function syncFromOrderbook() {
+  const orderbookInterval = localStorage.getItem('sxa_orderbook_interval');
+  const orderbookStock = localStorage.getItem('sxa_orderbook_stock');
+  if (orderbookStock) {
+    selectStock(orderbookStock);
+  }
+  showToast('已从对价盘同步数据');
+}
+
+function showToast(msg) {
+  const existing = document.getElementById('toast-msg');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'toast-msg';
+  toast.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#161b22;border:1px solid #58a6ff;color:#58a6ff;padding:6px 16px;border-radius:4px;font-size:12px;font-family:JetBrains Mono,monospace;z-index:2000;transition:opacity 0.3s;';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; }, 1500);
+  setTimeout(() => { toast.remove(); }, 2000);
+}
+
+// Listen for storage changes from other pages (e.g. 24-realtime-orderbook.html)
+window.addEventListener('storage', function(e) {
+  if (e.key === 'sxa_orderbook_interval') {
+    // React to interval changes from orderbook page
+    showToast('检测到对价盘区间变化');
+  }
+  if (e.key === 'sxa_orderbook_stock') {
+    if (e.newValue) {
+      selectStock(e.newValue);
+      showToast('检测到对价盘标的变化: ' + e.newValue);
+    }
+  }
+});
+
+// Read initial orderbook state
+(function() {
+  const obStock = localStorage.getItem('sxa_orderbook_stock');
+  if (obStock && stocks.find(s => s.symbol === obStock)) {
+    selectedStock = obStock;
+    document.querySelectorAll('.stock-tag').forEach(el => el.classList.remove('active'));
+    const tagEl = document.getElementById('stk-' + obStock);
+    if (tagEl) tagEl.classList.add('active');
+  }
+})();
+
+// ============================================================
+// Initialize
+// ============================================================
+window.addEventListener('load', function() {
+  renderAllCharts();
+  setFocus(1);
+});
+
+// Re-render on resize
+let resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderAllCharts, 150);
+});
+</script>
+</body>
+</html>

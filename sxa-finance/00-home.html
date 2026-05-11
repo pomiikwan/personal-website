@@ -145,92 +145,159 @@
     <!-- Main Content Area -->
     <div class="flex flex-1 overflow-hidden">
 
-      <!-- LEFT: Box 2 - Navigation Sidebar -->
-      <div class="flex-shrink-0 border-r border-tui-border bg-tui-surface overflow-y-auto" style="width:220px;">
-        <div class="p-3">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="text-tui-accent font-mono text-xs font-bold">[2]</span>
-            <span class="text-xs font-semibold text-tui-text">快速导航 Quick Nav</span>
-          </div>
+      <!-- LEFT COLUMN: Box 2 + Box 6 (同步显隐) -->
+      <div id="left-column" class="flex flex-col flex-shrink-0 border-r border-tui-border" style="width:220px;">
 
-          <!-- Quick Nav Links -->
-          <div class="space-y-0.5 mb-4">
-            <a href="00-home.html" class="flex items-center gap-2 px-2 py-1.5 rounded text-xs bg-tui-accent bg-opacity-10 text-tui-accent border border-tui-accent" style="border-width:1px;">
-              <span>🏠</span> <span>操作主页</span>
-            </a>
-            <a href="01-approval-center.html" class="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-tui-textMuted hover:bg-tui-border hover:text-tui-text transition-colors">
-              <span>✅</span> <span>审批中心</span>
-              <span class="pending-badge ml-auto">3</span>
-            </a>
-            <a href="02-agent-collaboration.html" class="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-tui-textMuted hover:bg-tui-border hover:text-tui-text transition-colors">
-              <span>🤖</span> <span>Agent协作</span>
-            </a>
-            <a href="03-compliance-dashboard.html" class="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-tui-textMuted hover:bg-tui-border hover:text-tui-text transition-colors">
-              <span>🛡️</span> <span>合规仪表盘</span>
-            </a>
-            <a href="08-strategy-management.html" class="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-tui-textMuted hover:bg-tui-border hover:text-tui-text transition-colors">
-              <span>📋</span> <span>策略管理</span>
-            </a>
-            <a href="10-trading-execution.html" class="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-tui-textMuted hover:bg-tui-border hover:text-tui-text transition-colors">
-              <span>💹</span> <span>交易执行</span>
-            </a>
-            <a href="15-system-monitor.html" class="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-tui-textMuted hover:bg-tui-border hover:text-tui-text transition-colors">
-              <span>📡</span> <span>系统监控</span>
-            </a>
-          </div>
-
-          <!-- Divider -->
-          <div class="border-t border-tui-border my-3"></div>
-
-          <!-- Pending Items -->
-          <div class="mb-3">
-            <div class="flex items-center gap-1 mb-2">
-              <span class="text-tui-yellow text-xs">⏳</span>
-              <span class="text-xs font-semibold text-tui-yellow">待处理 Pending</span>
+        <!-- Box 2: 全局管控 Global Governance -->
+        <div id="box2" class="bg-tui-surface overflow-y-auto flex-shrink-0 border-b border-tui-border" style="flex:1 1 0%;">
+          <div class="p-3">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-tui-accent font-mono text-xs font-bold">[2]</span>
+              <span class="text-xs font-semibold text-tui-text">全局管控 Global Governance</span>
             </div>
-            <div class="space-y-1">
-              <div class="px-2 py-1.5 rounded bg-tui-bg border border-tui-border text-xs cursor-pointer hover:border-tui-yellow transition-colors">
-                <div class="flex items-center justify-between">
-                  <span class="text-tui-text">QDII-2026-042 审批</span>
-                  <span class="text-tui-red text-[10px]">紧急</span>
+
+            <!-- Governance Navigation Cards -->
+            <div class="space-y-2">
+              <a href="05-e2e-workflow-overview.html" class="nav-card rounded-lg p-2.5">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-6 h-6 rounded flex items-center justify-center text-xs" style="background:rgba(88,166,255,0.12);">🔗</div>
+                  <div>
+                    <div class="text-[11px] font-semibold text-tui-text">端到端流程</div>
+                    <div class="text-[9px] text-tui-textDim">E2E Workflow</div>
+                  </div>
                 </div>
-                <div class="text-tui-textDim text-[10px] mt-0.5">剩余 2h 15m</div>
-              </div>
-              <div class="px-2 py-1.5 rounded bg-tui-bg border border-tui-border text-xs cursor-pointer hover:border-tui-yellow transition-colors">
-                <div class="flex items-center justify-between">
-                  <span class="text-tui-text">风控阈值调整复核</span>
-                  <span class="text-tui-orange text-[10px]">重要</span>
+                <div class="text-[9px] text-tui-textMuted">全链路可视 / 节点追踪</div>
+                <div class="flex items-center gap-1 mt-1">
+                  <span class="text-[9px] px-1 py-0.5 rounded bg-tui-accent bg-opacity-15 text-tui-accent">A→G 7阶段</span>
                 </div>
-                <div class="text-tui-textDim text-[10px] mt-0.5">剩余 5h 30m</div>
-              </div>
-              <div class="px-2 py-1.5 rounded bg-tui-bg border border-tui-border text-xs cursor-pointer hover:border-tui-yellow transition-colors">
-                <div class="flex items-center justify-between">
-                  <span class="text-tui-text">新策略合规审查</span>
-                  <span class="text-tui-textDim text-[10px]">常规</span>
+              </a>
+              <a href="06-categorized-workflows.html" class="nav-card rounded-lg p-2.5">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-6 h-6 rounded flex items-center justify-center text-xs" style="background:rgba(188,140,255,0.12);">📂</div>
+                  <div>
+                    <div class="text-[11px] font-semibold text-tui-text">分类工作流</div>
+                    <div class="text-[9px] text-tui-textDim">Categorized</div>
+                  </div>
                 </div>
-                <div class="text-tui-textDim text-[10px] mt-0.5">剩余 1d 8h</div>
-              </div>
+                <div class="text-[9px] text-tui-textMuted">按类型/状态/优先级分组</div>
+                <div class="flex items-center gap-1 mt-1">
+                  <span class="text-[9px] px-1 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">8 类</span>
+                </div>
+              </a>
+              <a href="03-compliance-dashboard.html" class="nav-card rounded-lg p-2.5">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-6 h-6 rounded flex items-center justify-center text-xs" style="background:rgba(63,185,80,0.12);">🛡️</div>
+                  <div>
+                    <div class="text-[11px] font-semibold text-tui-text">合规仪表盘</div>
+                    <div class="text-[9px] text-tui-textDim">Compliance</div>
+                  </div>
+                </div>
+                <div class="text-[9px] text-tui-textMuted">实时合规监控 / 规则引擎</div>
+                <div class="flex items-center gap-1 mt-1">
+                  <span class="text-[9px] px-1 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">96.8分</span>
+                </div>
+              </a>
+              <a href="15-system-monitor.html" class="nav-card rounded-lg p-2.5">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-6 h-6 rounded flex items-center justify-center text-xs" style="background:rgba(57,210,192,0.12);">📡</div>
+                  <div>
+                    <div class="text-[11px] font-semibold text-tui-text">系统监控</div>
+                    <div class="text-[9px] text-tui-textDim">Sys Monitor</div>
+                  </div>
+                </div>
+                <div class="text-[9px] text-tui-textMuted">性能 / 日志 / 健康 / 告警</div>
+                <div class="flex items-center gap-1 mt-1">
+                  <span class="text-[9px] px-1 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">正常</span>
+                </div>
+              </a>
+              <a href="02-agent-collaboration.html" class="nav-card rounded-lg p-2.5">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-6 h-6 rounded flex items-center justify-center text-xs" style="background:rgba(188,140,255,0.12);">🤖</div>
+                  <div>
+                    <div class="text-[11px] font-semibold text-tui-text">Agent协作</div>
+                    <div class="text-[9px] text-tui-textDim">Collaboration</div>
+                  </div>
+                </div>
+                <div class="text-[9px] text-tui-textMuted">多Agent协同 / 决策共识</div>
+                <div class="flex items-center gap-1 mt-1">
+                  <span class="text-[9px] px-1 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">5 Agents</span>
+                </div>
+              </a>
             </div>
-          </div>
 
-          <!-- Recent Alerts -->
-          <div>
-            <div class="flex items-center gap-1 mb-2">
-              <span class="text-tui-red text-xs">🔔</span>
-              <span class="text-xs font-semibold text-tui-red">告警 Alerts</span>
-              <span class="pending-badge ml-1">2</span>
-            </div>
-            <div class="space-y-1">
-              <div class="px-2 py-1 rounded text-[10px] text-tui-textMuted border-l-2 border-tui-red bg-tui-bg">
-                VaR 超限: 策略 Alpha-7 触发止损线
-              </div>
-              <div class="px-2 py-1 rounded text-[10px] text-tui-textMuted border-l-2 border-tui-yellow bg-tui-bg">
-                流动性预警: 港股通额度 85%
-              </div>
-            </div>
           </div>
         </div>
-      </div>
+
+        <!-- Box 6: 待处理 & 告警 -->
+        <div id="box6" class="bg-tui-surface overflow-y-auto flex-shrink-0" style="flex:1 1 0%;">
+          <div class="px-3 py-2 border-b border-tui-border flex items-center gap-2">
+            <span class="text-tui-accent font-mono text-xs font-bold">[6]</span>
+            <span class="text-xs font-semibold text-tui-text">待处理 & 告警</span>
+          </div>
+          <div class="p-3">
+
+            <!-- Pending Items Skill -->
+            <div class="mb-4">
+              <div class="flex items-center gap-1 mb-2">
+                <span class="text-tui-yellow text-xs">⏳</span>
+                <span class="text-xs font-semibold text-tui-yellow">待处理 Pending</span>
+                <span class="pending-badge ml-1">3</span>
+              </div>
+              <div class="space-y-1.5">
+                <a href="01-approval-center.html" class="block px-2 py-1.5 rounded bg-tui-bg border border-tui-border text-xs cursor-pointer hover:border-tui-yellow transition-colors" style="text-decoration:none;">
+                  <div class="flex items-center justify-between">
+                    <span class="text-tui-text">QDII-2026-042 审批</span>
+                    <span class="text-tui-red text-[10px]">紧急</span>
+                  </div>
+                  <div class="text-tui-textDim text-[10px] mt-0.5">剩余 2h 15m</div>
+                </a>
+                <div class="px-2 py-1.5 rounded bg-tui-bg border border-tui-border text-xs cursor-pointer hover:border-tui-yellow transition-colors">
+                  <div class="flex items-center justify-between">
+                    <span class="text-tui-text">风控阈值调整复核</span>
+                    <span class="text-tui-orange text-[10px]">重要</span>
+                  </div>
+                  <div class="text-tui-textDim text-[10px] mt-0.5">剩余 5h 30m</div>
+                </div>
+                <div class="px-2 py-1.5 rounded bg-tui-bg border border-tui-border text-xs cursor-pointer hover:border-tui-yellow transition-colors">
+                  <div class="flex items-center justify-between">
+                    <span class="text-tui-text">新策略合规审查</span>
+                    <span class="text-tui-textDim text-[10px]">常规</span>
+                  </div>
+                  <div class="text-tui-textDim text-[10px] mt-0.5">剩余 1d 8h</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alerts Skill -->
+            <div>
+              <div class="flex items-center gap-1 mb-2">
+                <span class="text-tui-red text-xs">🔔</span>
+                <span class="text-xs font-semibold text-tui-red">告警 Alerts</span>
+                <span class="pending-badge ml-1">2</span>
+              </div>
+              <div class="space-y-1.5">
+                <div class="px-2 py-1.5 rounded text-[10px] text-tui-textMuted border-l-2 border-tui-red bg-tui-bg">
+                  <div class="text-tui-text text-xs font-medium">VaR 超限</div>
+                  <div>策略 Alpha-7 触发止损线</div>
+                  <div class="text-tui-textDim mt-0.5">13:45:33</div>
+                </div>
+                <div class="px-2 py-1.5 rounded text-[10px] text-tui-textMuted border-l-2 border-tui-yellow bg-tui-bg">
+                  <div class="text-tui-text text-xs font-medium">流动性预警</div>
+                  <div>港股通额度 85%</div>
+                  <div class="text-tui-textDim mt-0.5">14:15:22</div>
+                </div>
+                <div class="px-2 py-1.5 rounded text-[10px] text-tui-textMuted border-l-2 border-tui-orange bg-tui-bg">
+                  <div class="text-tui-text text-xs font-medium">组合偏离预警</div>
+                  <div>组合A 偏离基准 2.3%</div>
+                  <div class="text-tui-textDim mt-0.5">14:08:10</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /left-column -->
 
       <!-- CENTER COLUMN: Box 1 + Box 3 + Box 4 -->
       <div class="flex-1 flex flex-col overflow-hidden">
@@ -293,11 +360,103 @@
 
           <div class="grid grid-cols-2 gap-4">
 
-            <!-- Group 1: 策略全生命周期 -->
+            <!-- Group 2: 投前分析全周期 -->
+            <div class="border border-tui-border rounded-lg overflow-hidden">
+              <div class="px-3 py-2 bg-tui-surface border-b border-tui-border flex items-center gap-2">
+                <span class="text-sm">📊</span>
+                <span class="text-xs font-semibold text-tui-text">投前分析全周期 Pre-trade Analysis</span>
+                <span class="ml-auto text-[10px] text-tui-textDim font-mono">6 模块</span>
+              </div>
+              <div class="p-2 grid grid-cols-3 gap-2">
+                <a href="09-market-overview.html" class="nav-card rounded-lg p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(88,166,255,0.12);">📊</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">市场总览</div>
+                      <div class="text-[10px] text-tui-textDim">Market Overview</div>
+                    </div>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">全球行情 / 指数 / 板块热力</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">实时</span>
+                  </div>
+                </a>
+                <a href="14-macro-analysis.html" class="nav-card rounded-lg p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(188,140,255,0.12);">🌍</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">宏观分析</div>
+                      <div class="text-[10px] text-tui-textDim">Macro Analysis</div>
+                    </div>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">宏观经济 / 政策动向 / 周期</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-accent bg-opacity-15 text-tui-accent">7 数据源</span>
+                  </div>
+                </a>
+                <a href="12-sentiment-analysis.html" class="nav-card rounded-lg p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(63,185,80,0.12);">🧠</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">情绪分析</div>
+                      <div class="text-[10px] text-tui-textDim">Sentiment</div>
+                    </div>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">市场情绪 / NLP / 舆情监控</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">偏多</span>
+                  </div>
+                </a>
+                <a href="13-signal-aggregation.html" class="nav-card rounded-lg p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(57,210,192,0.12);">📡</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">信号聚合</div>
+                      <div class="text-[10px] text-tui-textDim">Signal Aggregation</div>
+                    </div>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">多源信号 / 因子 / 评分矩阵</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-yellow bg-opacity-15 text-tui-yellow">5 信号</span>
+                  </div>
+                </a>
+                <a href="17-logic-analysis.html" class="nav-card rounded-lg p-3" style="border-color:rgba(188,140,255,0.4);">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(188,140,255,0.12);">🔗</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">逻辑分析</div>
+                      <div class="text-[10px] text-tui-textDim">Logic Analysis</div>
+                    </div>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple ml-auto">NEW</span>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">因果推理 / 标的池筛选 / 情景模拟</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">Logic Agent</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">3 标的</span>
+                  </div>
+                </a>
+                <a href="18-signal-monitor.html" class="nav-card rounded-lg p-3" style="border-color:rgba(57,210,192,0.4);">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(57,210,192,0.12);">🎯</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">信号监测</div>
+                      <div class="text-[10px] text-tui-textDim">Signal Monitor</div>
+                    </div>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-cyan bg-opacity-15 text-tui-cyan ml-auto">NEW</span>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">关键监测点 / 触发追踪 / 预警通知</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-cyan bg-opacity-15 text-tui-cyan">12 监测点</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <!-- Group 1: 投前策略全生命周期 -->
             <div class="border border-tui-border rounded-lg overflow-hidden">
               <div class="px-3 py-2 bg-tui-surface border-b border-tui-border flex items-center gap-2">
                 <span class="text-sm">📋</span>
-                <span class="text-xs font-semibold text-tui-text">策略全生命周期 Strategy Lifecycle</span>
+                <span class="text-xs font-semibold text-tui-text">投前策略全生命周期 Pre-trade Strategy Lifecycle</span>
                 <span class="ml-auto text-[10px] text-tui-textDim font-mono">4 模块</span>
               </div>
               <div class="p-2 grid grid-cols-2 gap-2">
@@ -358,77 +517,41 @@
               </div>
             </div>
 
-            <!-- Group 2: 投前分析全周期 -->
-            <div class="border border-tui-border rounded-lg overflow-hidden">
-              <div class="px-3 py-2 bg-tui-surface border-b border-tui-border flex items-center gap-2">
-                <span class="text-sm">📊</span>
-                <span class="text-xs font-semibold text-tui-text">投前分析全周期 Pre-trade Analysis</span>
-                <span class="ml-auto text-[10px] text-tui-textDim font-mono">4 模块</span>
-              </div>
-              <div class="p-2 grid grid-cols-2 gap-2">
-                <a href="09-market-overview.html" class="nav-card rounded-lg p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(88,166,255,0.12);">📊</div>
-                    <div>
-                      <div class="text-xs font-semibold text-tui-text">市场总览</div>
-                      <div class="text-[10px] text-tui-textDim">Market Overview</div>
-                    </div>
-                  </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">全球行情 / 指数 / 板块热力</div>
-                  <div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">实时</span>
-                  </div>
-                </a>
-                <a href="14-macro-analysis.html" class="nav-card rounded-lg p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(188,140,255,0.12);">🌍</div>
-                    <div>
-                      <div class="text-xs font-semibold text-tui-text">宏观分析</div>
-                      <div class="text-[10px] text-tui-textDim">Macro Analysis</div>
-                    </div>
-                  </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">宏观经济 / 政策动向 / 周期</div>
-                  <div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-accent bg-opacity-15 text-tui-accent">7 数据源</span>
-                  </div>
-                </a>
-                <a href="12-sentiment-analysis.html" class="nav-card rounded-lg p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(63,185,80,0.12);">🧠</div>
-                    <div>
-                      <div class="text-xs font-semibold text-tui-text">情绪分析</div>
-                      <div class="text-[10px] text-tui-textDim">Sentiment</div>
-                    </div>
-                  </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">市场情绪 / NLP / 舆情监控</div>
-                  <div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">偏多</span>
-                  </div>
-                </a>
-                <a href="13-signal-aggregation.html" class="nav-card rounded-lg p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(57,210,192,0.12);">📡</div>
-                    <div>
-                      <div class="text-xs font-semibold text-tui-text">信号聚合</div>
-                      <div class="text-[10px] text-tui-textDim">Signal Aggregation</div>
-                    </div>
-                  </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">多源信号 / 因子 / 评分矩阵</div>
-                  <div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-yellow bg-opacity-15 text-tui-yellow">5 信号</span>
-                  </div>
-                </a>
-              </div>
-            </div>
-
             <!-- Group 3: 投中决策 -->
             <div class="border border-tui-border rounded-lg overflow-hidden">
               <div class="px-3 py-2 bg-tui-surface border-b border-tui-border flex items-center gap-2">
                 <span class="text-sm">💹</span>
                 <span class="text-xs font-semibold text-tui-text">投中决策 Execution & Risk</span>
-                <span class="ml-auto text-[10px] text-tui-textDim font-mono">3 模块</span>
+                <span class="ml-auto text-[10px] text-tui-textDim font-mono">4 模块</span>
               </div>
-              <div class="p-2 grid grid-cols-3 gap-2">
+              <div class="p-2 grid grid-cols-4 gap-2">
+                <a href="25-realtime-pricechart.html" class="nav-card rounded-lg p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(57,210,192,0.12);">📈</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">实时价格图</div>
+                      <div class="text-[10px] text-tui-textDim">Price Chart</div>
+                    </div>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">多股同列 / 多周期同列 / 联动</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-cyan bg-opacity-15 text-tui-cyan">联动</span>
+                  </div>
+                </a>
+                <a href="24-realtime-orderbook.html" class="nav-card rounded-lg p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(63,185,80,0.12);">📊</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">实时对价盘</div>
+                      <div class="text-[10px] text-tui-textDim">Order Book</div>
+                    </div>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">五档对价 / 执行控制 / 实时指标</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-accent bg-opacity-15 text-tui-accent">8 Box</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">6 标的</span>
+                  </div>
+                </a>
                 <a href="10-trading-execution.html" class="nav-card rounded-lg p-3">
                   <div class="flex items-center gap-2 mb-1">
                     <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(88,166,255,0.12);">💹</div>
@@ -456,80 +579,91 @@
                     <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">安全</span>
                   </div>
                 </a>
-                <a href="02-agent-collaboration.html" class="nav-card rounded-lg p-3">
+              </div>
+            </div>
+
+            <!-- Group 4: 投后管理（新增板块） -->
+            <div class="border border-tui-border rounded-lg overflow-hidden" style="border-color:rgba(57,210,192,0.4);">
+              <div class="px-3 py-2 bg-tui-surface border-b border-tui-border flex items-center gap-2">
+                <span class="text-sm">📈</span>
+                <span class="text-xs font-semibold text-tui-text">投后管理 Post-trade Management</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-cyan bg-opacity-15 text-tui-cyan ml-1">NEW SECTION</span>
+                <span class="ml-auto text-[10px] text-tui-textDim font-mono">4 模块</span>
+              </div>
+              <div class="p-2 grid grid-cols-4 gap-2">
+                <a href="19-portfolio-management.html" class="nav-card rounded-lg p-3" style="border-color:rgba(57,210,192,0.3);">
                   <div class="flex items-center gap-2 mb-1">
-                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(188,140,255,0.12);">🤖</div>
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(57,210,192,0.12);">📈</div>
                     <div>
-                      <div class="text-xs font-semibold text-tui-text">Agent协作</div>
-                      <div class="text-[10px] text-tui-textDim">Collaboration</div>
+                      <div class="text-xs font-semibold text-tui-text">组合监控</div>
+                      <div class="text-[10px] text-tui-textDim">Portfolio Monitor</div>
                     </div>
                   </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">多Agent协同 / 决策共识</div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">组合池监控 / 关键点追踪</div>
                   <div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">5 Agents</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">4 组合</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-cyan bg-opacity-15 text-tui-cyan">子主页</span>
+                  </div>
+                </a>
+                <a href="20-performance-attribution.html" class="nav-card rounded-lg p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(88,166,255,0.12);">📊</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">业绩归因</div>
+                      <div class="text-[10px] text-tui-textDim">Perf Attribution</div>
+                    </div>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">归因分析 / 预期对比 / 偏离度</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">+12.3%</span>
+                  </div>
+                </a>
+                <a href="21-sensitivity-analysis.html" class="nav-card rounded-lg p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(188,140,255,0.12);">🔬</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">敏感度分析</div>
+                      <div class="text-[10px] text-tui-textDim">Sensitivity</div>
+                    </div>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">相关性矩阵 / 信号敏感度</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">3 因子</span>
+                  </div>
+                </a>
+                <a href="22-strategy-runtime.html" class="nav-card rounded-lg p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(57,210,192,0.12);">⚙️</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">策略运行状态</div>
+                      <div class="text-[10px] text-tui-textDim">Strategy Runtime</div>
+                    </div>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">策略执行 / 运行监控 / 日志</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">运行中</span>
                   </div>
                 </a>
               </div>
             </div>
 
-            <!-- Group 4: 全局管控 -->
-            <div class="border border-tui-border rounded-lg overflow-hidden">
+            <!-- Group 5: 交付报告（新增） -->
+            <div class="border border-tui-border rounded-lg overflow-hidden col-span-2" style="border-color:rgba(63,185,80,0.4);">
               <div class="px-3 py-2 bg-tui-surface border-b border-tui-border flex items-center gap-2">
-                <span class="text-sm">🔍</span>
-                <span class="text-xs font-semibold text-tui-text">全局管控 Global Governance</span>
-                <span class="ml-auto text-[10px] text-tui-textDim font-mono">4 模块</span>
+                <span class="text-sm">📦</span>
+                <span class="text-xs font-semibold text-tui-text">交付报告 Delivery & Reports</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green ml-1">NEW</span>
               </div>
-              <div class="p-2 grid grid-cols-2 gap-2">
-                <a href="05-e2e-workflow-overview.html" class="nav-card rounded-lg p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(88,166,255,0.12);">🔗</div>
-                    <div>
-                      <div class="text-xs font-semibold text-tui-text">端到端流程</div>
-                      <div class="text-[10px] text-tui-textDim">E2E Workflow</div>
-                    </div>
+              <div class="p-2">
+                <a href="23-delivery-report.html" class="nav-card rounded-lg p-3 flex items-center gap-4">
+                  <div class="w-10 h-10 rounded flex items-center justify-center text-lg" style="background:rgba(63,185,80,0.12);">📦</div>
+                  <div class="flex-1">
+                    <div class="text-xs font-semibold text-tui-text">阶段性交付与最终交付报告</div>
+                    <div class="text-[10px] text-tui-textDim">Periodic & Final Delivery Reports | 策略日报/周报/月报 + 投后总结 + 归因报告导出</div>
                   </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">全链路可视 / 节点追踪</div>
-                  <div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-accent bg-opacity-15 text-tui-accent">A→F 6阶段</span>
-                  </div>
-                </a>
-                <a href="06-categorized-workflows.html" class="nav-card rounded-lg p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(188,140,255,0.12);">📂</div>
-                    <div>
-                      <div class="text-xs font-semibold text-tui-text">分类工作流</div>
-                      <div class="text-[10px] text-tui-textDim">Categorized</div>
-                    </div>
-                  </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">按类型/状态/优先级分组</div>
-                  <div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">8 类</span>
-                  </div>
-                </a>
-                <a href="03-compliance-dashboard.html" class="nav-card rounded-lg p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(63,185,80,0.12);">🛡️</div>
-                    <div>
-                      <div class="text-xs font-semibold text-tui-text">合规仪表盘</div>
-                      <div class="text-[10px] text-tui-textDim">Compliance</div>
-                    </div>
-                  </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">实时合规监控 / 规则引擎</div>
-                  <div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">96.8分</span>
-                  </div>
-                </a>
-                <a href="15-system-monitor.html" class="nav-card rounded-lg p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(57,210,192,0.12);">📡</div>
-                    <div>
-                      <div class="text-xs font-semibold text-tui-text">系统监控</div>
-                      <div class="text-[10px] text-tui-textDim">Sys Monitor</div>
-                    </div>
-                  </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">性能 / 日志 / 健康 / 告警</div>
-                  <div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">正常</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">2 待交付</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-accent bg-opacity-15 text-tui-accent">15 已完成</span>
                   </div>
                 </a>
               </div>
@@ -690,7 +824,7 @@
     <!-- Status Bar -->
     <div class="flex items-center justify-between px-4 py-1.5 bg-tui-surface border-t border-tui-border text-[10px] text-tui-textDim font-mono flex-shrink-0" style="height:28px;">
       <div class="flex items-center gap-3">
-        <span><span class="kbd">1</span>-<span class="kbd">5</span> 聚焦Box</span>
+        <span><span class="kbd">1</span>-<span class="kbd">6</span> 聚焦Box</span>
         <span><span class="kbd">Tab</span> 切换</span>
         <span><span class="kbd">Shift+Tab</span> 隐藏</span>
         <span><span class="kbd">/</span> 命令</span>
@@ -722,21 +856,69 @@
 
     // Box focus with keyboard
     let activeBox = 3;
-    const boxes = [1, 2, 3, 4, 5];
+    let leftColumnVisible = true; // Track Box 2 & Box 6 combined visibility
+    const boxElements = {
+      1: null, // status bar - no dedicated container
+      2: document.getElementById('box2'),
+      3: null, // workflow dashboard
+      4: null, // recent activity
+      5: null, // agent chat
+      6: document.getElementById('box6')
+    };
+    const leftColumn = document.getElementById('left-column');
 
     function highlightBox(num) {
-      document.querySelectorAll('.box-highlight').forEach(el => {
-        el.classList.remove('box-highlight');
-        el.style.borderColor = '';
-        el.style.boxShadow = '';
+      // Remove focus from all box containers
+      document.querySelectorAll('.box-focus').forEach(el => {
+        el.classList.remove('box-focus');
       });
       activeBox = num;
+
+      // Highlight the specific box element
+      const el = boxElements[num];
+      if (el) {
+        el.classList.add('box-focus');
+      }
+
+      // When focusing Box 2 or 6, also highlight the sibling (sync visual focus)
+      if (num === 2 && boxElements[6]) {
+        boxElements[6].classList.add('box-focus');
+      } else if (num === 6 && boxElements[2]) {
+        boxElements[2].classList.add('box-focus');
+      }
+    }
+
+    function toggleLeftColumn() {
+      leftColumnVisible = !leftColumnVisible;
+      if (leftColumnVisible) {
+        leftColumn.style.display = '';
+      } else {
+        leftColumn.style.display = 'none';
+      }
     }
 
     document.addEventListener('keydown', (e) => {
       const num = parseInt(e.key);
-      if (num >= 1 && num <= 5) {
+      if (num >= 1 && num <= 6) {
+        // If left column is hidden and user presses 2 or 6, show it first
+        if ((num === 2 || num === 6) && !leftColumnVisible) {
+          leftColumnVisible = true;
+          leftColumn.style.display = '';
+        }
         highlightBox(num);
+      }
+      // Shift+Tab: toggle show/hide the left column (Box 2 + Box 6 sync)
+      if (e.key === 'Tab' && e.shiftKey) {
+        e.preventDefault();
+        toggleLeftColumn();
+      }
+      // Tab: cycle through boxes
+      if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        const cycle = [1, 3, 4, 5];
+        const idx = cycle.indexOf(activeBox);
+        const next = cycle[(idx + 1) % cycle.length];
+        highlightBox(next);
       }
       if (e.key === 'q') {
         window.location.href = '00-home.html';
