@@ -223,6 +223,19 @@
                   <span class="text-[9px] px-1 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">5 Agents</span>
                 </div>
               </a>
+              <a href="04-document-viewer.html" class="nav-card rounded-lg p-2.5">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-6 h-6 rounded flex items-center justify-center text-xs" style="background:rgba(188,140,255,0.12);">📄</div>
+                  <div>
+                    <div class="text-[11px] font-semibold text-tui-text">项目文档管理</div>
+                    <div class="text-[9px] text-tui-textDim">Doc Management</div>
+                  </div>
+                </div>
+                <div class="text-[9px] text-tui-textMuted">合规文档 / 研报 / 政策文件</div>
+                <div class="flex items-center gap-1 mt-1">
+                  <span class="text-[9px] px-1 py-0.5 rounded bg-tui-accent bg-opacity-15 text-tui-accent">48 文件</span>
+                </div>
+              </a>
             </div>
 
           </div>
@@ -364,7 +377,7 @@
             <div class="border border-tui-border rounded-lg overflow-hidden">
               <div class="px-3 py-2 bg-tui-surface border-b border-tui-border flex items-center gap-2">
                 <span class="text-sm">📊</span>
-                <span class="text-xs font-semibold text-tui-text">投前分析全周期 Pre-trade Analysis</span>
+                <span class="text-xs font-semibold text-tui-text">投前分析 Pre-trade Analysis</span>
                 <span class="ml-auto text-[10px] text-tui-textDim font-mono">6 模块</span>
               </div>
               <div class="p-2 grid grid-cols-3 gap-2">
@@ -456,10 +469,11 @@
             <div class="border border-tui-border rounded-lg overflow-hidden">
               <div class="px-3 py-2 bg-tui-surface border-b border-tui-border flex items-center gap-2">
                 <span class="text-sm">📋</span>
-                <span class="text-xs font-semibold text-tui-text">投前策略全生命周期 Pre-trade Strategy Lifecycle</span>
-                <span class="ml-auto text-[10px] text-tui-textDim font-mono">4 模块</span>
+                <span class="text-xs font-semibold text-tui-text">投前策略 Pre-trade Strategy Lifecycle</span>
+                <span class="ml-auto text-[10px] text-tui-textDim font-mono">6 模块</span>
               </div>
-              <div class="p-2 grid grid-cols-2 gap-2">
+              <div class="p-2 grid grid-cols-3 gap-2">
+                <!-- 第一行：策略管理 → 启发式优化 → 静态回测 -->
                 <a href="08-strategy-management.html" class="nav-card rounded-lg p-3">
                   <div class="flex items-center gap-2 mb-1">
                     <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(88,166,255,0.12);">📋</div>
@@ -468,23 +482,54 @@
                       <div class="text-[10px] text-tui-textDim">Strategy Mgmt</div>
                     </div>
                   </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">创建 / 编辑 / 回测 / 部署策略</div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">创建 / 编辑 / 策略库</div>
                   <div class="flex items-center gap-1 mt-1.5">
                     <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">12 活跃</span>
                     <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-yellow bg-opacity-15 text-tui-yellow">2 待审</span>
                   </div>
                 </a>
-                <a href="04-document-viewer.html" class="nav-card rounded-lg p-3">
+                <a href="28-heuristic-optimization.html" class="nav-card rounded-lg p-3" style="border-color:rgba(219,109,40,0.4);">
                   <div class="flex items-center gap-2 mb-1">
-                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(188,140,255,0.12);">📄</div>
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(219,109,40,0.12);">🧠</div>
                     <div>
-                      <div class="text-xs font-semibold text-tui-text">文档查看器</div>
-                      <div class="text-[10px] text-tui-textDim">Doc Viewer</div>
+                      <div class="text-xs font-semibold text-tui-text">启发式优化</div>
+                      <div class="text-[10px] text-tui-textDim">Heuristic Opt</div>
                     </div>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-orange bg-opacity-15 text-tui-orange ml-auto">NEW</span>
                   </div>
-                  <div class="text-[10px] text-tui-textMuted mt-1">合规文档 / 研报 / 政策文件</div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">HL迭代优化 / 白盒黑盒策略</div>
                   <div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-accent bg-opacity-15 text-tui-accent">48 文件</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-orange bg-opacity-15 text-tui-orange">HL Agent</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-green bg-opacity-15 text-tui-green">策略包</span>
+                  </div>
+                </a>
+                <a href="26-static-backtest.html" class="nav-card rounded-lg p-3" style="border-color:rgba(188,140,255,0.4);">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(188,140,255,0.12);">📊</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">静态回测</div>
+                      <div class="text-[10px] text-tui-textDim">Static Backtest</div>
+                    </div>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple ml-auto">NEW</span>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">多级别历史数据回测</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">backtrader</span>
+                  </div>
+                </a>
+                <!-- 第二行：动态模拟 → 审批中心 → 策略部署 -->
+                <a href="27-dynamic-simulation.html" class="nav-card rounded-lg p-3" style="border-color:rgba(188,140,255,0.4);">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(188,140,255,0.12);">🎭</div>
+                    <div>
+                      <div class="text-xs font-semibold text-tui-text">动态模拟</div>
+                      <div class="text-[10px] text-tui-textDim">Dynamic Sim</div>
+                    </div>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple ml-auto">NEW</span>
+                  </div>
+                  <div class="text-[10px] text-tui-textMuted mt-1">历史订单 / 多情景模拟</div>
+                  <div class="flex items-center gap-1 mt-1.5">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-tui-cyan bg-opacity-15 text-tui-cyan">Agent驱动</span>
                   </div>
                 </a>
                 <a href="01-approval-center.html" class="nav-card rounded-lg p-3">
@@ -505,8 +550,8 @@
                   <div class="flex items-center gap-2 mb-1">
                     <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(57,210,192,0.12);">⚙️</div>
                     <div>
-                      <div class="text-xs font-semibold text-tui-text">工作面板</div>
-                      <div class="text-[10px] text-tui-textDim">Workflow Panel</div>
+                      <div class="text-xs font-semibold text-tui-text">策略部署</div>
+                      <div class="text-[10px] text-tui-textDim">Strategy Deploy</div>
                     </div>
                   </div>
                   <div class="text-[10px] text-tui-textMuted mt-1">任务驱动 / 阶段式流程执行</div>
@@ -635,7 +680,7 @@
                   <div class="flex items-center gap-2 mb-1">
                     <div class="w-7 h-7 rounded flex items-center justify-center text-sm" style="background:rgba(57,210,192,0.12);">⚙️</div>
                     <div>
-                      <div class="text-xs font-semibold text-tui-text">策略运行状态</div>
+                      <div class="text-xs font-semibold text-tui-text">策略状态</div>
                       <div class="text-[10px] text-tui-textDim">Strategy Runtime</div>
                     </div>
                   </div>

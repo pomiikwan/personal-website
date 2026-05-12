@@ -457,10 +457,10 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- Row 2: Main content row -->
+    <!-- Row 2: Main content row (restructured for Box 4 alignment) -->
     <div style="flex:1; display:flex; gap:8px; min-height:0;">
 
-      <!-- Box 2: File Tree -->
+      <!-- Box 2: File Tree (extends full height) -->
       <div class="tui-box" style="width:220px; flex-shrink:0;">
         <div class="tui-box-title">
           <div class="flex items-center">
@@ -539,49 +539,52 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- Box 3: Document Content -->
-      <div class="tui-box" style="flex:1; min-width:0;">
-        <div class="tui-box-title">
-          <div class="flex items-center">
-            <span class="box-number">3</span>
-            <span>DocumentContentBox / 文档内容</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="tag tag-green">&#x2713; 合规预检通过</span>
-            <span style="font-size:10px; color:#484f58;">Ln 142, Col 38</span>
-            <span style="font-size:10px; color:#3fb950;">UTF-8</span>
-            <span style="font-size:10px; color:#484f58;">Markdown</span>
-          </div>
-        </div>
-        <div class="doc-content scrollbar-thin" style="flex:1;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-            <h1 style="border:none; padding:0; margin:0;">动量突破策略需求文档 / Momentum Breakout Strategy Requirements</h1>
-            <span class="tag tag-yellow">DRAFT v2.4</span>
-          </div>
+      <!-- Middle Column: Box 3 + Box 4 stacked vertically -->
+      <div style="flex:1; display:flex; flex-direction:column; gap:8px; min-width:0;">
 
-          <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
-            <span class="tag tag-blue">策略需求 / Strategy Requirements</span>
-            <span class="tag tag-purple">动量类型 / Momentum</span>
-            <span class="tag tag-muted">负责: 张明 / Zhang Ming</span>
-            <span class="tag tag-muted">审核: 李芳 / Li Fang</span>
-            <span style="font-size:11px; color:#484f58;">更新: 2026-05-10 14:32</span>
+        <!-- Box 3: Document Content -->
+        <div class="tui-box" style="flex:1; min-width:0;">
+          <div class="tui-box-title">
+            <div class="flex items-center">
+              <span class="box-number">3</span>
+              <span>DocumentContentBox / 文档内容</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="tag tag-green">&#x2713; 合规预检通过</span>
+              <span style="font-size:10px; color:#484f58;">Ln 142, Col 38</span>
+              <span style="font-size:10px; color:#3fb950;">UTF-8</span>
+              <span style="font-size:10px; color:#484f58;">Markdown</span>
+            </div>
           </div>
+          <div class="doc-content scrollbar-thin" style="flex:1;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+              <h1 style="border:none; padding:0; margin:0;">动量突破策略需求文档 / Momentum Breakout Strategy Requirements</h1>
+              <span class="tag tag-yellow">DRAFT v2.4</span>
+            </div>
 
-          <h2>1. 策略概述 / Strategy Overview</h2>
-          <p>本策略基于动量突破原理，通过识别价格突破关键技术水平，结合成交量确认和多重时间框架分析，在趋势初期建立仓位。策略适用于A股市场，主要针对中小市值股票的短线交易机会。</p>
-          <p>策略目标年化收益率: <span style="color:#3fb950;">18%-25%</span>，最大回撤控制在 <span style="color:#f85149;">12%</span> 以内。</p>
+            <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+              <span class="tag tag-blue">策略需求 / Strategy Requirements</span>
+              <span class="tag tag-purple">动量类型 / Momentum</span>
+              <span class="tag tag-muted">负责: 张明 / Zhang Ming</span>
+              <span class="tag tag-muted">审核: 李芳 / Li Fang</span>
+              <span style="font-size:11px; color:#484f58;">更新: 2026-05-10 14:32</span>
+            </div>
 
-          <h2>2. 入场规则 / Entry Rules</h2>
-          <h3>2.1 主信号 / Primary Signal</h3>
-          <ul>
-            <li>价格突破20日最高价（<code>HIGH(20)</code>）</li>
-            <li>当日成交量 &gt; 20日平均成交量的 <span style="color:#d29922;">1.5倍</span></li>
-            <li>RSI(14) 在 50-75 区间内</li>
-            <li>MACD 柱状图为正值且递增</li>
-          </ul>
+            <h2>1. 策略概述 / Strategy Overview</h2>
+            <p>本策略基于动量突破原理，通过识别价格突破关键技术水平，结合成交量确认和多重时间框架分析，在趋势初期建立仓位。策略适用于A股市场，主要针对中小市值股票的短线交易机会。</p>
+            <p>策略目标年化收益率: <span style="color:#3fb950;">18%-25%</span>，最大回撤控制在 <span style="color:#f85149;">12%</span> 以内。</p>
 
-          <h3>2.2 确认条件 / Confirmation</h3>
-          <pre><span class="hl-comment">// 动量突破入场条件伪代码</span>
+            <h2>2. 入场规则 / Entry Rules</h2>
+            <h3>2.1 主信号 / Primary Signal</h3>
+            <ul>
+              <li>价格突破20日最高价（<code>HIGH(20)</code>）</li>
+              <li>当日成交量 &gt; 20日平均成交量的 <span style="color:#d29922;">1.5倍</span></li>
+              <li>RSI(14) 在 50-75 区间内</li>
+              <li>MACD 柱状图为正值且递增</li>
+            </ul>
+
+            <h3>2.2 确认条件 / Confirmation</h3>
+            <pre><span class="hl-comment">// 动量突破入场条件伪代码</span>
 <span class="hl-keyword">func</span> <span class="hl-type">checkEntrySignal</span>(bar: Bar) -&gt; <span class="hl-type">Signal</span> {
     <span class="hl-keyword">let</span> breakout = bar.close &gt; <span class="hl-type">HIGH</span>(<span class="hl-number">20</span>)
     <span class="hl-keyword">let</span> volumeConfirm = bar.volume &gt; <span class="hl-type">SMA</span>(bar.volume, <span class="hl-number">20</span>) * <span class="hl-number">1.5</span>
@@ -594,105 +597,179 @@ tailwind.config = {
     <span class="hl-keyword">return</span> <span class="hl-type">Signal</span>.NONE
 }</pre>
 
-          <h2>3. 风控参数 / Risk Parameters</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>参数 / Parameter</th>
-                <th>默认值 / Default</th>
-                <th>范围 / Range</th>
-                <th>说明 / Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>单笔止损 / Stop Loss</td>
-                <td style="color:#3fb950;">3%</td>
-                <td>1% - 5%</td>
-                <td>基于入场价计算</td>
-              </tr>
-              <tr>
-                <td>止盈目标 / Take Profit</td>
-                <td style="color:#388bfd;">8%</td>
-                <td>5% - 15%</td>
-                <td>分两档止盈</td>
-              </tr>
-              <tr>
-                <td>最大持仓 / Max Position</td>
-                <td style="color:#d29922;">5</td>
-                <td>1 - 10</td>
-                <td>同时持有最大股票数</td>
-              </tr>
-              <tr>
-                <td>单票权重 / Max Weight</td>
-                <td style="color:#f85149;">20%</td>
-                <td>10% - 30%</td>
-                <td>占组合最大比例</td>
-              </tr>
-              <tr>
-                <td>日度回撤限制 / Daily DD</td>
-                <td style="color:#f85149;">2%</td>
-                <td>1% - 3%</td>
-                <td>触发暂停交易</td>
-              </tr>
-            </tbody>
-          </table>
+            <h2>3. 风控参数 / Risk Parameters</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>参数 / Parameter</th>
+                  <th>默认值 / Default</th>
+                  <th>范围 / Range</th>
+                  <th>说明 / Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>单笔止损 / Stop Loss</td>
+                  <td style="color:#3fb950;">3%</td>
+                  <td>1% - 5%</td>
+                  <td>基于入场价计算</td>
+                </tr>
+                <tr>
+                  <td>止盈目标 / Take Profit</td>
+                  <td style="color:#388bfd;">8%</td>
+                  <td>5% - 15%</td>
+                  <td>分两档止盈</td>
+                </tr>
+                <tr>
+                  <td>最大持仓 / Max Position</td>
+                  <td style="color:#d29922;">5</td>
+                  <td>1 - 10</td>
+                  <td>同时持有最大股票数</td>
+                </tr>
+                <tr>
+                  <td>单票权重 / Max Weight</td>
+                  <td style="color:#f85149;">20%</td>
+                  <td>10% - 30%</td>
+                  <td>占组合最大比例</td>
+                </tr>
+                <tr>
+                  <td>日度回撤限制 / Daily DD</td>
+                  <td style="color:#f85149;">2%</td>
+                  <td>1% - 3%</td>
+                  <td>触发暂停交易</td>
+                </tr>
+              </tbody>
+            </table>
 
-          <h2>4. 合规要求 / Compliance Requirements</h2>
-          <ul>
-            <li><span class="precheck-pass">&#x2713;</span> 所有交易需通过 <span style="color:#3fb950;">T+1</span> 规则检查</li>
-            <li><span class="precheck-pass">&#x2713;</span> 涨跌停板股票自动排除</li>
-            <li><span class="precheck-pass">&#x2713;</span> ST/*ST 股票自动排除</li>
-            <li><span class="precheck-warn">&#x26A0;</span> 需确认不低于 <span style="color:#d29922;">5000万</span> 日均成交额门槛</li>
-            <li><span class="precheck-pass">&#x2713;</span> 融资融券标的限制检查</li>
-            <li><span class="precheck-pass">&#x2713;</span> 行业集中度不超过 <span style="color:#388bfd;">30%</span></li>
-          </ul>
+            <h2>4. 合规要求 / Compliance Requirements</h2>
+            <ul>
+              <li><span class="precheck-pass">&#x2713;</span> 所有交易需通过 <span style="color:#3fb950;">T+1</span> 规则检查</li>
+              <li><span class="precheck-pass">&#x2713;</span> 涨跌停板股票自动排除</li>
+              <li><span class="precheck-pass">&#x2713;</span> ST/*ST 股票自动排除</li>
+              <li><span class="precheck-warn">&#x26A0;</span> 需确认不低于 <span style="color:#d29922;">5000万</span> 日均成交额门槛</li>
+              <li><span class="precheck-pass">&#x2713;</span> 融资融券标的限制检查</li>
+              <li><span class="precheck-pass">&#x2713;</span> 行业集中度不超过 <span style="color:#388bfd;">30%</span></li>
+            </ul>
 
-          <h2>5. 回测指标 / Backtest Metrics</h2>
-          <div style="display:flex; gap:16px; margin:8px 0; flex-wrap:wrap;">
-            <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:12px; min-width:140px;">
-              <div style="font-size:10px; color:#484f58;">年化收益 / Annual Return</div>
-              <div style="font-size:20px; color:#3fb950; font-weight:600; margin-top:4px;">22.3%</div>
-              <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:74%; background:#3fb950;"></div></div>
+            <h2>5. 回测指标 / Backtest Metrics</h2>
+            <div style="display:flex; gap:16px; margin:8px 0; flex-wrap:wrap;">
+              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:12px; min-width:140px;">
+                <div style="font-size:10px; color:#484f58;">年化收益 / Annual Return</div>
+                <div style="font-size:20px; color:#3fb950; font-weight:600; margin-top:4px;">22.3%</div>
+                <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:74%; background:#3fb950;"></div></div>
+              </div>
+              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:12px; min-width:140px;">
+                <div style="font-size:10px; color:#484f58;">最大回撤 / Max Drawdown</div>
+                <div style="font-size:20px; color:#f85149; font-weight:600; margin-top:4px;">-9.8%</div>
+                <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:49%; background:#f85149;"></div></div>
+              </div>
+              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:12px; min-width:140px;">
+                <div style="font-size:10px; color:#484f58;">夏普比率 / Sharpe</div>
+                <div style="font-size:20px; color:#388bfd; font-weight:600; margin-top:4px;">1.85</div>
+                <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:62%; background:#388bfd;"></div></div>
+              </div>
+              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:12px; min-width:140px;">
+                <div style="font-size:10px; color:#484f58;">胜率 / Win Rate</div>
+                <div style="font-size:20px; color:#d29922; font-weight:600; margin-top:4px;">58.7%</div>
+                <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:59%; background:#d29922;"></div></div>
+              </div>
             </div>
-            <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:12px; min-width:140px;">
-              <div style="font-size:10px; color:#484f58;">最大回撤 / Max Drawdown</div>
-              <div style="font-size:20px; color:#f85149; font-weight:600; margin-top:4px;">-9.8%</div>
-              <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:49%; background:#f85149;"></div></div>
-            </div>
-            <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:12px; min-width:140px;">
-              <div style="font-size:10px; color:#484f58;">夏普比率 / Sharpe</div>
-              <div style="font-size:20px; color:#388bfd; font-weight:600; margin-top:4px;">1.85</div>
-              <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:62%; background:#388bfd;"></div></div>
-            </div>
-            <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:12px; min-width:140px;">
-              <div style="font-size:10px; color:#484f58;">胜率 / Win Rate</div>
-              <div style="font-size:20px; color:#d29922; font-weight:600; margin-top:4px;">58.7%</div>
-              <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:59%; background:#d29922;"></div></div>
+
+            <h2>6. 版本变更记录 / Change Log</h2>
+            <table>
+              <thead>
+                <tr><th>版本</th><th>日期</th><th>作者</th><th>变更说明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td style="color:#3fb950;">v2.4</td><td>2026-05-10</td><td>张明</td><td>增加行业集中度限制，调整止盈目标分档</td></tr>
+                <tr><td style="color:#8b949e;">v2.3</td><td>2026-04-22</td><td>张明</td><td>优化RSI区间范围，增加MACD确认条件</td></tr>
+                <tr><td style="color:#8b949e;">v2.2</td><td>2026-04-05</td><td>李芳</td><td>修正风控参数范围，增加日度回撤限制</td></tr>
+                <tr><td style="color:#484f58;">v2.1</td><td>2026-03-18</td><td>王磊</td><td>调整成交量确认倍数从1.3到1.5</td></tr>
+              </tbody>
+            </table>
+
+            <div style="margin-top:16px; padding:10px; background:#388bfd08; border:1px solid #388bfd22; border-radius:4px;">
+              <div style="font-size:11px; color:#388bfd; margin-bottom:4px;">&#x2139; 编辑提示 / Edit Hint</div>
+              <div style="font-size:11px; color:#8b949e;">按 <span class="key">e</span> 进入编辑模式 | <span class="key">Ctrl+S</span> 保存 | <span class="key">Ctrl+Z</span> 撤销 | <span class="key">Ctrl+Shift+P</span> 命令面板</div>
             </div>
           </div>
+        </div>
 
-          <h2>6. 版本变更记录 / Change Log</h2>
-          <table>
-            <thead>
-              <tr><th>版本</th><th>日期</th><th>作者</th><th>变更说明</th></tr>
-            </thead>
-            <tbody>
-              <tr><td style="color:#3fb950;">v2.4</td><td>2026-05-10</td><td>张明</td><td>增加行业集中度限制，调整止盈目标分档</td></tr>
-              <tr><td style="color:#8b949e;">v2.3</td><td>2026-04-22</td><td>张明</td><td>优化RSI区间范围，增加MACD确认条件</td></tr>
-              <tr><td style="color:#8b949e;">v2.2</td><td>2026-04-05</td><td>李芳</td><td>修正风控参数范围，增加日度回撤限制</td></tr>
-              <tr><td style="color:#484f58;">v2.1</td><td>2026-03-18</td><td>王磊</td><td>调整成交量确认倍数从1.3到1.5</td></tr>
-            </tbody>
-          </table>
-
-          <div style="margin-top:16px; padding:10px; background:#388bfd08; border:1px solid #388bfd22; border-radius:4px;">
-            <div style="font-size:11px; color:#388bfd; margin-bottom:4px;">&#x2139; 编辑提示 / Edit Hint</div>
-            <div style="font-size:11px; color:#8b949e;">按 <span class="key">e</span> 进入编辑模式 | <span class="key">Ctrl+S</span> 保存 | <span class="key">Ctrl+Z</span> 撤销 | <span class="key">Ctrl+Shift+P</span> 命令面板</div>
+        <!-- Box 4: Diff Preview (now in middle column, same width as Box 3) -->
+        <div class="tui-box" style="flex-shrink:0; height:180px;">
+          <div class="tui-box-title">
+            <div class="flex items-center">
+              <span class="box-number">4</span>
+              <span>DiffPreviewBox / 差异预览 (v2.3 → v2.4)</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span style="font-size:10px; color:#3fb950;">+12 新增</span>
+              <span style="font-size:10px; color:#d29922;">~5 修改</span>
+              <span style="font-size:10px; color:#f85149;">-2 删除</span>
+              <span style="font-size:10px; color:#484f58;">19 lines changed</span>
+            </div>
+          </div>
+          <div class="scrollbar-thin" style="flex:1; overflow-y:auto; font-size:11px; font-family:'JetBrains Mono',monospace;">
+            <div class="diff-line diff-deleted">
+              <span class="diff-line-num">87</span>
+              <span style="color:#f85149; min-width:16px;">-</span>
+              <span class="diff-content" style="color:#f85149;">4. 成交额门槛: 需确认不低于日均成交额门槛 (TBD)</span>
+            </div>
+            <div class="diff-line diff-added">
+              <span class="diff-line-num">87</span>
+              <span style="color:#3fb950; min-width:16px;">+</span>
+              <span class="diff-content" style="color:#3fb950;">4. 需确认不低于 <span style="background:#3fb95022;">5000万</span> 日均成交额门槛</span>
+            </div>
+            <div class="diff-line diff-added">
+              <span class="diff-line-num">88</span>
+              <span style="color:#3fb950; min-width:16px;">+</span>
+              <span class="diff-content" style="color:#3fb950;">5. 融资融券标的限制检查 (融资买入限制比例 &lt; 30%)</span>
+            </div>
+            <div class="diff-line diff-added">
+              <span class="diff-line-num">89</span>
+              <span style="color:#3fb950; min-width:16px;">+</span>
+              <span class="diff-content" style="color:#3fb950;">6. 行业集中度不超过 <span style="background:#3fb95022;">30%</span></span>
+            </div>
+            <div class="diff-line" style="background:#161b22;">
+              <span class="diff-line-num">90</span>
+              <span style="min-width:16px; color:#484f58;"> </span>
+              <span class="diff-content" style="color:#484f58;">```</span>
+            </div>
+            <div class="diff-line diff-changed">
+              <span class="diff-line-num">104</span>
+              <span style="color:#d29922; min-width:16px;">~</span>
+              <span class="diff-content" style="color:#d29922;">| 止盈目标 / Take Profit | <span style="background:#d2992222;">8%</span> | 5% - 15% | <span style="background:#d2992222;">分两档止盈 (5%+3%)</span> |</span>
+            </div>
+            <div class="diff-line diff-changed">
+              <span class="diff-line-num">108</span>
+              <span style="color:#d29922; min-width:16px;">~</span>
+              <span class="diff-content" style="color:#d29922;">| 日度回撤限制 / Daily DD | <span style="background:#d2992222;">2%</span> | 1% - 3% | 触发暂停交易 |</span>
+            </div>
+            <div class="diff-line diff-deleted">
+              <span class="diff-line-num">109</span>
+              <span style="color:#f85149; min-width:16px;">-</span>
+              <span class="diff-content" style="color:#f85149;">| 隔夜持仓限制 / Overnight | 不允许 | - | 所有仓位当日清仓 |</span>
+            </div>
+            <div class="diff-line diff-added">
+              <span class="diff-line-num">110</span>
+              <span style="color:#3fb950; min-width:16px;">+</span>
+              <span class="diff-content" style="color:#3fb950;">| 行业集中度 / Industry | <span style="background:#3fb95022;">30%</span> | 20% - 40% | 单一行业最大占比 |</span>
+            </div>
+            <div class="diff-line" style="background:#161b22;">
+              <span class="diff-line-num">111</span>
+              <span style="min-width:16px; color:#484f58;"> </span>
+              <span class="diff-content" style="color:#484f58;"></span>
+            </div>
+            <div class="diff-line diff-changed">
+              <span class="diff-line-num">132</span>
+              <span style="color:#d29922; min-width:16px;">~</span>
+              <span class="diff-content" style="color:#d29922;">| <span style="background:#d2992222;">v2.4</span> | <span style="background:#d2992222;">2026-05-10</span> | <span style="background:#d2992222;">张明</span> | <span style="background:#d2992222;">增加行业集中度限制，调整止盈目标分档</span> |</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Box 5: Agent Chat -->
+      <!-- Box 5: Agent Chat (extends full height) -->
       <div class="tui-box" style="width:320px; flex-shrink:0;">
         <div class="tui-box-title">
           <div class="flex items-center">
@@ -807,79 +884,6 @@ tailwind.config = {
             <button class="cmd-btn" style="font-size:9px; padding:2px 6px;">/diff 版本对比</button>
             <button class="cmd-btn" style="font-size:9px; padding:2px 6px;">/fix 自动修复</button>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Row 3: Diff Preview -->
-    <div class="tui-box" style="flex-shrink:0; height:180px;">
-      <div class="tui-box-title">
-        <div class="flex items-center">
-          <span class="box-number">4</span>
-          <span>DiffPreviewBox / 差异预览 (v2.3 → v2.4)</span>
-        </div>
-        <div class="flex items-center gap-3">
-          <span style="font-size:10px; color:#3fb950;">+12 新增</span>
-          <span style="font-size:10px; color:#d29922;">~5 修改</span>
-          <span style="font-size:10px; color:#f85149;">-2 删除</span>
-          <span style="font-size:10px; color:#484f58;">19 lines changed</span>
-        </div>
-      </div>
-      <div class="scrollbar-thin" style="flex:1; overflow-y:auto; font-size:11px; font-family:'JetBrains Mono',monospace;">
-        <div class="diff-line diff-deleted">
-          <span class="diff-line-num">87</span>
-          <span style="color:#f85149; min-width:16px;">-</span>
-          <span class="diff-content" style="color:#f85149;">4. 成交额门槛: 需确认不低于日均成交额门槛 (TBD)</span>
-        </div>
-        <div class="diff-line diff-added">
-          <span class="diff-line-num">87</span>
-          <span style="color:#3fb950; min-width:16px;">+</span>
-          <span class="diff-content" style="color:#3fb950;">4. 需确认不低于 <span style="background:#3fb95022;">5000万</span> 日均成交额门槛</span>
-        </div>
-        <div class="diff-line diff-added">
-          <span class="diff-line-num">88</span>
-          <span style="color:#3fb950; min-width:16px;">+</span>
-          <span class="diff-content" style="color:#3fb950;">5. 融资融券标的限制检查 (融资买入限制比例 &lt; 30%)</span>
-        </div>
-        <div class="diff-line diff-added">
-          <span class="diff-line-num">89</span>
-          <span style="color:#3fb950; min-width:16px;">+</span>
-          <span class="diff-content" style="color:#3fb950;">6. 行业集中度不超过 <span style="background:#3fb95022;">30%</span></span>
-        </div>
-        <div class="diff-line" style="background:#161b22;">
-          <span class="diff-line-num">90</span>
-          <span style="min-width:16px; color:#484f58;"> </span>
-          <span class="diff-content" style="color:#484f58;">```</span>
-        </div>
-        <div class="diff-line diff-changed">
-          <span class="diff-line-num">104</span>
-          <span style="color:#d29922; min-width:16px;">~</span>
-          <span class="diff-content" style="color:#d29922;">| 止盈目标 / Take Profit | <span style="background:#d2992222;">8%</span> | 5% - 15% | <span style="background:#d2992222;">分两档止盈 (5%+3%)</span> |</span>
-        </div>
-        <div class="diff-line diff-changed">
-          <span class="diff-line-num">108</span>
-          <span style="color:#d29922; min-width:16px;">~</span>
-          <span class="diff-content" style="color:#d29922;">| 日度回撤限制 / Daily DD | <span style="background:#d2992222;">2%</span> | 1% - 3% | 触发暂停交易 |</span>
-        </div>
-        <div class="diff-line diff-deleted">
-          <span class="diff-line-num">109</span>
-          <span style="color:#f85149; min-width:16px;">-</span>
-          <span class="diff-content" style="color:#f85149;">| 隔夜持仓限制 / Overnight | 不允许 | - | 所有仓位当日清仓 |</span>
-        </div>
-        <div class="diff-line diff-added">
-          <span class="diff-line-num">110</span>
-          <span style="color:#3fb950; min-width:16px;">+</span>
-          <span class="diff-content" style="color:#3fb950;">| 行业集中度 / Industry | <span style="background:#3fb95022;">30%</span> | 20% - 40% | 单一行业最大占比 |</span>
-        </div>
-        <div class="diff-line" style="background:#161b22;">
-          <span class="diff-line-num">111</span>
-          <span style="min-width:16px; color:#484f58;"> </span>
-          <span class="diff-content" style="color:#484f58;"></span>
-        </div>
-        <div class="diff-line diff-changed">
-          <span class="diff-line-num">132</span>
-          <span style="color:#d29922; min-width:16px;">~</span>
-          <span class="diff-content" style="color:#d29922;">| <span style="background:#d2992222;">v2.4</span> | <span style="background:#d2992222;">2026-05-10</span> | <span style="background:#d2992222;">张明</span> | <span style="background:#d2992222;">增加行业集中度限制，调整止盈目标分档</span> |</span>
         </div>
       </div>
     </div>

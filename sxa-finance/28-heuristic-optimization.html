@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 启发式优化 | Heuristic Optimization</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-surface': '#161b22',
+        'tui-border': '#30363d',
+        'tui-borderLight': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-textMuted': '#8b949e',
+        'tui-textDim': '#6e7681',
+        'tui-accent': '#58a6ff',
+        'tui-accentDim': '#1f6feb',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-orange': '#db6d28',
+        'tui-red': '#f85149',
+        'tui-purple': '#bc8cff',
+        'tui-cyan': '#39d2c0',
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family: 'JetBrains Mono', 'Noto Sans SC', monospace; box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; overflow: hidden; height: 100vh; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  .tui-box { border: 1px solid #30363d; border-radius: 6px; background: #0d1117; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+  .tui-box.focused { border-color: #58a6ff; box-shadow: 0 0 0 1px #58a6ff, 0 0 12px rgba(88,166,255,0.15); }
+  .tui-box-title { background: #161b22; padding: 6px 12px; border-bottom: 1px solid #30363d; font-size: 12px; font-weight: 600; color: #c9d1d9; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .box-number { background: #58a6ff; color: #0d1117; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .key { background: #21262d; border: 1px solid #30363d; padding: 1px 6px; border-radius: 3px; font-size: 10px; color: #8b949e; }
+  .tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+  .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .tag-yellow { background: rgba(210,153,34,0.15); color: #d29922; }
+  .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+  .tag-blue { background: rgba(88,166,255,0.15); color: #58a6ff; }
+  .tag-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+  .tag-cyan { background: rgba(57,210,192,0.15); color: #39d2c0; }
+  .tag-orange { background: rgba(219,109,40,0.15); color: #db6d28; }
+  .tag-muted { background: rgba(139,148,158,0.15); color: #8b949e; }
+
+  .filter-btn { background: #21262d; border: 1px solid #30363d; padding: 4px 12px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { background: #58a6ff; color: #0d1117; border-color: #58a6ff; }
+  .cmd-btn { background: #21262d; border: 1px solid #30363d; padding: 4px 10px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; text-decoration: none; display: inline-block; }
+  .cmd-btn:hover { background: #30363d; }
+  .cmd-btn-green { background: #238636; border-color: #238636; color: white; }
+  .cmd-btn-green:hover { background: #3fb950; border-color: #3fb950; }
+  .cmd-btn-purple { background: #8957e5; border-color: #8957e5; color: white; }
+  .cmd-btn-purple:hover { background: #bc8cff; border-color: #bc8cff; }
+  .cmd-btn-orange { background: #db6d28; border-color: #db6d28; color: white; }
+  .cmd-btn-orange:hover { background: #f0883e; border-color: #f0883e; }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+
+  .metric-card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px; min-width: 120px; }
+  .metric-label { font-size: 10px; color: #6e7681; margin-bottom: 4px; }
+  .metric-value { font-size: 18px; font-weight: 600; }
+  .progress-bar { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+  .chat-message { padding: 8px 10px; border-radius: 6px; font-size: 11px; line-height: 1.5; margin-bottom: 8px; }
+  .chat-agent { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); }
+  .chat-user { background: rgba(188,140,255,0.08); border: 1px solid rgba(188,140,255,0.2); margin-left: 20px; }
+  .chat-system { background: rgba(57,210,192,0.08); border: 1px solid rgba(57,210,192,0.2); }
+
+  .strategy-type-tab { flex: 1; padding: 8px 12px; font-size: 11px; border: 1px solid #30363d; background: transparent; color: #8b949e; cursor: pointer; transition: all 0.15s; text-align: center; }
+  .strategy-type-tab:first-child { border-radius: 6px 0 0 6px; }
+  .strategy-type-tab:last-child { border-radius: 0 6px 6px 0; }
+  .strategy-type-tab.active { background: #58a6ff; color: #0d1117; border-color: #58a6ff; font-weight: 600; }
+
+  .code-block { background: #161b22; border: 1px solid #30363d; border-radius: 4px; padding: 8px; font-size: 10px; font-family: 'JetBrains Mono', monospace; overflow-x: auto; }
+  .code-line { display: flex; gap: 8px; }
+  .code-line-num { color: #6e7681; min-width: 24px; text-align: right; }
+  .code-keyword { color: #ff7b72; }
+  .code-string { color: #a5d6ff; }
+  .code-func { color: #d2a8ff; }
+  .code-comment { color: #8b949e; }
+  .code-number { color: #79c0ff; }
+  .code-highlight { background: rgba(188,140,255,0.2); }
+
+  .optimization-step { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #30363d; border-radius: 4px; margin-bottom: 4px; font-size: 11px; }
+  .optimization-step:hover { border-color: #58a6ff; }
+  .optimization-step.active { border-color: #bc8cff; background: rgba(188,140,255,0.08); }
+  .optimization-step.completed { border-color: #3fb950; }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  .signal-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; font-size: 10px; color: #8b949e; }
+  .signal-chip.active { border-color: #3fb950; color: #3fb950; }
+  .signal-chip.disabled { border-color: #f85149; color: #f85149; text-decoration: line-through; }
+  .signal-chip.new { border-color: #58a6ff; color: #58a6ff; }
+
+  .param-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: #161b22; border: 1px solid #30363d; border-radius: 4px; font-size: 11px; margin-bottom: 4px; }
+  .param-row:hover { border-color: #58a6ff; }
+  .param-slider { -webkit-appearance: none; width: 80px; height: 4px; background: #30363d; border-radius: 2px; outline: none; }
+  .param-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #58a6ff; border-radius: 50%; cursor: pointer; }
+
+  .package-tree { font-size: 10px; font-family: 'JetBrains Mono', monospace; line-height: 1.6; }
+  .package-folder { color: #58a6ff; }
+  .package-file { color: #8b949e; }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .animate-pulse { animation: pulse 2s infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .animate-spin { animation: spin 1s linear infinite; }
+</style>
+</head>
+<body class="h-screen flex flex-col">
+
+<div class="flex flex-col h-full">
+  <!-- Title Bar -->
+  <div class="flex items-center justify-between px-4 py-2 bg-tui-surface border-b border-tui-border" style="height:40px; flex-shrink:0;">
+    <div class="flex items-center gap-2">
+      <div class="flex gap-1.5">
+        <div style="width:12px;height:12px;border-radius:50%;background:#f85149;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#d29922;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#3fb950;"></div>
+      </div>
+      <span class="text-tui-textDim text-xs ml-2">SXA v3.2.1</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-tui-orange text-sm">🧠</span>
+      <span class="text-xs font-semibold text-tui-text">启发式优化</span>
+      <span class="text-tui-textDim text-xs">/ Heuristic Optimization (HL)</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-tui-textMuted">
+      <a href="00-home.html" class="px-3 py-1 bg-tui-accentDim text-white rounded hover:bg-tui-accent transition-colors">
+        <span class="key mr-1">ESC</span> 主页
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- LEFT COLUMN: Box 2 -->
+    <div class="flex flex-col overflow-hidden border-r border-tui-border" style="width:300px; flex-shrink:0;">
+
+      <!-- Box 2: Strategy & Optimization Config -->
+      <div class="tui-box border-0 border-b border-tui-border rounded-none flex-1">
+        <div class="tui-box-title">
+          <span class="box-number">2</span>
+          <span>优化配置 / Optimization Config</span>
+        </div>
+        <div class="scrollbar-thin flex-1 overflow-y-auto p-3 space-y-4" style="min-height:0;">
+
+          <!-- Strategy Type Selection -->
+          <div>
+            <div class="text-tui-textDim text-xs mb-2">策略类型 / Strategy Type</div>
+            <div class="flex">
+              <button class="strategy-type-tab active" onclick="selectStrategyType('white')">白盒策略</button>
+              <button class="strategy-type-tab" onclick="selectStrategyType('black')">黑盒策略</button>
+            </div>
+          </div>
+
+          <!-- Strategy Selection -->
+          <div>
+            <div class="text-tui-textDim text-xs mb-2">选择策略 / Select Strategy</div>
+            <select class="w-full bg-tui-surface border border-tui-border rounded px-2 py-1.5 text-xs text-tui-text">
+              <option>动量突破策略 v2.4 (白盒)</option>
+              <option>均值回归策略 v1.8 (白盒)</option>
+              <option>第三方CTA信号_A (黑盒)</option>
+              <option>量化信号API_X (黑盒)</option>
+            </select>
+          </div>
+
+          <!-- Optimization Target -->
+          <div>
+            <div class="text-tui-textDim text-xs mb-2">优化目标 / Target Metrics</div>
+            <div class="space-y-2">
+              <div class="param-row">
+                <span class="text-tui-text">目标夏普比率</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-tui-accent">≥ 2.0</span>
+                  <input type="number" value="2.0" step="0.1" class="w-16 bg-tui-bg border border-tui-border rounded px-2 py-0.5 text-xs text-tui-text text-right">
+                </div>
+              </div>
+              <div class="param-row">
+                <span class="text-tui-text">最大回撤限制</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-tui-red">≤ 10%</span>
+                  <input type="number" value="10" step="1" class="w-16 bg-tui-bg border border-tui-border rounded px-2 py-0.5 text-xs text-tui-text text-right">
+                </div>
+              </div>
+              <div class="param-row">
+                <span class="text-tui-text">最小胜率</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-tui-yellow">≥ 55%</span>
+                  <input type="number" value="55" step="1" class="w-16 bg-tui-bg border border-tui-border rounded px-2 py-0.5 text-xs text-tui-text text-right">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- White Box: Code Optimization Objects -->
+          <div id="whitebox-config">
+            <div class="text-tui-textDim text-xs mb-2 font-semibold">📝 可优化对象 (白盒)</div>
+            <div class="space-y-2 p-2 bg-tui-surface rounded border border-tui-border">
+              <div class="text-tui-text text-xs font-semibold">指标选择 / Indicators</div>
+              <div class="flex flex-wrap gap-1">
+                <span class="signal-chip active">MA</span>
+                <span class="signal-chip active">EMA</span>
+                <span class="signal-chip">RSI</span>
+                <span class="signal-chip">MACD</span>
+                <span class="signal-chip active">ATR</span>
+                <span class="signal-chip">BB</span>
+              </div>
+              <div class="text-tui-text text-xs font-semibold mt-2">阈值调整 / Thresholds</div>
+              <div class="text-tui-textDim text-[10px]">MA_fast > MA_slow + 0.05</div>
+              <div class="text-tui-text text-xs font-semibold mt-2">条件组合 / Logic</div>
+              <div class="text-tui-textDim text-[10px]">AND / OR / 顺序 / 时间过滤</div>
+              <div class="text-tui-text text-xs font-semibold mt-2">出场规则 / Exit</div>
+              <div class="text-tui-textDim text-[10px]">止盈 / 止损 / Time-based</div>
+            </div>
+          </div>
+
+          <!-- Black Box: Wrapper Optimization Objects -->
+          <div id="blackbox-config" style="display:none;">
+            <div class="text-tui-textDim text-xs mb-2 font-semibold">🔧 Wrapper 优化对象 (黑盒)</div>
+            <div class="space-y-2 p-2 bg-tui-surface rounded border border-tui-border">
+              <div class="text-tui-text text-xs font-semibold">调用时机 / Call Timing</div>
+              <div class="text-tui-textDim text-[10px]">市场状态 / 时间窗口 / 波动率条件</div>
+              <div class="text-tui-text text-xs font-semibold mt-2">信号过滤 / Signal Filter</div>
+              <div class="flex flex-wrap gap-1">
+                <span class="signal-chip active">置信度>0.7</span>
+                <span class="signal-chip">成交量过滤</span>
+                <span class="signal-chip new">波动率过滤</span>
+              </div>
+              <div class="text-tui-text text-xs font-semibold mt-2">参数调度 / Param Schedule</div>
+              <div class="text-tui-textDim text-[10px]">动态参数选择 / 情景适配</div>
+              <div class="text-tui-text text-xs font-semibold mt-2">信号归一化 / Normalize</div>
+              <div class="text-tui-textDim text-[10px]">多源信号加权 / 冲突处理</div>
+            </div>
+          </div>
+
+          <!-- Max Iterations -->
+          <div>
+            <div class="text-tui-textDim text-xs mb-2">最大迭代次数 / Max Iterations</div>
+            <input type="number" value="50" class="w-full bg-tui-surface border border-tui-border rounded px-2 py-1.5 text-xs text-tui-text">
+          </div>
+
+          <!-- Actions -->
+          <div class="space-y-2">
+            <button class="w-full cmd-btn-orange py-2 text-xs font-semibold">
+              🧠 启动 HL 优化
+            </button>
+            <div class="flex gap-2">
+              <button class="flex-1 cmd-btn text-[10px]">⏸ 暂停</button>
+              <button class="flex-1 cmd-btn text-[10px]">↻ 重置</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER COLUMN: Box 3 + Box 4 -->
+    <div class="flex-1 flex flex-col overflow-hidden" style="min-width:0;">
+
+      <!-- Box 1: Filter Bar -->
+      <div class="tui-box border-0 border-b border-tui-border rounded-none">
+        <div class="tui-box-title">
+          <span class="box-number">1</span>
+          <span>HLOptimizationFilter / 优化筛选</span>
+          <div class="flex-1"></div>
+          <span class="tag tag-orange">迭代 23/50</span>
+        </div>
+        <div class="p-3 flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span class="text-tui-textDim text-xs">阶段:</span>
+            <button class="filter-btn active">全部</button>
+            <button class="filter-btn">信号优化</button>
+            <button class="filter-btn">参数调优</button>
+            <button class="filter-btn">回归测试</button>
+          </div>
+          <div class="flex-1"></div>
+          <a href="26-static-backtest.html" class="cmd-btn text-[10px]">📊 静态回测</a>
+          <a href="27-dynamic-simulation.html" class="cmd-btn text-[10px]">🎭 动态模拟</a>
+          <button class="cmd-btn text-[10px]">📦 生成策略包</button>
+        </div>
+      </div>
+
+      <!-- Box 3: Optimization Process & Results -->
+      <div class="tui-box border-0 rounded-none flex-1">
+        <div class="tui-box-title">
+          <span class="box-number">3</span>
+          <span>OptimizationProcess / 优化过程</span>
+          <div class="flex-1"></div>
+          <span class="text-tui-textDim text-xs">动量突破策略 v2.4 → v2.5-HL</span>
+        </div>
+        <div class="flex-1 overflow-y-auto scrollbar-thin p-3" style="min-height:0;">
+
+          <!-- Current Iteration Progress -->
+          <div class="mb-4">
+            <div class="text-tui-textDim text-xs mb-2 font-semibold">🔄 当前迭代进度 / Iteration #23</div>
+            <div class="grid grid-cols-5 gap-2">
+              <div class="metric-card">
+                <div class="metric-label">当前夏普</div>
+                <div class="metric-value text-tui-accent">1.92</div>
+                <div class="text-tui-green text-[10px]">↑ +0.07</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">目标夏普</div>
+                <div class="metric-value text-tui-textDim">2.00</div>
+                <div class="progress-bar"><div class="progress-fill bg-tui-accent" style="width:96%"></div></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">当前回撤</div>
+                <div class="metric-value text-tui-green">-8.5%</div>
+                <div class="text-tui-green text-[10px]">✓ 达标</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">当前胜率</div>
+                <div class="metric-value text-tui-yellow">56.8%</div>
+                <div class="text-tui-green text-[10px]">✓ 达标</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">改进幅度</div>
+                <div class="metric-value text-tui-purple">+15.2%</div>
+                <div class="text-tui-textDim text-[10px]">vs 初始</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Code Diff View -->
+          <div class="mb-4">
+            <div class="text-tui-textDim text-xs mb-2 font-semibold">📝 策略代码变更 / Code Changes (HL)</div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <div class="text-tui-textDim text-[10px] mb-1">原始代码 / Original</div>
+                <div class="code-block" style="height:180px; overflow-y:auto;">
+                  <div class="code-line"><span class="code-line-num">1</span><span class="code-keyword">def</span> <span class="code-func">generate_signal</span>(ctx):</div>
+                  <div class="code-line"><span class="code-line-num">2</span>    <span class="code-keyword">if</span> ctx[<span class="code-string">"ma_fast"</span>] > ctx[<span class="code-string">"ma_slow"</span>]:</div>
+                  <div class="code-line"><span class="code-line-num">3</span>        <span class="code-keyword">return</span> <span class="code-string">"long"</span></div>
+                  <div class="code-line"><span class="code-line-num">4</span>    <span class="code-keyword">return</span> <span class="code-string">"flat"</span></div>
+                </div>
+              </div>
+              <div>
+                <div class="text-tui-textDim text-[10px] mb-1">优化后代码 / Optimized</div>
+                <div class="code-block" style="height:180px; overflow-y:auto;">
+                  <div class="code-line"><span class="code-line-num">1</span><span class="code-keyword">def</span> <span class="code-func">generate_signal</span>(ctx):</div>
+                  <div class="code-line"><span class="code-line-num">2</span>    <span class="code-comment"># HL优化: 添加RSI过滤</span></div>
+                  <div class="code-line code-highlight"><span class="code-line-num">3</span>    <span class="code-keyword">if</span> ctx[<span class="code-string">"ma_fast"</span>] > ctx[<span class="code-string">"ma_slow"</span>] <span class="code-keyword">and</span> ctx[<span class="code-string">"rsi"</span>] > <span class="code-number">50</span>:</div>
+                  <div class="code-line code-highlight"><span class="code-line-num">4</span>        <span class="code-keyword">if</span> ctx[<span class="code-string">"volatility"</span>] < <span class="code-number">0.03</span>:  <span class="code-comment"># 波动率过滤</span></div>
+                  <div class="code-line"><span class="code-line-num">5</span>            <span class="code-keyword">return</span> <span class="code-string">"long"</span></div>
+                  <div class="code-line code-highlight"><span class="code-line-num">6</span>    <span class="code-keyword">return</span> <span class="code-string">"flat"</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Signal Changes -->
+          <div class="mb-4">
+            <div class="text-tui-textDim text-xs mb-2 font-semibold">📡 信号变更记录 / Signal Changes</div>
+            <div class="grid grid-cols-3 gap-2">
+              <div class="p-2 bg-tui-surface rounded border border-tui-border">
+                <div class="text-tui-text text-xs font-semibold mb-1">新增信号</div>
+                <div class="flex flex-wrap gap-1">
+                  <span class="signal-chip new">+ RSI>50过滤</span>
+                  <span class="signal-chip new">+ 波动率过滤</span>
+                </div>
+              </div>
+              <div class="p-2 bg-tui-surface rounded border border-tui-border">
+                <div class="text-tui-text text-xs font-semibold mb-1">修改参数</div>
+                <div class="flex flex-wrap gap-1">
+                  <span class="signal-chip active">MA_fast: 10→12</span>
+                  <span class="signal-chip active">MA_slow: 20→25</span>
+                </div>
+              </div>
+              <div class="p-2 bg-tui-surface rounded border border-tui-border">
+                <div class="text-tui-text text-xs font-semibold mb-1">移除信号</div>
+                <div class="flex flex-wrap gap-1">
+                  <span class="signal-chip disabled">- 纯MA交叉</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Backtest Results Summary -->
+          <div class="mb-4">
+            <div class="text-tui-textDim text-xs mb-2 font-semibold">📊 回测结果对比 / Backtest Comparison</div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs border border-tui-border rounded">
+                <thead>
+                  <tr class="bg-tui-surface">
+                    <th class="px-3 py-2 text-left text-tui-textDim border-b border-tui-border">指标</th>
+                    <th class="px-3 py-2 text-center text-tui-textMuted border-b border-tui-border">初始版本</th>
+                    <th class="px-3 py-2 text-center text-tui-textMuted border-b border-tui-border">迭代 #10</th>
+                    <th class="px-3 py-2 text-center text-tui-textMuted border-b border-tui-border">迭代 #20</th>
+                    <th class="px-3 py-2 text-center text-tui-accent border-b border-tui-border">当前 #23</th>
+                    <th class="px-3 py-2 text-center text-tui-green border-b border-tui-border">目标</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-tui-border">
+                    <td class="px-3 py-2 text-tui-textMuted">Sharpe</td>
+                    <td class="px-3 py-2 text-center text-tui-red">1.45</td>
+                    <td class="px-3 py-2 text-center text-tui-yellow">1.68</td>
+                    <td class="px-3 py-2 text-center text-tui-accent">1.85</td>
+                    <td class="px-3 py-2 text-center text-tui-accent font-semibold">1.92</td>
+                    <td class="px-3 py-2 text-center text-tui-green">≥2.0</td>
+                  </tr>
+                  <tr class="border-b border-tui-border">
+                    <td class="px-3 py-2 text-tui-textMuted">MaxDD</td>
+                    <td class="px-3 py-2 text-center text-tui-red">-12.3%</td>
+                    <td class="px-3 py-2 text-center text-tui-yellow">-10.5%</td>
+                    <td class="px-3 py-2 text-center text-tui-accent">-9.2%</td>
+                    <td class="px-3 py-2 text-center text-tui-green font-semibold">-8.5%</td>
+                    <td class="px-3 py-2 text-center text-tui-green">≤10%</td>
+                  </tr>
+                  <tr class="border-b border-tui-border">
+                    <td class="px-3 py-2 text-tui-textMuted">WinRate</td>
+                    <td class="px-3 py-2 text-center text-tui-red">48.2%</td>
+                    <td class="px-3 py-2 text-center text-tui-yellow">52.1%</td>
+                    <td class="px-3 py-2 text-center text-tui-accent">55.3%</td>
+                    <td class="px-3 py-2 text-center text-tui-green font-semibold">56.8%</td>
+                    <td class="px-3 py-2 text-center text-tui-green">≥55%</td>
+                  </tr>
+                  <tr>
+                    <td class="px-3 py-2 text-tui-textMuted">AnnualReturn</td>
+                    <td class="px-3 py-2 text-center text-tui-text">15.2%</td>
+                    <td class="px-3 py-2 text-center text-tui-text">17.8%</td>
+                    <td class="px-3 py-2 text-center text-tui-green">20.5%</td>
+                    <td class="px-3 py-2 text-center text-tui-green font-semibold">21.8%</td>
+                    <td class="px-3 py-2 text-center text-tui-textDim">-</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Strategy Package Preview -->
+          <div>
+            <div class="text-tui-textDim text-xs mb-2 font-semibold">📦 策略包预览 / Strategy Package Preview</div>
+            <div class="p-3 bg-tui-surface rounded border border-tui-border">
+              <div class="package-tree">
+                <div><span class="package-folder">📁 MomentumStrategy_V2.5-HL/</span></div>
+                <div style="padding-left:16px;"><span class="package-file">📄 metadata.yaml</span> <span class="text-tui-textDim"># 策略元信息</span></div>
+                <div style="padding-left:16px;"><span class="package-file">📄 entrypoint.py</span> <span class="text-tui-textDim"># 统一入口</span></div>
+                <div style="padding-left:16px;"><span class="package-folder">📁 core/</span></div>
+                <div style="padding-left:32px;"><span class="package-file">📄 strategy.py</span> <span class="text-tui-green"># 已优化</span></div>
+                <div style="padding-left:32px;"><span class="package-file">📄 filters.py</span> <span class="text-tui-green"># 新增</span></div>
+                <div style="padding-left:32px;"><span class="package-file">📄 params.py</span></div>
+                <div style="padding-left:32px;"><span class="package-folder">📁 tests/</span></div>
+                <div style="padding-left:48px;"><span class="package-file">📄 regression.py</span> <span class="text-tui-yellow"># 待运行</span></div>
+                <div style="padding-left:16px;"><span class="package-folder">📁 backtest/</span></div>
+                <div style="padding-left:32px;"><span class="package-file">📄 result.json</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 4: Optimization History -->
+      <div class="tui-box border-0 border-t border-tui-border rounded-none" style="height:150px; flex-shrink:0;">
+        <div class="tui-box-title">
+          <span class="box-number">4</span>
+          <span>OptimizationHistory / 优化历史</span>
+          <div class="flex-1"></div>
+          <span class="text-tui-textDim text-xs">共 23 次迭代</span>
+        </div>
+        <div class="flex-1 overflow-y-auto scrollbar-thin p-2">
+          <div class="optimization-step completed">
+            <div class="step-dot bg-tui-green"></div>
+            <div class="flex-1">
+              <span class="text-tui-text">#1</span>
+              <span class="text-tui-textDim ml-2">初始回测</span>
+            </div>
+            <span class="tag tag-red">Sharpe 1.45</span>
+          </div>
+          <div class="optimization-step completed">
+            <div class="step-dot bg-tui-green"></div>
+            <div class="flex-1">
+              <span class="text-tui-text">#5</span>
+              <span class="text-tui-yellow ml-2">添加RSI过滤</span>
+            </div>
+            <span class="tag tag-yellow">Sharpe 1.58</span>
+          </div>
+          <div class="optimization-step completed">
+            <div class="step-dot bg-tui-green"></div>
+            <div class="flex-1">
+              <span class="text-tui-text">#10</span>
+              <span class="text-tui-accent ml-2">调整MA参数</span>
+            </div>
+            <span class="tag tag-yellow">Sharpe 1.68</span>
+          </div>
+          <div class="optimization-step completed">
+            <div class="step-dot bg-tui-green"></div>
+            <div class="flex-1">
+              <span class="text-tui-text">#15</span>
+              <span class="text-tui-accent ml-2">添加波动率过滤</span>
+            </div>
+            <span class="tag tag-blue">Sharpe 1.78</span>
+          </div>
+          <div class="optimization-step completed">
+            <div class="step-dot bg-tui-green"></div>
+            <div class="flex-1">
+              <span class="text-tui-text">#20</span>
+              <span class="text-tui-accent ml-2">优化出场规则</span>
+            </div>
+            <span class="tag tag-blue">Sharpe 1.85</span>
+          </div>
+          <div class="optimization-step active">
+            <div class="step-dot bg-tui-purple animate-pulse"></div>
+            <div class="flex-1">
+              <span class="text-tui-text">#23</span>
+              <span class="text-tui-purple ml-2">微调阈值...</span>
+            </div>
+            <span class="tag tag-purple">Sharpe 1.92</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Box 5 - HL Agent Chat -->
+    <div class="tui-box border-0 border-l border-tui-border rounded-none flex flex-col" style="width:340px; flex-shrink:0;">
+      <div class="tui-box-title">
+        <span class="box-number">5</span>
+        <span>HL Agent / 启发式优化助手</span>
+        <span class="w-2 h-2 rounded-full bg-tui-orange ml-1 animate-pulse"></span>
+      </div>
+
+      <!-- Chat Messages -->
+      <div class="flex-1 overflow-y-auto scrollbar-thin p-3" style="min-height:0;">
+        <div class="chat-message chat-agent">
+          <div class="text-tui-accent text-[10px] font-semibold mb-1">HL Agent 🧠</div>
+          <div>启发式优化已启动！当前目标：Sharpe ≥ 2.0, MaxDD ≤ 10%</div>
+          <div class="mt-2 text-tui-textDim text-[10px]">已识别可优化对象：<span class="text-tui-accent">3个指标</span>, <span class="text-tui-yellow">2个阈值</span>, <span class="text-tui-green">1个条件</span></div>
+        </div>
+
+        <div class="chat-message chat-user">
+          <div class="text-tui-purple text-[10px] font-semibold mb-1">You</div>
+          <div>请优化这个策略，目标是夏普比率提高到2.0以上</div>
+        </div>
+
+        <div class="chat-message chat-agent">
+          <div class="text-tui-accent text-[10px] font-semibold mb-1">HL Agent 🧠</div>
+          <div>好的，我将通过多轮迭代来优化策略。计划优化路径：</div>
+          <div class="mt-2 text-xs space-y-1">
+            <div>1. <span class="text-tui-yellow">添加RSI过滤</span> - 减少假信号</div>
+            <div>2. <span class="text-tui-accent">调整MA参数</span> - 优化入场时机</div>
+            <div>3. <span class="text-tui-green">添加波动率过滤</span> - 改善回撤</div>
+          </div>
+          <div class="mt-2">
+            <button class="cmd-btn-green text-[10px] px-2 py-1">▶ 开始优化</button>
+          </div>
+        </div>
+
+        <div class="chat-message chat-system">
+          <div class="text-tui-cyan text-[10px] font-semibold mb-1">System</div>
+          <div>迭代 #5 完成 | 从 <span class="26-static-backtest.html text-tui-accent">静态回测</span> 获取报告</div>
+          <div class="text-tui-textDim text-[10px]">Sharpe: 1.45 → 1.58 | 改进: +8.9%</div>
+        </div>
+
+        <div class="chat-message chat-agent">
+          <div class="text-tui-accent text-[10px] font-semibold mb-1">HL Agent 🧠</div>
+          <div>迭代 #5 结果分析：</div>
+          <div class="mt-2 text-xs">
+            <div class="text-tui-green">✓ 添加RSI>50过滤有效</div>
+            <div class="text-tui-yellow">△ 但震荡行情表现仍不理想</div>
+          </div>
+          <div class="mt-2 text-tui-textDim text-[10px]">下一步：调整MA参数以适应震荡</div>
+        </div>
+
+        <div class="chat-message chat-system">
+          <div class="text-tui-cyan text-[10px] font-semibold mb-1">System</div>
+          <div>迭代 #23 进行中 | 调用 <a href="27-dynamic-simulation.html" class="text-tui-accent">动态模拟</a> 验证</div>
+          <div class="text-tui-textDim text-[10px]">当前最优: Sharpe 1.92 | 距目标 4%</div>
+        </div>
+
+        <div class="chat-message chat-agent">
+          <div class="text-tui-accent text-[10px] font-semibold mb-1">HL Agent 🧠</div>
+          <div>接近目标！当前夏普 1.92，距目标差 0.08。</div>
+          <div class="mt-2 text-xs">
+            <div>建议微调：<span class="text-tui-accent">MA_slow: 20→25</span></div>
+            <div>预计效果：Sharpe +0.05~0.10</div>
+          </div>
+          <div class="mt-2 flex gap-2">
+            <button class="cmd-btn-green text-[10px] px-2 py-1">✓ 确认调整</button>
+            <button class="cmd-btn text-[10px] px-2 py-1">✗ 跳过</button>
+          </div>
+        </div>
+
+        <div class="chat-message chat-user">
+          <div class="text-tui-purple text-[10px] font-semibold mb-1">You</div>
+          <div>如果达到目标，帮我生成策略包</div>
+        </div>
+
+        <div class="chat-message chat-agent">
+          <div class="text-tui-accent text-[10px] font-semibold mb-1">HL Agent 🧠</div>
+          <div>明白！达到目标后将自动：</div>
+          <div class="mt-2 text-xs space-y-1">
+            <div>1. 运行<span class="text-tui-cyan">回归测试</span>确保旧能力不丢失</div>
+            <div>2. 生成<span class="text-tui-purple">Strategy Package</span></div>
+            <div>3. 创建<span class="text-tui-green">版本标签</span> v2.5-HL</div>
+          </div>
+          <div class="mt-2 p-2 bg-tui-surface rounded border border-tui-border">
+            <div class="text-tui-textDim text-[10px]">预计策略包内容：</div>
+            <div class="text-tui-text text-[10px]">• entrypoint.py (统一入口)</div>
+            <div class="text-tui-text text-[10px]">• strategy.py (优化后代码)</div>
+            <div class="text-tui-text text-[10px]">• filters.py (新增过滤模块)</div>
+            <div class="text-tui-text text-[10px]">• regression.py (回归测试)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Input -->
+      <div class="p-2 border-t border-tui-border">
+        <div class="flex items-center gap-2">
+          <input type="text" placeholder="输入指令或目标..." class="flex-1 bg-tui-surface border border-tui-border rounded px-2 py-1.5 text-xs text-tui-text">
+          <button class="cmd-btn-green px-3 py-1.5">发送</button>
+        </div>
+        <div class="flex gap-1 mt-2">
+          <button class="cmd-btn text-[10px]">/target</button>
+          <button class="cmd-btn text-[10px]">/signal</button>
+          <button class="cmd-btn text-[10px]">/param</button>
+          <button class="cmd-btn text-[10px]">/package</button>
+          <button class="cmd-btn text-[10px]">/regression</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Status Bar -->
+  <div class="flex items-center justify-between px-4 py-1.5 bg-tui-surface border-t border-tui-border text-[10px] text-tui-textDim flex-shrink:0" style="height:28px;">
+    <div class="flex items-center gap-3">
+      <span><span class="key">1</span>-<span class="key">5</span> 聚焦Box</span>
+      <span><span class="key">Tab</span> 切换</span>
+      <span><span class="key">/</span> 命令</span>
+      <span><span class="key">p</span> 生成包</span>
+      <span><span class="key">F1</span> 帮助</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span>SXA v3.2.1</span>
+      <span>|</span>
+      <span>优化引擎: <span class="text-tui-orange">Heuristic Learning (HL)</span></span>
+      <span>|</span>
+      <span>迭代: <span class="text-tui-accent">23/50</span></span>
+      <span>|</span>
+      <span class="text-tui-green">✓ 回归通过</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function selectStrategyType(type) {
+  const tabs = document.querySelectorAll('.strategy-type-tab');
+  tabs.forEach((tab, index) => {
+    if ((type === 'white' && index === 0) || (type === 'black' && index === 1)) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+
+  document.getElementById('whitebox-config').style.display = type === 'white' ? 'block' : 'none';
+  document.getElementById('blackbox-config').style.display = type === 'black' ? 'block' : 'none';
+}
+</script>
+
+</body>
+</html>

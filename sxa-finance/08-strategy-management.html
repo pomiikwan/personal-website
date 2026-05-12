@@ -490,10 +490,10 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- Row 2: Main content area -->
+    <!-- Row 2: Main content area (restructured for Box 4 alignment) -->
     <div style="flex:1; display:flex; gap:8px; min-height:0;">
 
-      <!-- Box 2: Strategy List -->
+      <!-- Box 2: Strategy List (extends full height) -->
       <div class="tui-box" style="width:250px; flex-shrink:0;">
         <div class="tui-box-title">
           <div class="flex items-center">
@@ -650,210 +650,326 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- Box 3: Strategy Detail -->
-      <div class="tui-box" style="flex:1; min-width:0;">
-        <div class="tui-box-title">
-          <div class="flex items-center">
-            <span class="box-number">3</span>
-            <span>StrategyDetailBox / 策略详情</span>
+      <!-- Middle Column: Box 3 + Box 4 stacked vertically -->
+      <div style="flex:1; display:flex; flex-direction:column; gap:8px; min-width:0;">
+
+        <!-- Box 3: Strategy Detail -->
+        <div class="tui-box" style="flex:1; min-width:0;">
+          <div class="tui-box-title">
+            <div class="flex items-center">
+              <span class="box-number">3</span>
+              <span>StrategyDetailBox / 策略详情</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <a href="04-document-viewer.html" class="cmd-btn" style="font-size:10px;">&#x1F4C4; 文档</a>
+              <a href="10-trading-execution.html" class="cmd-btn" style="font-size:10px;">&#x1F4C8; 交易</a>
+              <a href="11-risk-management.html" class="cmd-btn" style="font-size:10px;">&#x26A0; 风控</a>
+              <a href="01-approval-center.html" class="cmd-btn cmd-btn-green" style="font-size:10px;">&#x2713; 审批</a>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <a href="04-document-viewer.html" class="cmd-btn" style="font-size:10px;">&#x1F4C4; 文档</a>
-            <a href="10-trading-execution.html" class="cmd-btn" style="font-size:10px;">&#x1F4C8; 交易</a>
-            <a href="11-risk-management.html" class="cmd-btn" style="font-size:10px;">&#x26A0; 风控</a>
-            <a href="01-approval-center.html" class="cmd-btn cmd-btn-green" style="font-size:10px;">&#x2713; 审批</a>
+          <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:12px;">
+
+            <!-- Strategy Overview Card -->
+            <div style="background:#161b22; border:1px solid #30363d; border-radius:8px; padding:16px; margin-bottom:12px;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px;">
+                <div>
+                  <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                    <span style="font-size:18px; font-weight:600; color:#c9d1d9;">动量突破策略</span>
+                    <span style="font-size:13px; color:#bc8cff; font-weight:500;">v2.4</span>
+                    <span class="tag tag-green">运行中 / Running</span>
+                    <span class="tag tag-blue">Phase F - 运行</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:12px; font-size:11px; color:#484f58;">
+                    <span>类型: <span style="color:#8b949e;">动量 / Momentum</span></span>
+                    <span>|</span>
+                    <span>负责: <span style="color:#8b949e;">张明 / Zhang Ming</span></span>
+                    <span>|</span>
+                    <span>创建: <span style="color:#8b949e;">2026-01-15</span></span>
+                    <span>|</span>
+                    <span>更新: <span style="color:#8b949e;">2026-05-10</span></span>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <div class="score-ring" style="background: #3fb95022; border: 2px solid #3fb950; color: #3fb950;">
+                    92
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:10px; color:#484f58;">合规评分</div>
+                    <div style="font-size:10px; color:#3fb950;">优秀</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Risk Level -->
+              <div style="display:flex; gap:16px; font-size:11px; margin-bottom:12px;">
+                <div class="flex items-center gap-2">
+                  <span style="color:#484f58;">风险等级:</span>
+                  <span class="tag tag-yellow">R3 - 中等</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#484f58;">投资范围:</span>
+                  <span style="color:#8b949e;">A股 / 中小市值</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#484f58;">交易频率:</span>
+                  <span style="color:#8b949e;">日内-短线</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#484f58;">最大仓位:</span>
+                  <span style="color:#d29922;">80%</span>
+                </div>
+              </div>
+
+              <!-- Lifecycle Timeline Bar -->
+              <div style="border:1px solid #30363d; border-radius:6px; overflow:hidden;">
+                <div class="lifecycle-bar">
+                  <div class="lifecycle-step completed">
+                    <span class="step-icon">&#x2713;</span>
+                    创建<br/>Phase A
+                  </div>
+                  <div class="lifecycle-step completed">
+                    <span class="step-icon">&#x2713;</span>
+                    编辑<br/>Phase B
+                  </div>
+                  <div class="lifecycle-step completed">
+                    <span class="step-icon">&#x2713;</span>
+                    提交<br/>Phase C
+                  </div>
+                  <div class="lifecycle-step completed">
+                    <span class="step-icon">&#x2713;</span>
+                    审批<br/>Phase D
+                  </div>
+                  <div class="lifecycle-step completed">
+                    <span class="step-icon">&#x2713;</span>
+                    回测<br/>Phase E
+                  </div>
+                  <div class="lifecycle-step current">
+                    <span class="step-icon">&#x25B6;</span>
+                    运行<br/>Phase F
+                  </div>
+                  <div class="lifecycle-step">
+                    <span class="step-icon">&#x25CB;</span>
+                    监控<br/>&mdash;
+                  </div>
+                  <div class="lifecycle-step">
+                    <span class="step-icon">&#x25CB;</span>
+                    归档<br/>&mdash;
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div style="margin-bottom:12px;">
+              <div style="font-size:12px; color:#8b949e; margin-bottom:8px; font-weight:500;">&#x1F4CA; 绩效指标 / Performance Metrics (实盘 28天)</div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div class="metric-card">
+                  <div class="metric-label">累计收益 / Total Return</div>
+                  <div class="metric-value" style="color:#3fb950;">+4.82%</div>
+                  <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:48%; background:#3fb950;"></div></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">年化收益 / Annualized</div>
+                  <div class="metric-value" style="color:#3fb950;">22.3%</div>
+                  <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:74%; background:#3fb950;"></div></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">最大回撤 / Max DD</div>
+                  <div class="metric-value" style="color:#f85149;">-3.8%</div>
+                  <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:19%; background:#f85149;"></div></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">夏普比率 / Sharpe</div>
+                  <div class="metric-value" style="color:#388bfd;">1.92</div>
+                  <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:64%; background:#388bfd;"></div></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">胜率 / Win Rate</div>
+                  <div class="metric-value" style="color:#d29922;">61.2%</div>
+                  <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:61%; background:#d29922;"></div></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">盈亏比 / PnL Ratio</div>
+                  <div class="metric-value" style="color:#3fb950;">1.85</div>
+                  <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:62%; background:#3fb950;"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Associated Documents -->
+            <div style="margin-bottom:12px;">
+              <div style="font-size:12px; color:#8b949e; margin-bottom:8px; font-weight:500;">&#x1F4C1; 关联文档 / Associated Documents</div>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
+                  <span style="color:#3fb950;">&#x1F4C4;</span>
+                  <span style="color:#c9d1d9; font-size:12px;">momentum-breakout-v2.4.md</span>
+                  <span class="tag tag-green" style="margin-left:auto;">策略需求</span>
+                  <span style="font-size:10px; color:#484f58;">v2.4</span>
+                </a>
+                <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
+                  <span style="color:#388bfd;">&#x1F4CB;</span>
+                  <span style="color:#c9d1d9; font-size:12px;">entry-rules-momentum.json</span>
+                  <span class="tag tag-blue" style="margin-left:auto;">规则模型</span>
+                  <span style="font-size:10px; color:#484f58;">v2.4</span>
+                </a>
+                <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
+                  <span style="color:#d29922;">&#x2611;</span>
+                  <span style="color:#c9d1d9; font-size:12px;">implementation-checklist-v2.4.md</span>
+                  <span class="tag tag-yellow" style="margin-left:auto;">实施清单</span>
+                  <span style="font-size:10px; color:#484f58;">v2.4</span>
+                </a>
+                <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
+                  <span style="color:#f85149;">&#x1F4CA;</span>
+                  <span style="color:#c9d1d9; font-size:12px;">backtest-report-2026-05-08.pdf</span>
+                  <span class="tag tag-red" style="margin-left:auto;">审计报告</span>
+                  <span style="font-size:10px; color:#484f58;">最新</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Assigned Agents -->
+            <div>
+              <div style="font-size:12px; color:#8b949e; margin-bottom:8px; font-weight:500;">&#x1F916; 分配 Agent / Assigned Agents</div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                  <span style="width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
+                  <span style="font-size:11px; color:#c9d1d9;">Compliance Agent</span>
+                  <span class="tag tag-green" style="font-size:9px;">合规</span>
+                </div>
+                <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                  <span style="width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
+                  <span style="font-size:11px; color:#c9d1d9;">Backtest Agent</span>
+                  <span class="tag tag-blue" style="font-size:9px;">回测</span>
+                </div>
+                <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                  <span style="width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
+                  <span style="font-size:11px; color:#c9d1d9;">Risk Monitor Agent</span>
+                  <span class="tag tag-red" style="font-size:9px;">风控</span>
+                </div>
+                <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                  <span style="width:8px; height:8px; border-radius:50%; background:#d29922;"></span>
+                  <span style="font-size:11px; color:#c9d1d9;">Execution Agent</span>
+                  <span class="tag tag-yellow" style="font-size:9px;">执行</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:12px;">
 
-          <!-- Strategy Overview Card -->
-          <div style="background:#161b22; border:1px solid #30363d; border-radius:8px; padding:16px; margin-bottom:12px;">
-            <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px;">
-              <div>
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                  <span style="font-size:18px; font-weight:600; color:#c9d1d9;">动量突破策略</span>
-                  <span style="font-size:13px; color:#bc8cff; font-weight:500;">v2.4</span>
-                  <span class="tag tag-green">运行中 / Running</span>
-                  <span class="tag tag-blue">Phase F - 运行</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:12px; font-size:11px; color:#484f58;">
-                  <span>类型: <span style="color:#8b949e;">动量 / Momentum</span></span>
-                  <span>|</span>
-                  <span>负责: <span style="color:#8b949e;">张明 / Zhang Ming</span></span>
-                  <span>|</span>
-                  <span>创建: <span style="color:#8b949e;">2026-01-15</span></span>
-                  <span>|</span>
-                  <span>更新: <span style="color:#8b949e;">2026-05-10</span></span>
-                </div>
-              </div>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <div class="score-ring" style="background: #3fb95022; border: 2px solid #3fb950; color: #3fb950;">
-                  92
-                </div>
-                <div style="text-align:right;">
-                  <div style="font-size:10px; color:#484f58;">合规评分</div>
-                  <div style="font-size:10px; color:#3fb950;">优秀</div>
-                </div>
-              </div>
+        <!-- Box 4: Strategy Timeline (now in middle column, same width as Box 3) -->
+        <div class="tui-box" style="flex-shrink:0; height:170px;">
+          <div class="tui-box-title">
+            <div class="flex items-center">
+              <span class="box-number">4</span>
+              <span>StrategyTimelineBox / 策略生命周期事件</span>
             </div>
-
-            <!-- Risk Level -->
-            <div style="display:flex; gap:16px; font-size:11px; margin-bottom:12px;">
-              <div class="flex items-center gap-2">
-                <span style="color:#484f58;">风险等级:</span>
-                <span class="tag tag-yellow">R3 - 中等</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span style="color:#484f58;">投资范围:</span>
-                <span style="color:#8b949e;">A股 / 中小市值</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span style="color:#484f58;">交易频率:</span>
-                <span style="color:#8b949e;">日内-短线</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span style="color:#484f58;">最大仓位:</span>
-                <span style="color:#d29922;">80%</span>
-              </div>
-            </div>
-
-            <!-- Lifecycle Timeline Bar -->
-            <div style="border:1px solid #30363d; border-radius:6px; overflow:hidden;">
-              <div class="lifecycle-bar">
-                <div class="lifecycle-step completed">
-                  <span class="step-icon">&#x2713;</span>
-                  创建<br/>Phase A
-                </div>
-                <div class="lifecycle-step completed">
-                  <span class="step-icon">&#x2713;</span>
-                  编辑<br/>Phase B
-                </div>
-                <div class="lifecycle-step completed">
-                  <span class="step-icon">&#x2713;</span>
-                  提交<br/>Phase C
-                </div>
-                <div class="lifecycle-step completed">
-                  <span class="step-icon">&#x2713;</span>
-                  审批<br/>Phase D
-                </div>
-                <div class="lifecycle-step completed">
-                  <span class="step-icon">&#x2713;</span>
-                  回测<br/>Phase E
-                </div>
-                <div class="lifecycle-step current">
-                  <span class="step-icon">&#x25B6;</span>
-                  运行<br/>Phase F
-                </div>
-                <div class="lifecycle-step">
-                  <span class="step-icon">&#x25CB;</span>
-                  监控<br/>&mdash;
-                </div>
-                <div class="lifecycle-step">
-                  <span class="step-icon">&#x25CB;</span>
-                  归档<br/>&mdash;
-                </div>
-              </div>
+            <div class="flex items-center gap-3">
+              <span style="font-size:10px; color:#484f58;">动量突破策略 v2.4 事件时间线</span>
+              <span style="font-size:10px; color:#484f58;">|</span>
+              <span style="font-size:10px; color:#8b949e;">共 12 个事件</span>
             </div>
           </div>
-
-          <!-- Performance Metrics -->
-          <div style="margin-bottom:12px;">
-            <div style="font-size:12px; color:#8b949e; margin-bottom:8px; font-weight:500;">&#x1F4CA; 绩效指标 / Performance Metrics (实盘 28天)</div>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-              <div class="metric-card">
-                <div class="metric-label">累计收益 / Total Return</div>
-                <div class="metric-value" style="color:#3fb950;">+4.82%</div>
-                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:48%; background:#3fb950;"></div></div>
+          <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:8px 12px;">
+            <div style="display:flex; gap:0;">
+              <!-- Timeline column 1 -->
+              <div style="flex:1;">
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-green">&#x2713;</div>
+                  <div>
+                    <div style="font-size:11px; color:#3fb950; font-weight:500;">策略创建 / Strategy Created</div>
+                    <div style="font-size:10px; color:#484f58;">2026-01-15 09:30 | 张明 | Phase A 完成</div>
+                    <div style="font-size:10px; color:#8b949e;">初始化动量突破策略框架，定义基本入场/出场规则</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-green">&#x2713;</div>
+                  <div>
+                    <div style="font-size:11px; color:#3fb950; font-weight:500;">文档编辑完成 / Document Edited</div>
+                    <div style="font-size:10px; color:#484f58;">2026-02-20 16:45 | 张明 | Phase B 完成</div>
+                    <div style="font-size:10px; color:#8b949e;">策略需求文档 v2.4 定稿，增加行业集中度限制</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-green">&#x2713;</div>
+                  <div>
+                    <div style="font-size:11px; color:#3fb950; font-weight:500;">合规预检通过 / Compliance Passed</div>
+                    <div style="font-size:10px; color:#484f58;">2026-03-01 10:15 | Compliance Agent | 评分: 92/100</div>
+                    <div style="font-size:10px; color:#8b949e;">5项通过，1项警告（成交额门槛），0项失败</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-blue">&#x2713;</div>
+                  <div>
+                    <div style="font-size:11px; color:#388bfd; font-weight:500;">提交审批 / Submitted</div>
+                    <div style="font-size:10px; color:#484f58;">2026-03-05 14:00 | 张明 | Phase C</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-blue">&#x2713;</div>
+                  <div>
+                    <div style="font-size:11px; color:#388bfd; font-weight:500;">审批通过 / Approved</div>
+                    <div style="font-size:10px; color:#484f58;">2026-03-12 11:30 | 李芳（审批人）| Phase D</div>
+                    <div style="font-size:10px; color:#8b949e;">一级审批 + 二级审批均通过，附带运行监控要求</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-yellow">&#x2713;</div>
+                  <div>
+                    <div style="font-size:11px; color:#d29922; font-weight:500;">回测完成 / Backtest Done</div>
+                    <div style="font-size:10px; color:#484f58;">2026-04-08 09:00 | Backtest Agent | Phase E</div>
+                    <div style="font-size:10px; color:#8b949e;">回测期: 2024-01 ~ 2026-03 | 年化22.3% | 最大回撤-9.8%</div>
+                  </div>
+                </div>
               </div>
-              <div class="metric-card">
-                <div class="metric-label">年化收益 / Annualized</div>
-                <div class="metric-value" style="color:#3fb950;">22.3%</div>
-                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:74%; background:#3fb950;"></div></div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-label">最大回撤 / Max DD</div>
-                <div class="metric-value" style="color:#f85149;">-3.8%</div>
-                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:19%; background:#f85149;"></div></div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-label">夏普比率 / Sharpe</div>
-                <div class="metric-value" style="color:#388bfd;">1.92</div>
-                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:64%; background:#388bfd;"></div></div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-label">胜率 / Win Rate</div>
-                <div class="metric-value" style="color:#d29922;">61.2%</div>
-                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:61%; background:#d29922;"></div></div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-label">盈亏比 / PnL Ratio</div>
-                <div class="metric-value" style="color:#3fb950;">1.85</div>
-                <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:62%; background:#3fb950;"></div></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Associated Documents -->
-          <div style="margin-bottom:12px;">
-            <div style="font-size:12px; color:#8b949e; margin-bottom:8px; font-weight:500;">&#x1F4C1; 关联文档 / Associated Documents</div>
-            <div style="display:flex; flex-direction:column; gap:4px;">
-              <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
-                <span style="color:#3fb950;">&#x1F4C4;</span>
-                <span style="color:#c9d1d9; font-size:12px;">momentum-breakout-v2.4.md</span>
-                <span class="tag tag-green" style="margin-left:auto;">策略需求</span>
-                <span style="font-size:10px; color:#484f58;">v2.4</span>
-              </a>
-              <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
-                <span style="color:#388bfd;">&#x1F4CB;</span>
-                <span style="color:#c9d1d9; font-size:12px;">entry-rules-momentum.json</span>
-                <span class="tag tag-blue" style="margin-left:auto;">规则模型</span>
-                <span style="font-size:10px; color:#484f58;">v2.4</span>
-              </a>
-              <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
-                <span style="color:#d29922;">&#x2611;</span>
-                <span style="color:#c9d1d9; font-size:12px;">implementation-checklist-v2.4.md</span>
-                <span class="tag tag-yellow" style="margin-left:auto;">实施清单</span>
-                <span style="font-size:10px; color:#484f58;">v2.4</span>
-              </a>
-              <a href="04-document-viewer.html" style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#161b22; border:1px solid #30363d; border-radius:4px; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.borderColor='#388bfd'" onmouseout="this.style.borderColor='#30363d'">
-                <span style="color:#f85149;">&#x1F4CA;</span>
-                <span style="color:#c9d1d9; font-size:12px;">backtest-report-2026-05-08.pdf</span>
-                <span class="tag tag-red" style="margin-left:auto;">审计报告</span>
-                <span style="font-size:10px; color:#484f58;">最新</span>
-              </a>
-            </div>
-          </div>
-
-          <!-- Assigned Agents -->
-          <div>
-            <div style="font-size:12px; color:#8b949e; margin-bottom:8px; font-weight:500;">&#x1F916; 分配 Agent / Assigned Agents</div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
-                <span style="width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
-                <span style="font-size:11px; color:#c9d1d9;">Compliance Agent</span>
-                <span class="tag tag-green" style="font-size:9px;">合规</span>
-              </div>
-              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
-                <span style="width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
-                <span style="font-size:11px; color:#c9d1d9;">Backtest Agent</span>
-                <span class="tag tag-blue" style="font-size:9px;">回测</span>
-              </div>
-              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
-                <span style="width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
-                <span style="font-size:11px; color:#c9d1d9;">Risk Monitor Agent</span>
-                <span class="tag tag-red" style="font-size:9px;">风控</span>
-              </div>
-              <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
-                <span style="width:8px; height:8px; border-radius:50%; background:#d29922;"></span>
-                <span style="font-size:11px; color:#c9d1d9;">Execution Agent</span>
-                <span class="tag tag-yellow" style="font-size:9px;">执行</span>
+              <!-- Timeline column 2 -->
+              <div style="flex:1; border-left:1px solid #30363d; padding-left:16px;">
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-purple">&#x25B6;</div>
+                  <div>
+                    <div style="font-size:11px; color:#bc8cff; font-weight:500;">实盘启动 / Live Trading Started</div>
+                    <div style="font-size:10px; color:#484f58;">2026-04-12 09:30 | Phase F | 初始资金: 500万</div>
+                    <div style="font-size:10px; color:#8b949e;">小仓位试运行，单笔上限20%</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-green">&#x2713;</div>
+                  <div>
+                    <div style="font-size:11px; color:#3fb950; font-weight:500;">风控检查通过 / Risk Check OK</div>
+                    <div style="font-size:10px; color:#484f58;">2026-04-20 | Risk Monitor Agent</div>
+                    <div style="font-size:10px; color:#8b949e;">第一周风控报告: 未触发任何限制，运行平稳</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-yellow">&#x26A0;</div>
+                  <div>
+                    <div style="font-size:11px; color:#d29922; font-weight:500;">优化建议 / Optimization Suggestion</div>
+                    <div style="font-size:10px; color:#484f58;">2026-04-28 15:00 | Strategist Agent</div>
+                    <div style="font-size:10px; color:#8b949e;">建议增加ADX过滤条件，降低震荡市假信号</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-green">&#x2713;</div>
+                  <div>
+                    <div style="font-size:11px; color:#3fb950; font-weight:500;">月度合规审查通过</div>
+                    <div style="font-size:10px; color:#484f58;">2026-05-05 16:00 | Compliance Agent</div>
+                    <div style="font-size:10px; color:#8b949e;">4月合规报告: 全部合规，无违规交易</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot timeline-dot-blue" style="animation: pulse 2s infinite;">&#x25CF;</div>
+                  <div>
+                    <div style="font-size:11px; color:#388bfd; font-weight:500;">当前: 正在运行 / Currently Running</div>
+                    <div style="font-size:10px; color:#484f58;">2026-05-10 | 累计收益 +4.82% | 持仓 3只</div>
+                    <div style="font-size:10px; color:#3fb950;">运行正常 | 下次审查: 2026-06-05</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Box 5: Agent Chat -->
+      <!-- Box 5: Agent Chat (extends full height) -->
       <div class="tui-box" style="width:320px; flex-shrink:0;">
         <div class="tui-box-title">
           <div class="flex items-center">
@@ -983,118 +1099,6 @@ tailwind.config = {
             <button class="cmd-btn" style="font-size:9px; padding:2px 6px;">/optimize 优化</button>
             <button class="cmd-btn" style="font-size:9px; padding:2px 6px;">/backtest 回测</button>
             <button class="cmd-btn" style="font-size:9px; padding:2px 6px;">/report 报告</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Row 3: Strategy Timeline -->
-    <div class="tui-box" style="flex-shrink:0; height:170px;">
-      <div class="tui-box-title">
-        <div class="flex items-center">
-          <span class="box-number">4</span>
-          <span>StrategyTimelineBox / 策略生命周期事件</span>
-        </div>
-        <div class="flex items-center gap-3">
-          <span style="font-size:10px; color:#484f58;">动量突破策略 v2.4 事件时间线</span>
-          <span style="font-size:10px; color:#484f58;">|</span>
-          <span style="font-size:10px; color:#8b949e;">共 12 个事件</span>
-        </div>
-      </div>
-      <div class="scrollbar-thin" style="flex:1; overflow-y:auto; padding:8px 12px;">
-        <div style="display:flex; gap:0;">
-          <!-- Timeline column 1 -->
-          <div style="flex:1;">
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-green">&#x2713;</div>
-              <div>
-                <div style="font-size:11px; color:#3fb950; font-weight:500;">策略创建 / Strategy Created</div>
-                <div style="font-size:10px; color:#484f58;">2026-01-15 09:30 | 张明 | Phase A 完成</div>
-                <div style="font-size:10px; color:#8b949e;">初始化动量突破策略框架，定义基本入场/出场规则</div>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-green">&#x2713;</div>
-              <div>
-                <div style="font-size:11px; color:#3fb950; font-weight:500;">文档编辑完成 / Document Edited</div>
-                <div style="font-size:10px; color:#484f58;">2026-02-20 16:45 | 张明 | Phase B 完成</div>
-                <div style="font-size:10px; color:#8b949e;">策略需求文档 v2.4 定稿，增加行业集中度限制</div>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-green">&#x2713;</div>
-              <div>
-                <div style="font-size:11px; color:#3fb950; font-weight:500;">合规预检通过 / Compliance Passed</div>
-                <div style="font-size:10px; color:#484f58;">2026-03-01 10:15 | Compliance Agent | 评分: 92/100</div>
-                <div style="font-size:10px; color:#8b949e;">5项通过，1项警告（成交额门槛），0项失败</div>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-blue">&#x2713;</div>
-              <div>
-                <div style="font-size:11px; color:#388bfd; font-weight:500;">提交审批 / Submitted</div>
-                <div style="font-size:10px; color:#484f58;">2026-03-05 14:00 | 张明 | Phase C</div>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-blue">&#x2713;</div>
-              <div>
-                <div style="font-size:11px; color:#388bfd; font-weight:500;">审批通过 / Approved</div>
-                <div style="font-size:10px; color:#484f58;">2026-03-12 11:30 | 李芳（审批人）| Phase D</div>
-                <div style="font-size:10px; color:#8b949e;">一级审批 + 二级审批均通过，附带运行监控要求</div>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-yellow">&#x2713;</div>
-              <div>
-                <div style="font-size:11px; color:#d29922; font-weight:500;">回测完成 / Backtest Done</div>
-                <div style="font-size:10px; color:#484f58;">2026-04-08 09:00 | Backtest Agent | Phase E</div>
-                <div style="font-size:10px; color:#8b949e;">回测期: 2024-01 ~ 2026-03 | 年化22.3% | 最大回撤-9.8%</div>
-              </div>
-            </div>
-          </div>
-          <!-- Timeline column 2 -->
-          <div style="flex:1; border-left:1px solid #30363d; padding-left:16px;">
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-purple">&#x25B6;</div>
-              <div>
-                <div style="font-size:11px; color:#bc8cff; font-weight:500;">实盘启动 / Live Trading Started</div>
-                <div style="font-size:10px; color:#484f58;">2026-04-12 09:30 | Phase F | 初始资金: 500万</div>
-                <div style="font-size:10px; color:#8b949e;">小仓位试运行，单笔上限20%</div>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-green">&#x2713;</div>
-              <div>
-                <div style="font-size:11px; color:#3fb950; font-weight:500;">风控检查通过 / Risk Check OK</div>
-                <div style="font-size:10px; color:#484f58;">2026-04-20 | Risk Monitor Agent</div>
-                <div style="font-size:10px; color:#8b949e;">第一周风控报告: 未触发任何限制，运行平稳</div>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-yellow">&#x26A0;</div>
-              <div>
-                <div style="font-size:11px; color:#d29922; font-weight:500;">优化建议 / Optimization Suggestion</div>
-                <div style="font-size:10px; color:#484f58;">2026-04-28 15:00 | Strategist Agent</div>
-                <div style="font-size:10px; color:#8b949e;">建议增加ADX过滤条件，降低震荡市假信号</div>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-green">&#x2713;</div>
-              <div>
-                <div style="font-size:11px; color:#3fb950; font-weight:500;">月度合规审查通过</div>
-                <div style="font-size:10px; color:#484f58;">2026-05-05 16:00 | Compliance Agent</div>
-                <div style="font-size:10px; color:#8b949e;">4月合规报告: 全部合规，无违规交易</div>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot timeline-dot-blue" style="animation: pulse 2s infinite;">&#x25CF;</div>
-              <div>
-                <div style="font-size:11px; color:#388bfd; font-weight:500;">当前: 正在运行 / Currently Running</div>
-                <div style="font-size:10px; color:#484f58;">2026-05-10 | 累计收益 +4.82% | 持仓 3只</div>
-                <div style="font-size:10px; color:#3fb950;">运行正常 | 下次审查: 2026-06-05</div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
