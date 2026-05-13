@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 情报监控 Intelligence Monitor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-surface': '#161b22',
+        'tui-border': '#30363d',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#39d2c0',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-textMuted': '#8b949e',
+        'tui-textDim': '#6e7681',
+        'tui-accent': '#58a6ff',
+        'tui-purple': '#bc8cff',
+        'tui-orange': '#db6d28',
+      },
+      fontFamily: {
+        'mono': ['JetBrains Mono', 'monospace'],
+        'sans': ['Noto Sans SC', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family: 'JetBrains Mono', 'Noto Sans SC', monospace; box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; overflow: hidden; height: 100vh; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  .tui-box { border: 1px solid #30363d; border-radius: 6px; background: #0d1117; position: relative; }
+  .tui-box.focused { border-color: #39d2c0; box-shadow: 0 0 0 1px #39d2c0, 0 0 12px rgba(57,210,192,0.15); }
+  .tui-box-title { background: #161b22; padding: 6px 12px; border-bottom: 1px solid #30363d; font-size: 12px; font-weight: 600; color: #c9d1d9; display: flex; align-items: center; gap: 8px; }
+  .box-number { background: #39d2c0; color: #0d1117; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .key { background: #21262d; border: 1px solid #30363d; padding: 1px 6px; border-radius: 3px; font-size: 10px; color: #c9d1d9; }
+  .tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+  .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .tag-yellow { background: rgba(210,153,34,0.15); color: #d29922; }
+  .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+  .tag-blue { background: rgba(56,139,253,0.15); color: #388bfd; }
+  .tag-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+  .tag-cyan { background: rgba(57,210,192,0.15); color: #39d2c0; }
+  .tag-orange { background: rgba(219,109,40,0.15); color: #db6d28; }
+  .tag-gray { background: rgba(139,148,158,0.15); color: #8b949e; }
+
+  .filter-btn { background: #21262d; border: 1px solid #30363d; padding: 4px 12px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { background: #39d2c0; color: #0d1117; border-color: #39d2c0; }
+  .cmd-btn { background: #21262d; border: 1px solid #30363d; padding: 3px 10px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; }
+  .cmd-btn:hover { background: #30363d; }
+  .cmd-btn-green { background: #238636; border-color: #238636; color: white; }
+  .cmd-btn-green:hover { background: #3fb950; border-color: #3fb950; }
+
+  .chat-agent { background: rgba(57,210,192,0.08); border: 1px solid rgba(57,210,192,0.2); border-left: 3px solid #39d2c0; border-radius: 0 6px 6px 0; padding: 8px 10px; font-size: 11px; line-height: 1.5; margin-bottom: 8px; }
+  .chat-user { background: rgba(188,140,255,0.08); border: 1px solid rgba(188,140,255,0.2); border-left: 3px solid #bc8cff; border-radius: 0 6px 6px 0; padding: 8px 10px; font-size: 11px; line-height: 1.5; margin-bottom: 8px; margin-left: 16px; }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+
+  .progress-bar { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+  .signal-card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px; transition: all 0.15s; cursor: pointer; }
+  .signal-card:hover { border-color: #39d2c0; background: #1c2128; }
+  .signal-card.bullish { border-left: 3px solid #3fb950; }
+  .signal-card.bearish { border-left: 3px solid #f85149; }
+  .signal-card.neutral { border-left: 3px solid #d29922; }
+
+  .event-line { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 11px; line-height: 1.5; border-bottom: 1px solid #21262d; }
+  .event-line:last-child { border-bottom: none; }
+  .event-line .ts { color: #6e7681; min-width: 64px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+  .mover-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0; font-size: 11px; }
+  .mini-sparkline { display: inline-flex; align-items: flex-end; gap: 1px; height: 16px; }
+  .mini-sparkline span { width: 3px; border-radius: 1px; display: block; }
+
+  .chain-step { padding: 3px 10px; border-radius: 3px; background: #21262d; border: 1px solid #30363d; color: #484f58; text-decoration: none; font-size: 11px; font-family: 'JetBrains Mono', monospace; display: inline-block; transition: all 0.15s; }
+  .chain-step:hover { border-color: #484f58; color: #8b949e; }
+  .chain-step.active { background: rgba(57,210,192,0.2); border-color: #39d2c0; color: #39d2c0; }
+  .chain-arrow { color: #30363d; font-size: 12px; }
+
+  .nav-item { padding: 2px 8px; font-size: 10px; color: #484f58; text-decoration: none; transition: color 0.15s; }
+  .nav-item:hover { color: #c9d1d9; }
+
+  .box4-tab { padding: 2px 10px; border-radius: 3px; font-size: 10px; cursor: pointer; background: #21262d; border: 1px solid #30363d; color: #8b949e; transition: all 0.15s; }
+  .box4-tab:hover { border-color: #484f58; color: #c9d1d9; }
+  .box4-tab.active { background: rgba(57,210,192,0.2); border-color: #39d2c0; color: #39d2c0; }
+
+  .monitor-point { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 10px; line-height: 1.4; border-bottom: 1px solid #21262d; }
+  .monitor-point:last-child { border-bottom: none; }
+  .alert-line { display: flex; align-items: flex-start; gap: 6px; padding: 3px 0; font-size: 10px; line-height: 1.5; border-bottom: 1px solid #21262d; }
+  .alert-line:last-child { border-bottom: none; }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .animate-pulse-slow { animation: pulse 2s infinite; }
+</style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+<div class="flex flex-col h-full">
+  <!-- Title Bar -->
+  <div class="flex items-center justify-between px-4 py-2 bg-tui-surface border-b border-tui-border" style="height:40px; flex-shrink:0;">
+    <div class="flex items-center gap-3">
+      <div class="flex gap-1.5">
+        <div style="width:12px;height:12px;border-radius:50%;background:#f85149;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#d29922;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#3fb950;"></div>
+      </div>
+      <span class="text-tui-cyan font-semibold text-sm">SXA v3.2.1</span>
+      <span class="text-tui-textMuted text-sm">|</span>
+      <span class="text-tui-text text-sm">情报监控 Intelligence Monitor</span>
+      <span class="text-tui-textDim text-xs">/ Pre-analysis Group</span>
+      <span class="tag tag-cyan">STAGE A</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-tui-textMuted">
+      <span class="key">ESC</span><a href="00-home.html" class="text-tui-textMuted hover:text-tui-accent" style="text-decoration:none;">主页</a>
+      <span class="key">1-5</span><span>聚焦</span>
+      <span class="key">Tab</span><span>切换</span>
+      <span class="key">/</span><span>命令</span>
+    </div>
+  </div>
+
+  <!-- Pipeline Nav Bar -->
+  <div class="flex items-center gap-1 px-4 py-1.5 border-b border-tui-border bg-tui-bg text-xs">
+    <span class="text-tui-textMuted mr-2">Pipeline</span>
+    <span class="chain-step active">A Intel</span>
+    <span class="chain-arrow">→</span>
+    <a href="03-compliance-dashboard.html" class="chain-step">B 合规</a>
+    <span class="chain-arrow">→</span>
+    <a href="30-backtest-agent.html" class="chain-step">C 回测</a>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step">D 审批</span>
+    <span class="chain-arrow">→</span>
+    <a href="31-capital-agent.html" class="chain-step">E 净值</a>
+    <span class="chain-arrow">→</span>
+    <a href="32-portfolio-agent.html" class="chain-step">F 组合</a>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step">G 报告</span>
+    <div class="flex-1"></div>
+    <span class="text-tui-textDim text-[10px]">投前分析组 (4 Agents: Intel / Macro / Sentiment / Logic)</span>
+  </div>
+
+  <!-- Main Content: Three-Column Layout -->
+  <div class="flex flex-1 overflow-hidden" style="min-height:0;">
+
+    <!-- LEFT SIDEBAR: Box 1 + Box 3 (250px) -->
+    <div class="flex flex-col overflow-hidden border-r border-tui-border" style="width:250px; flex-shrink:0;">
+
+      <!-- Box 1: Market Overview -->
+      <div class="tui-box focused border-0 border-b border-tui-border rounded-none" style="flex:0 0 52%;">
+        <div class="tui-box-title">
+          <span class="box-number">1</span>
+          <span>MarketOverview / 市场概览</span>
+        </div>
+        <div class="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3" style="min-height:0;">
+
+          <!-- Market Status -->
+          <div>
+            <div class="text-tui-textDim text-[10px] mb-1.5 font-semibold">市场状态</div>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 text-xs">
+                <span class="w-2 h-2 rounded-full bg-tui-green animate-pulse-slow" style="flex-shrink:0;"></span>
+                <span class="text-tui-text">A股</span>
+                <span class="text-tui-green text-[10px]">开盘中</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="w-2 h-2 rounded-full bg-tui-muted" style="flex-shrink:0;"></span>
+                <span class="text-tui-text">港股</span>
+                <span class="text-tui-textDim text-[10px]">已收盘</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="w-2 h-2 rounded-full bg-tui-yellow animate-pulse-slow" style="flex-shrink:0;"></span>
+                <span class="text-tui-text">美股</span>
+                <span class="text-tui-yellow text-[10px]">盘前</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Indices -->
+          <div>
+            <div class="text-tui-textDim text-[10px] mb-1.5 font-semibold">主要指数</div>
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-tui-textMuted">上证</span>
+                <span class="text-tui-text">3,245.68</span>
+                <span class="text-tui-green">+0.82%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill bg-tui-green" style="width:82%"></div></div>
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-tui-textMuted">深成指</span>
+                <span class="text-tui-text">10,856.23</span>
+                <span class="text-tui-green">+1.15%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill bg-tui-green" style="width:85%"></div></div>
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-tui-textMuted">创业板</span>
+                <span class="text-tui-text">2,156.78</span>
+                <span class="text-tui-green">+0.93%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill bg-tui-green" style="width:73%"></div></div>
+            </div>
+          </div>
+
+          <!-- Top Movers -->
+          <div>
+            <div class="text-tui-textDim text-[10px] mb-1.5 font-semibold">涨幅榜 Top 5</div>
+            <div class="space-y-1.5">
+              <div class="mover-row">
+                <span class="text-tui-accent">贵州茅台</span>
+                <div class="mini-sparkline">
+                  <span style="height:4px;background:#238636;"></span>
+                  <span style="height:6px;background:#238636;"></span>
+                  <span style="height:8px;background:#238636;"></span>
+                  <span style="height:10px;background:#238636;"></span>
+                  <span style="height:13px;background:#3fb950;"></span>
+                </div>
+                <span class="text-tui-green text-[10px]">+3.2%</span>
+              </div>
+              <div class="mover-row">
+                <span class="text-tui-accent">宁德时代</span>
+                <div class="mini-sparkline">
+                  <span style="height:5px;background:#238636;"></span>
+                  <span style="height:7px;background:#238636;"></span>
+                  <span style="height:9px;background:#238636;"></span>
+                  <span style="height:11px;background:#3fb950;"></span>
+                  <span style="height:12px;background:#3fb950;"></span>
+                </div>
+                <span class="text-tui-green text-[10px]">+2.8%</span>
+              </div>
+              <div class="mover-row">
+                <span class="text-tui-accent">比亚迪</span>
+                <div class="mini-sparkline">
+                  <span style="height:3px;background:#238636;"></span>
+                  <span style="height:5px;background:#238636;"></span>
+                  <span style="height:8px;background:#238636;"></span>
+                  <span style="height:10px;background:#3fb950;"></span>
+                </div>
+                <span class="text-tui-green text-[10px]">+2.5%</span>
+              </div>
+              <div class="mover-row">
+                <span class="text-tui-accent">中芯国际</span>
+                <div class="mini-sparkline">
+                  <span style="height:4px;background:#238636;"></span>
+                  <span style="height:6px;background:#238636;"></span>
+                  <span style="height:9px;background:#3fb950;"></span>
+                </div>
+                <span class="text-tui-green text-[10px]">+2.1%</span>
+              </div>
+              <div class="mover-row">
+                <span class="text-tui-accent">药明康德</span>
+                <div class="mini-sparkline">
+                  <span style="height:3px;background:#238636;"></span>
+                  <span style="height:5px;background:#238636;"></span>
+                  <span style="height:8px;background:#3fb950;"></span>
+                </div>
+                <span class="text-tui-green text-[10px]">+1.9%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Asset Allocation Mini Pie -->
+          <div>
+            <div class="text-tui-textDim text-[10px] mb-1.5 font-semibold">资产配置</div>
+            <div class="flex items-center gap-3">
+              <svg width="60" height="60" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="25" fill="none" stroke="#30363d" stroke-width="8"/>
+                <circle cx="30" cy="30" r="25" fill="none" stroke="#3fb950" stroke-width="8" stroke-dasharray="94.2 62.8" stroke-dashoffset="0" transform="rotate(-90 30 30)"/>
+                <circle cx="30" cy="30" r="25" fill="none" stroke="#58a6ff" stroke-width="8" stroke-dasharray="31.4 125.6" stroke-dashoffset="-94.2" transform="rotate(-90 30 30)"/>
+                <circle cx="30" cy="30" r="25" fill="none" stroke="#d29922" stroke-width="8" stroke-dasharray="23.6 133.4" stroke-dashoffset="-125.6" transform="rotate(-90 30 30)"/>
+                <circle cx="30" cy="30" r="25" fill="none" stroke="#bc8cff" stroke-width="8" stroke-dasharray="7.9 149.1" stroke-dashoffset="-149.2" transform="rotate(-90 30 30)"/>
+              </svg>
+              <div class="space-y-1 text-[10px]">
+                <div class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-tui-green inline-block"></span><span class="text-tui-textMuted">股票 60%</span></div>
+                <div class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-tui-accent inline-block"></span><span class="text-tui-textMuted">债券 20%</span></div>
+                <div class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-tui-yellow inline-block"></span><span class="text-tui-textMuted">现金 15%</span></div>
+                <div class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-tui-purple inline-block"></span><span class="text-tui-textMuted">另类 5%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nav Links -->
+          <div class="flex gap-2 pt-1">
+            <a href="29-intel-agent.html" class="text-[10px] text-tui-cyan hover:underline" style="text-decoration:none;">→ 市场总览</a>
+            <a href="14-macro-analysis.html" class="text-[10px] text-tui-cyan hover:underline" style="text-decoration:none;">→ 宏观分析</a>
+          </div>
+
+          <!-- Quick Commands -->
+          <div class="flex gap-1 flex-wrap">
+            <button class="cmd-btn text-[10px]">/market</button>
+            <button class="cmd-btn text-[10px]">/indices</button>
+            <button class="cmd-btn text-[10px]">/movers</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 3: Macro & Sentiment -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="tui-box-title">
+          <span class="box-number" style="background:#db6d28;">3</span>
+          <span>MacroSentiment / 宏观情绪</span>
+        </div>
+        <div class="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3" style="min-height:0;">
+
+          <!-- Macro Indicators -->
+          <div>
+            <div class="text-tui-textDim text-[10px] mb-1.5 font-semibold">宏观指标</div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <div class="bg-tui-surface border border-tui-border rounded p-1.5 text-center">
+                <div class="text-tui-textDim text-[9px]">GDP增长</div>
+                <div class="text-tui-green text-xs font-bold">5.2%</div>
+              </div>
+              <div class="bg-tui-surface border border-tui-border rounded p-1.5 text-center">
+                <div class="text-tui-textDim text-[9px]">CPI</div>
+                <div class="text-tui-yellow text-xs font-bold">0.3%</div>
+              </div>
+              <div class="bg-tui-surface border border-tui-border rounded p-1.5 text-center">
+                <div class="text-tui-textDim text-[9px]">PMI</div>
+                <div class="text-tui-green text-xs font-bold">50.8</div>
+              </div>
+              <div class="bg-tui-surface border border-tui-border rounded p-1.5 text-center">
+                <div class="text-tui-textDim text-[9px]">利率</div>
+                <div class="text-tui-orange text-xs font-bold">3.45%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sentiment Gauge -->
+          <div>
+            <div class="text-tui-textDim text-[10px] mb-1.5 font-semibold">市场情绪指数</div>
+            <div class="flex items-center gap-3">
+              <svg width="80" height="50" viewBox="0 0 80 50">
+                <path d="M8 45 A35 35 0 0 1 72 45" fill="none" stroke="#21262d" stroke-width="6" stroke-linecap="round"/>
+                <path d="M8 45 A35 35 0 0 1 56 12" fill="none" stroke="#39d2c0" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="42" cy="18" r="3" fill="#39d2c0"/>
+              </svg>
+              <div>
+                <div class="text-tui-cyan text-lg font-bold">68</div>
+                <div class="text-tui-textDim text-[10px]">/100 偏乐观</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fear & Greed -->
+          <div>
+            <div class="flex items-center justify-between text-[10px] mb-1">
+              <span class="text-tui-textDim">恐慌贪婪指数</span>
+              <span class="text-tui-yellow font-bold">贪婪 72</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width:72%; background: linear-gradient(90deg, #3fb950, #d29922, #f85149);"></div>
+            </div>
+            <div class="flex justify-between text-[9px] text-tui-textDim mt-0.5">
+              <span>极度恐慌</span><span>中性</span><span>极度贪婪</span>
+            </div>
+          </div>
+
+          <!-- News Highlights -->
+          <div>
+            <div class="text-tui-textDim text-[10px] mb-1.5 font-semibold">新闻要闻</div>
+            <div class="space-y-1.5">
+              <div class="text-[10px]">
+                <span class="text-tui-textDim">05-13</span>
+                <span class="text-tui-text ml-1">国常会释放积极信号</span>
+              </div>
+              <div class="text-[10px]">
+                <span class="text-tui-textDim">05-12</span>
+                <span class="text-tui-text ml-1">外资持续流入A股</span>
+              </div>
+              <div class="text-[10px]">
+                <span class="text-tui-textDim">05-11</span>
+                <span class="text-tui-text ml-1">科技股财报超预期</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Commands -->
+          <div class="flex gap-1 flex-wrap">
+            <button class="cmd-btn text-[10px]">/macro</button>
+            <button class="cmd-btn text-[10px]">/sentiment</button>
+            <button class="cmd-btn text-[10px]">/news</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER COLUMN: Box 2 + Box 4 -->
+    <div class="flex-1 flex flex-col overflow-hidden" style="min-width:0;">
+
+      <!-- Box 2: Signal Intelligence -->
+      <div style="flex: 0 0 50%; display:flex; flex-direction:column; overflow:hidden;">
+        <div class="tui-box-title">
+          <span class="box-number" style="background:#58a6ff;">2</span>
+          <span>SignalIntel / 信号情报</span>
+          <span class="flex-1"></span>
+          <span class="tag tag-green">6 活跃</span>
+          <span class="tag tag-red">2 看空</span>
+        </div>
+        <!-- Filter Bar -->
+        <div class="p-2 flex items-center gap-2 border-b border-tui-border bg-tui-surface">
+          <button class="filter-btn active">全部</button>
+          <button class="filter-btn">技术面</button>
+          <button class="filter-btn">基本面</button>
+          <button class="filter-btn">资金流</button>
+          <button class="filter-btn">事件驱动</button>
+          <div class="flex-1"></div>
+          <button class="cmd-btn text-[10px]">/signal</button>
+          <button class="cmd-btn text-[10px]">/filter</button>
+        </div>
+        <!-- Signal Cards Grid -->
+        <div class="flex-1 overflow-y-auto scrollbar-thin p-2" style="min-height:0;">
+          <div class="grid grid-cols-2 gap-2">
+            <!-- Signal 1: Bullish -->
+            <div class="signal-card bullish">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-tui-text text-xs font-semibold">AAPL 突破阻力位 $192</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="tag tag-cyan" style="font-size:9px;">技术面</span>
+                <span class="text-tui-textDim text-[9px]">14:28:33</span>
+              </div>
+              <div class="text-tui-textMuted text-[10px] mb-1.5">价格突破三角形上沿，成交量放大至1.8倍均值</div>
+              <div class="flex items-center gap-2">
+                <span class="text-tui-textDim text-[9px]">置信度</span>
+                <div class="progress-bar flex-1"><div class="progress-fill bg-tui-green" style="width:87%"></div></div>
+                <span class="text-tui-green text-[10px] font-bold">87%</span>
+              </div>
+            </div>
+            <!-- Signal 2: Bearish -->
+            <div class="signal-card bearish">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-tui-text text-xs font-semibold">NVDA RSI超买 RSI=78.3</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="tag tag-cyan" style="font-size:9px;">技术面</span>
+                <span class="text-tui-textDim text-[9px]">14:15:02</span>
+              </div>
+              <div class="text-tui-textMuted text-[10px] mb-1.5">RSI进入超买区域，短期回调风险加大</div>
+              <div class="flex items-center gap-2">
+                <span class="text-tui-textDim text-[9px]">置信度</span>
+                <div class="progress-bar flex-1"><div class="progress-fill bg-tui-red" style="width:72%"></div></div>
+                <span class="text-tui-red text-[10px] font-bold">72%</span>
+              </div>
+            </div>
+            <!-- Signal 3: Bullish -->
+            <div class="signal-card bullish">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-tui-text text-xs font-semibold">茅台 北向资金净流入 ¥2.3亿</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="tag tag-orange" style="font-size:9px;">资金流</span>
+                <span class="text-tui-textDim text-[9px]">13:45:18</span>
+              </div>
+              <div class="text-tui-textMuted text-[10px] mb-1.5">连续3日净流入，累计金额¥6.8亿，外资看好白酒板块</div>
+              <div class="flex items-center gap-2">
+                <span class="text-tui-textDim text-[9px]">置信度</span>
+                <div class="progress-bar flex-1"><div class="progress-fill bg-tui-green" style="width:65%"></div></div>
+                <span class="text-tui-green text-[10px] font-bold">65%</span>
+              </div>
+            </div>
+            <!-- Signal 4: Neutral -->
+            <div class="signal-card neutral">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-tui-text text-xs font-semibold">美联储议息会议临近</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="tag tag-yellow" style="font-size:9px;">事件驱动</span>
+                <span class="text-tui-textDim text-[9px]">持续</span>
+              </div>
+              <div class="text-tui-textMuted text-[10px] mb-1.5">6月FOMC会议预计维持利率不变，关注前瞻指引变化</div>
+              <div class="flex items-center gap-2">
+                <span class="text-tui-textDim text-[9px]">置信度</span>
+                <div class="progress-bar flex-1"><div class="progress-fill bg-tui-yellow" style="width:58%"></div></div>
+                <span class="text-tui-yellow text-[10px] font-bold">58%</span>
+              </div>
+            </div>
+            <!-- Signal 5: Bullish -->
+            <div class="signal-card bullish">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-tui-text text-xs font-semibold">半导体板块资金集中流入</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="tag tag-orange" style="font-size:9px;">资金流</span>
+                <span class="text-tui-textDim text-[9px]">12:32:05</span>
+              </div>
+              <div class="text-tui-textMuted text-[10px] mb-1.5">半导体ETF单日净申购¥12.5亿，板块轮动信号明确</div>
+              <div class="flex items-center gap-2">
+                <span class="text-tui-textDim text-[9px]">置信度</span>
+                <div class="progress-bar flex-1"><div class="progress-fill bg-tui-green" style="width:79%"></div></div>
+                <span class="text-tui-green text-[10px] font-bold">79%</span>
+              </div>
+            </div>
+            <!-- Signal 6: Bearish -->
+            <div class="signal-card bearish">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-tui-text text-xs font-semibold">GOOGL MACD顶背离</span>
+              </div>
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="tag tag-cyan" style="font-size:9px;">技术面</span>
+                <span class="text-tui-textDim text-[9px]">10:18:22</span>
+              </div>
+              <div class="text-tui-textMuted text-[10px] mb-1.5">日线MACD顶背离形成，DIF线高位死叉</div>
+              <div class="flex items-center gap-2">
+                <span class="text-tui-textDim text-[9px]">置信度</span>
+                <div class="progress-bar flex-1"><div class="progress-fill bg-tui-red" style="width:61%"></div></div>
+                <span class="text-tui-red text-[10px] font-bold">61%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 4: EventMonitor / 事件监测 (Tabbed) -->
+      <div class="flex-1 flex flex-col overflow-hidden border-t border-tui-border">
+        <div class="tui-box-title">
+          <span class="box-number" style="background:#d29922;">4</span>
+          <span>EventMonitor / 事件监测</span>
+          <span class="flex-1"></span>
+          <!-- Tab Buttons -->
+          <button class="box4-tab active" onclick="switchTab('event')">事件流</button>
+          <button class="box4-tab" onclick="switchTab('monitor')">监测预警</button>
+          <span class="text-tui-textDim text-[10px] ml-2">|</span>
+          <span class="flex items-center gap-1 ml-1">
+            <span class="w-2 h-2 rounded-full bg-tui-green animate-pulse-slow"></span>
+            <span class="text-tui-green text-[10px]">Live</span>
+          </span>
+        </div>
+
+        <!-- Tab Panel 1: Event Timeline (original content) -->
+        <div id="event-panel">
+          <!-- Filter Tabs -->
+          <div class="flex items-center gap-1 px-2 py-1 border-b border-tui-border bg-tui-surface">
+            <button class="filter-btn text-[10px] py-1 active">全部</button>
+            <button class="filter-btn text-[10px] py-1">信号</button>
+            <button class="filter-btn text-[10px] py-1">风控</button>
+            <button class="filter-btn text-[10px] py-1">系统</button>
+            <button class="filter-btn text-[10px] py-1">策略</button>
+          </div>
+          <!-- Events -->
+          <div class="overflow-y-auto scrollbar-thin px-3 py-1" style="min-height:0; max-height: calc(100% - 52px);">
+            <div class="event-line">
+              <span class="ts">[15:32:18]</span>
+              <span class="text-tui-green flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">AAPL-MOM-01</span>
+                <span class="text-tui-textMuted">: 信号确认</span>
+                <span class="text-tui-green font-medium"> BUY</span>
+                <span class="text-tui-text"> AAPL</span>
+                <span class="text-tui-textMuted"> @ </span>
+                <span class="text-tui-text">$192.50</span>
+                <span class="text-tui-green"> ✓</span>
+              </div>
+            </div>
+            <div class="event-line">
+              <span class="ts">[15:28:05]</span>
+              <span class="text-tui-cyan flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">情报监控</span>
+                <span class="text-tui-textMuted">: 半导体板块资金流入信号触发，置信度</span>
+                <span class="text-tui-green"> 79%</span>
+              </div>
+            </div>
+            <div class="event-line">
+              <span class="ts">[15:15:42]</span>
+              <span class="text-tui-yellow flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">NVDA-BREAK-02</span>
+                <span class="text-tui-textMuted">: RSI超买预警 RSI=78.3，建议关注</span>
+                <span class="text-tui-yellow"> ⚠</span>
+              </div>
+            </div>
+            <div class="event-line">
+              <span class="ts">[14:55:10]</span>
+              <span class="text-tui-orange flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">Macro Agent</span>
+                <span class="text-tui-textMuted">: CPI数据发布 0.3%，低于预期0.5%</span>
+                <span class="text-tui-green"> ✓ 利好</span>
+              </div>
+            </div>
+            <div class="event-line">
+              <span class="ts">[14:32:18]</span>
+              <span class="text-tui-purple flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">Sentiment Agent</span>
+                <span class="text-tui-textMuted">: 市场情绪指数更新 68→72，转为乐观</span>
+              </div>
+            </div>
+            <div class="event-line">
+              <span class="ts">[14:00:00]</span>
+              <span class="text-tui-green flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">SECTOR-ROT-05</span>
+                <span class="text-tui-textMuted">: 板块轮动信号 - 科技>消费 切换权重</span>
+              </div>
+            </div>
+            <div class="event-line">
+              <span class="ts">[13:45:22]</span>
+              <span class="text-tui-red flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">Risk Agent</span>
+                <span class="text-tui-textMuted">: 组合VaR 2.1% 仍在阈值内</span>
+                <span class="text-tui-green"> ✓</span>
+              </div>
+            </div>
+            <div class="event-line">
+              <span class="ts">[12:15:38]</span>
+              <span class="text-tui-cyan flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-accent">Logic Agent</span>
+                <span class="text-tui-textMuted">: 茅台北向资金流入确认，触发资金流信号</span>
+              </div>
+            </div>
+            <div class="event-line">
+              <span class="ts">[09:30:00]</span>
+              <span class="text-tui-green flex-shrink-0">●</span>
+              <div>
+                <span class="text-tui-textMuted">[系统]</span>
+                <span class="text-tui-textMuted"> A股开盘 | 所有Agent连接就绪 | 数据源正常</span>
+                <span class="text-tui-green"> ✓</span>
+              </div>
+            </div>
+          </div>
+          <!-- Events Footer -->
+          <div class="flex items-center justify-between px-3 py-1 border-t border-tui-border bg-tui-surface text-[10px]">
+            <div class="flex items-center gap-2">
+              <span class="text-tui-textMuted">事件数: <span class="text-tui-text">9</span></span>
+              <span class="text-tui-green">信号 4</span>
+              <span class="text-tui-yellow">预警 2</span>
+              <span class="text-tui-cyan">数据 2</span>
+              <span class="text-tui-textDim">系统 1</span>
+            </div>
+            <span class="text-tui-textDim">最新: 15:32:18</span>
+          </div>
+        </div>
+
+        <!-- Tab Panel 2: Monitor -->
+        <div id="monitor-panel" style="display:none;">
+          <div class="overflow-y-auto scrollbar-thin px-2 py-1.5" style="min-height:0; max-height: calc(100% - 0px);">
+
+            <!-- Key Monitoring Points -->
+            <div class="text-tui-textDim text-[10px] font-semibold mb-1.5 px-1">关键监测点 <span class="text-tui-green">(8/10 正常)</span></div>
+            <div class="space-y-0 px-1">
+              <div class="monitor-point">
+                <span class="w-2 h-2 rounded-full bg-tui-green flex-shrink-0" style="margin-top:2px;"></span>
+                <span class="text-tui-text">AAPL 支撑位 $185</span>
+                <span class="flex-1"></span>
+                <span class="text-tui-textMuted">当前 $192.50</span>
+                <span class="tag tag-green" style="font-size:9px;">正常</span>
+              </div>
+              <div class="monitor-point">
+                <span class="w-2 h-2 rounded-full bg-tui-red flex-shrink-0 animate-pulse-slow" style="margin-top:2px;"></span>
+                <span class="text-tui-text">NVDA RSI 阈值 70</span>
+                <span class="flex-1"></span>
+                <span class="text-tui-textMuted">当前 78.3</span>
+                <span class="tag tag-red" style="font-size:9px;">触发</span>
+              </div>
+              <div class="monitor-point">
+                <span class="w-2 h-2 rounded-full bg-tui-green flex-shrink-0" style="margin-top:2px;"></span>
+                <span class="text-tui-text">茅台 北向资金净流入</span>
+                <span class="flex-1"></span>
+                <span class="text-tui-textMuted">今日 ¥2.3亿</span>
+                <span class="tag tag-green" style="font-size:9px;">正常</span>
+              </div>
+              <div class="monitor-point">
+                <span class="w-2 h-2 rounded-full bg-tui-green flex-shrink-0" style="margin-top:2px;"></span>
+                <span class="text-tui-text">半导体ETF 申购额</span>
+                <span class="flex-1"></span>
+                <span class="text-tui-textMuted">¥12.5亿</span>
+                <span class="tag tag-green" style="font-size:9px;">正常</span>
+              </div>
+              <div class="monitor-point">
+                <span class="w-2 h-2 rounded-full bg-tui-green flex-shrink-0" style="margin-top:2px;"></span>
+                <span class="text-tui-text">上证指数 3200支撑</span>
+                <span class="flex-1"></span>
+                <span class="text-tui-textMuted">当前 3245</span>
+                <span class="tag tag-green" style="font-size:9px;">正常</span>
+              </div>
+              <div class="monitor-point">
+                <span class="w-2 h-2 rounded-full bg-tui-yellow flex-shrink-0" style="margin-top:2px;"></span>
+                <span class="text-tui-text">美联储议息倒计时</span>
+                <span class="flex-1"></span>
+                <span class="text-tui-textMuted">距离12天</span>
+                <span class="tag tag-yellow" style="font-size:9px;">关注</span>
+              </div>
+              <div class="monitor-point">
+                <span class="w-2 h-2 rounded-full bg-tui-red flex-shrink-0 animate-pulse-slow" style="margin-top:2px;"></span>
+                <span class="text-tui-text">GOOGL MACD背离</span>
+                <span class="flex-1"></span>
+                <span class="text-tui-textMuted">DIF下穿DEA</span>
+                <span class="tag tag-red" style="font-size:9px;">触发</span>
+              </div>
+              <div class="monitor-point">
+                <span class="w-2 h-2 rounded-full bg-tui-green flex-shrink-0" style="margin-top:2px;"></span>
+                <span class="text-tui-text">市场情绪指数阈值</span>
+                <span class="flex-1"></span>
+                <span class="text-tui-textMuted">当前 68/100</span>
+                <span class="tag tag-green" style="font-size:9px;">正常</span>
+              </div>
+            </div>
+
+            <!-- Alert Notifications -->
+            <div class="text-tui-textDim text-[10px] font-semibold mb-1.5 mt-3 px-1">预警通知 <span class="text-tui-red">(最近5条)</span></div>
+            <div class="space-y-0 px-1">
+              <div class="alert-line">
+                <span class="text-tui-textDim flex-shrink-0" style="min-width:40px;">[15:15]</span>
+                <span class="text-tui-red flex-shrink-0" style="font-size:9px; margin-top:1px;">&#9679; 高</span>
+                <span class="text-tui-text">NVDA RSI超买 78.3，建议减仓</span>
+              </div>
+              <div class="alert-line">
+                <span class="text-tui-textDim flex-shrink-0" style="min-width:40px;">[14:55]</span>
+                <span class="text-tui-yellow flex-shrink-0" style="font-size:9px; margin-top:1px;">&#9679; 中</span>
+                <span class="text-tui-text">CPI数据低于预期，关注政策变化</span>
+              </div>
+              <div class="alert-line">
+                <span class="text-tui-textDim flex-shrink-0" style="min-width:40px;">[14:32]</span>
+                <span class="text-tui-red flex-shrink-0" style="font-size:9px; margin-top:1px;">&#9679; 高</span>
+                <span class="text-tui-text">GOOGL MACD顶背离确认</span>
+              </div>
+              <div class="alert-line">
+                <span class="text-tui-textDim flex-shrink-0" style="min-width:40px;">[13:45]</span>
+                <span class="text-tui-green flex-shrink-0" style="font-size:9px; margin-top:1px;">&#9679; 低</span>
+                <span class="text-tui-text">茅台北向资金流入，信号确认</span>
+              </div>
+              <div class="alert-line">
+                <span class="text-tui-textDim flex-shrink-0" style="min-width:40px;">[12:15]</span>
+                <span class="text-tui-yellow flex-shrink-0" style="font-size:9px; margin-top:1px;">&#9679; 中</span>
+                <span class="text-tui-text">市场情绪指数快速上升至72</span>
+              </div>
+            </div>
+
+            <!-- Escalation Rules -->
+            <div class="text-tui-textDim text-[10px] font-semibold mb-1.5 mt-3 px-1">升级规则</div>
+            <div class="space-y-1 px-1 pb-2">
+              <div class="flex items-center gap-2 text-[10px]">
+                <span class="tag tag-green" style="font-size:9px;">L1</span>
+                <span class="text-tui-textMuted">自动监测</span>
+                <span class="text-tui-textDim">→</span>
+                <span class="text-tui-textMuted">Agent通知</span>
+              </div>
+              <div class="flex items-center gap-2 text-[10px]">
+                <span class="tag tag-yellow" style="font-size:9px;">L2</span>
+                <span class="text-tui-textMuted">重复触发</span>
+                <span class="text-tui-textDim">→</span>
+                <span class="text-tui-textMuted">推送至Risk Agent</span>
+              </div>
+              <div class="flex items-center gap-2 text-[10px]">
+                <span class="tag tag-red" style="font-size:9px;">L3</span>
+                <span class="text-tui-textMuted">紧急事件</span>
+                <span class="text-tui-textDim">→</span>
+                <span class="text-tui-textMuted">CAHub广播 + 人工确认</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Box 5 - Agent Chat (320px) -->
+    <div class="flex flex-col overflow-hidden border-l border-tui-border" style="width:320px; flex-shrink:0;">
+      <div class="tui-box-title">
+        <span class="box-number">5</span>
+        <span>情报监控 / Monitor</span>
+        <span class="flex-1"></span>
+        <span class="w-2 h-2 rounded-full bg-tui-cyan animate-pulse-slow"></span>
+        <span class="text-tui-cyan text-[10px]">在线分析中...</span>
+      </div>
+      <!-- Chat Messages -->
+      <div class="flex-1 overflow-y-auto scrollbar-thin p-3" style="min-height:0;">
+        <div class="chat-agent">
+          <div class="text-tui-cyan text-[10px] font-semibold mb-1">情报监控</div>
+          <div>市场开盘分析完成。今日A股三大指数全线高开：</div>
+          <div class="mt-1 text-[10px]">
+            • 上证 <span class="text-tui-green">+0.82%</span> 半导体领涨<br>
+            • 深成指 <span class="text-tui-green">+1.15%</span> 科技板块强势<br>
+            • 创业板 <span class="text-tui-green">+0.93%</span> 新能源反弹
+          </div>
+          <div class="text-tui-textDim text-[9px] mt-1">09:30:15</div>
+        </div>
+
+        <div class="chat-user">
+          <div class="text-tui-purple text-[10px] font-semibold mb-1">You</div>
+          <div>分析一下半导体板块的资金流向</div>
+          <div class="text-tui-textDim text-[9px] mt-1">09:45:00</div>
+        </div>
+
+        <div class="chat-agent">
+          <div class="text-tui-cyan text-[10px] font-semibold mb-1">情报监控</div>
+          <div>半导体板块资金分析：</div>
+          <div class="mt-1 text-[10px]">
+            • 北向资金净流入 <span class="text-tui-green">¥8.2亿</span>，连续3日净流入<br>
+            • 半导体ETF单日净申购 <span class="text-tui-green">¥12.5亿</span><br>
+            • 龙头中芯国际 <span class="text-tui-green">+2.1%</span>，成交量放大1.5倍<br>
+            • 板块RSI(14) = 62，处于偏强区域
+          </div>
+          <div class="mt-1.5 p-1.5 bg-tui-surface rounded border border-tui-border text-[10px]">
+            <span class="text-tui-yellow">⚠</span> 注意：NVDA RSI已超买(78.3)，短期需警惕回调
+          </div>
+          <div class="text-tui-textDim text-[9px] mt-1">09:45:08</div>
+        </div>
+
+        <div class="chat-user">
+          <div class="text-tui-purple text-[10px] font-semibold mb-1">You</div>
+          <div>茅台的北向资金数据怎么样？</div>
+          <div class="text-tui-textDim text-[9px] mt-1">10:15:00</div>
+        </div>
+
+        <div class="chat-agent">
+          <div class="text-tui-cyan text-[10px] font-semibold mb-1">情报监控</div>
+          <div>贵州茅台北向资金分析：</div>
+          <div class="mt-1 text-[10px]">
+            • 今日净流入 <span class="text-tui-green">¥2.3亿</span><br>
+            • 近3日累计净流入 <span class="text-tui-green">¥6.8亿</span><br>
+            • 外资持股占比升至 <span class="text-tui-accent">7.82%</span><br>
+            • 信号强度：资金流信号 置信度 <span class="text-tui-green">65%</span>
+          </div>
+          <div class="text-tui-textDim text-[9px] mt-1">10:15:05</div>
+        </div>
+
+        <div class="chat-agent">
+          <div class="text-tui-cyan text-[10px] font-semibold mb-1">情报监控</div>
+          <div>美联储议息会议将于6月举行，市场预期维持利率不变概率 <span class="text-tui-accent">87%</span>。关注点在前瞻指引措辞变化。</div>
+          <div class="text-tui-textDim text-[9px] mt-1">10:30:00</div>
+        </div>
+      </div>
+      <!-- Chat Input -->
+      <div class="p-3 border-t border-tui-border" style="background:#161b22;">
+        <div class="flex items-center gap-2">
+          <input type="text" placeholder="输入指令或问题... (Enter)" class="flex-1 bg-tui-bg border border-tui-border rounded px-2 py-1.5 text-xs text-tui-text focus:outline-none focus:border-tui-cyan">
+          <button class="cmd-btn-green px-3 py-1.5 text-xs">发送</button>
+        </div>
+        <div class="flex gap-1 mt-2">
+          <button class="cmd-btn text-[10px]">/analyze</button>
+          <button class="cmd-btn text-[10px]">/signal</button>
+          <button class="cmd-btn text-[10px]">/macro</button>
+          <button class="cmd-btn text-[10px]">/sentiment</button>
+          <button class="cmd-btn text-[10px]">/news</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Status Bar -->
+  <div class="flex items-center justify-between px-4 py-1.5 bg-tui-surface border-t border-tui-border text-[10px] text-tui-textMuted flex-shrink-0" style="height:28px;">
+    <div class="flex items-center gap-3">
+      <span class="text-tui-cyan font-semibold">情报监控</span>
+      <span>|</span>
+      <span class="flex items-center gap-1">
+        <span class="key">1</span><span>市场</span>
+        <span class="key">2</span><span>信号</span>
+        <span class="key">3</span><span>宏观</span>
+        <span class="key">4</span><span>事件</span>
+        <span class="key">5</span><span>对话</span>
+      </span>
+      <span>|</span>
+      <span class="key">Tab</span><span>切换</span>
+      <span class="key">/</span><span>命令</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span>投前分析组 (4 Agents)</span>
+      <span>|</span>
+      <span>Pipeline: <span class="text-tui-cyan font-semibold">Stage A</span></span>
+      <span>|</span>
+      <span>市场: <span class="text-tui-green">A股开盘中</span></span>
+      <span>|</span>
+      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span> Connected</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  const eventPanel = document.getElementById('event-panel');
+  const monitorPanel = document.getElementById('monitor-panel');
+  const tabs = document.querySelectorAll('.box4-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  if (tab === 'event') {
+    eventPanel.style.display = '';
+    monitorPanel.style.display = 'none';
+    tabs[0].classList.add('active');
+  } else {
+    eventPanel.style.display = 'none';
+    monitorPanel.style.display = '';
+    tabs[1].classList.add('active');
+  }
+}
+</script>
+</body>
+</html>

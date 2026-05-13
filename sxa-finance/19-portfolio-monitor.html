@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SXA - 组合监控 Portfolio Monitor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'tui-bg': '#0d1117',
+        'tui-surface': '#161b22',
+        'tui-border': '#30363d',
+        'tui-hover': '#1c2128',
+        'tui-green': '#3fb950',
+        'tui-yellow': '#d29922',
+        'tui-red': '#f85149',
+        'tui-blue': '#388bfd',
+        'tui-cyan': '#39d2c0',
+        'tui-muted': '#484f58',
+        'tui-text': '#c9d1d9',
+        'tui-textMuted': '#8b949e',
+        'tui-textDim': '#6e7681',
+        'tui-accent': '#58a6ff',
+        'tui-purple': '#bc8cff',
+        'tui-orange': '#db6d28',
+      },
+      fontFamily: {
+        'mono': ['JetBrains Mono', 'monospace'],
+        'sans': ['Noto Sans SC', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family: 'JetBrains Mono', 'Noto Sans SC', monospace; box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; overflow: hidden; height: 100vh; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  .tui-box { border: 1px solid #30363d; border-radius: 6px; background: #0d1117; position: relative; }
+  .tui-box.focused { border-color: #58a6ff; box-shadow: 0 0 0 1px #58a6ff, 0 0 12px rgba(88,166,255,0.15); }
+  .tui-box-title { background: #161b22; padding: 6px 12px; border-bottom: 1px solid #30363d; font-size: 12px; font-weight: 600; color: #c9d1d9; display: flex; align-items: center; gap: 8px; }
+  .box-number { background: #58a6ff; color: #0d1117; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .key { background: #21262d; border: 1px solid #30363d; padding: 1px 6px; border-radius: 3px; font-size: 10px; color: #c9d1d9; }
+  .tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+  .tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .tag-yellow { background: rgba(210,153,34,0.15); color: #d29922; }
+  .tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+  .tag-blue { background: rgba(56,139,253,0.15); color: #388bfd; }
+  .tag-purple { background: rgba(188,140,255,0.15); color: #bc8cff; }
+  .tag-cyan { background: rgba(57,210,192,0.15); color: #39d2c0; }
+  .tag-orange { background: rgba(219,109,40,0.15); color: #db6d28; }
+  .tag-gray { background: rgba(139,148,158,0.15); color: #8b949e; }
+
+  .filter-btn { background: #21262d; border: 1px solid #30363d; padding: 4px 12px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { background: #58a6ff; color: #0d1117; border-color: #58a6ff; }
+  .cmd-btn { background: #21262d; border: 1px solid #30363d; padding: 3px 10px; border-radius: 4px; font-size: 11px; color: #c9d1d9; cursor: pointer; }
+  .cmd-btn:hover { background: #30363d; }
+  .cmd-btn-blue { background: #1f6feb; border-color: #1f6feb; color: white; }
+  .cmd-btn-blue:hover { background: #58a6ff; border-color: #58a6ff; }
+
+  .chat-agent { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); border-left: 3px solid #58a6ff; border-radius: 0 6px 6px 0; padding: 8px 10px; font-size: 11px; line-height: 1.5; margin-bottom: 8px; }
+  .chat-user { background: rgba(188,140,255,0.08); border: 1px solid rgba(188,140,255,0.2); border-left: 3px solid #bc8cff; border-radius: 0 6px 6px 0; padding: 8px 10px; font-size: 11px; line-height: 1.5; margin-bottom: 8px; margin-left: 16px; }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+
+  .progress-bar { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+  .pos-row { display: flex; align-items: center; padding: 4px 0; font-size: 11px; border-bottom: 1px solid #21262d; transition: all 0.15s; cursor: pointer; }
+  .pos-row:hover { background: rgba(88,166,255,0.06); }
+  .pos-row:last-child { border-bottom: none; }
+
+  .chain-step { padding: 3px 10px; border-radius: 3px; background: #21262d; border: 1px solid #30363d; color: #484f58; text-decoration: none; font-size: 11px; font-family: 'JetBrains Mono', monospace; display: inline-block; transition: all 0.15s; }
+  .chain-step:hover { border-color: #484f58; color: #8b949e; }
+  .chain-step.active { background: rgba(88,166,255,0.2); border-color: #58a6ff; color: #58a6ff; }
+  .chain-arrow { color: #30363d; font-size: 12px; }
+
+  .kpi-card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; flex: 1; min-width: 0; }
+  .kpi-label { font-size: 10px; color: #8b949e; margin-bottom: 2px; }
+  .kpi-value { font-size: 16px; font-weight: 700; }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .animate-pulse-slow { animation: pulse 2s infinite; }
+</style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+<div class="flex flex-col h-full">
+  <!-- Title Bar -->
+  <div class="flex items-center justify-between px-4 py-2 bg-tui-surface border-b border-tui-border" style="height:40px; flex-shrink:0;">
+    <div class="flex items-center gap-3">
+      <div class="flex gap-1.5">
+        <div style="width:12px;height:12px;border-radius:50%;background:#f85149;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#d29922;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#3fb950;"></div>
+      </div>
+      <span class="text-tui-accent font-semibold text-sm">SXA v3.2.1</span>
+      <span class="text-tui-textMuted text-sm">|</span>
+      <span class="text-tui-text text-sm">组合监控 Portfolio Monitor</span>
+      <span class="text-tui-textDim text-xs">/ Post-trade</span>
+      <span class="tag tag-blue">STAGE F</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-tui-textMuted">
+      <span class="key">ESC</span><a href="00-home.html" class="text-tui-textMuted hover:text-tui-accent" style="text-decoration:none;">主页</a>
+      <span class="key">1-5</span><span>聚焦</span>
+      <span class="key">Tab</span><span>切换</span>
+      <span class="key">/</span><span>命令</span>
+    </div>
+  </div>
+
+  <!-- Pipeline Nav Bar -->
+  <div class="flex items-center gap-1 px-4 py-1.5 border-b border-tui-border bg-tui-bg text-xs">
+    <span class="text-tui-textMuted mr-2">Pipeline</span>
+    <a href="09-market-overview.html" class="chain-step">A 行情</a>
+    <span class="chain-arrow">→</span>
+    <a href="03-compliance-dashboard.html" class="chain-step">B 合规</a>
+    <span class="chain-arrow">→</span>
+    <a href="30-backtest-agent.html" class="chain-step">C 回测</a>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step">D 审批</span>
+    <span class="chain-arrow">→</span>
+    <a href="31-capital-agent.html" class="chain-step">E 净值</a>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step active">F 监控</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step">G 报告</span>
+    <div class="flex-1"></div>
+    <span class="text-tui-textDim text-[10px]">投后管理组 | 组合监控</span>
+  </div>
+
+  <!-- Main Content: Three-Column Layout -->
+  <div class="flex flex-1 overflow-hidden" style="min-height:0;">
+
+    <!-- LEFT SIDEBAR: Box 1 + Box 3 (250px) -->
+    <div class="flex flex-col overflow-hidden border-r border-tui-border" style="width:250px; flex-shrink:0;">
+
+      <!-- Box 1: Portfolio Summary -->
+      <div class="tui-box focused border-0 border-b border-tui-border rounded-none" style="flex:0 0 55%;">
+        <div class="tui-box-title">
+          <span class="box-number">1</span>
+          <span>Portfolio / 组合概览</span>
+          <span class="flex-1"></span>
+          <span class="tag tag-blue">LIVE</span>
+        </div>
+        <div class="flex-1 overflow-y-auto scrollbar-thin p-2" style="min-height:0;">
+          <!-- Summary Stats -->
+          <div class="space-y-2 mb-3">
+            <div class="flex justify-between items-center">
+              <span class="text-tui-textMuted text-[10px]">总资产</span>
+              <span class="text-tui-text text-xs font-semibold">¥12,856,320.00</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-tui-textMuted text-[10px]">日盈亏</span>
+              <span class="text-tui-green text-xs font-semibold">+¥186,432.50</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-tui-textMuted text-[10px]">持仓数</span>
+              <span class="text-tui-text text-xs">8 只</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-tui-textMuted text-[10px]">现金占比</span>
+              <span class="text-tui-text text-xs">12.5%</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-tui-textMuted text-[10px]">NAV</span>
+              <span class="text-tui-accent text-xs font-semibold">1.2856</span>
+            </div>
+          </div>
+
+          <div class="border-t border-tui-border pt-2 mb-1">
+            <div class="text-tui-textMuted text-[10px] mb-1">资产配置</div>
+            <div class="flex items-center gap-1 mb-1.5">
+              <div class="flex-1 h-3 rounded-full overflow-hidden flex" style="background:#21262d;">
+                <div style="width:35%;background:#3fb950;"></div>
+                <div style="width:25%;background:#58a6ff;"></div>
+                <div style="width:15%;background:#bc8cff;"></div>
+                <div style="width:12.5%;background:#d29922;"></div>
+                <div style="width:12.5%;background:#6e7681;"></div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
+              <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span><span class="text-tui-textMuted">消费 35%</span></div>
+              <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-accent"></span><span class="text-tui-textMuted">科技 25%</span></div>
+              <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-purple"></span><span class="text-tui-textMuted">金融 15%</span></div>
+              <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-yellow"></span><span class="text-tui-textMuted">能源 12.5%</span></div>
+              <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-textDim"></span><span class="text-tui-textMuted">现金 12.5%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 3: Holdings List -->
+      <div class="tui-box border-0 rounded-none" style="flex:1; min-height:0;">
+        <div class="tui-box-title">
+          <span class="box-number">3</span>
+          <span>Holdings / 持仓</span>
+          <span class="flex-1"></span>
+          <span class="tag tag-gray">8</span>
+        </div>
+        <div class="flex-1 overflow-y-auto scrollbar-thin p-2" style="min-height:0;">
+          <div class="pos-row">
+            <span class="text-tui-textDim text-[10px]" style="width:40px;">茅台</span>
+            <span class="text-tui-text text-[10px] flex-1">500股</span>
+            <span class="text-tui-green text-[10px]" style="width:52px;">+5.82%</span>
+          </div>
+          <div class="pos-row">
+            <span class="text-tui-textDim text-[10px]" style="width:40px;">宁德</span>
+            <span class="text-tui-text text-[10px] flex-1">800股</span>
+            <span class="text-tui-green text-[10px]" style="width:52px;">+3.21%</span>
+          </div>
+          <div class="pos-row">
+            <span class="text-tui-textDim text-[10px]" style="width:40px;">比亚迪</span>
+            <span class="text-tui-text text-[10px] flex-1">600股</span>
+            <span class="text-tui-green text-[10px]" style="width:52px;">+2.15%</span>
+          </div>
+          <div class="pos-row">
+            <span class="text-tui-textDim text-[10px]" style="width:40px;">五粮液</span>
+            <span class="text-tui-text text-[10px] flex-1">1000股</span>
+            <span class="text-tui-green text-[10px]" style="width:52px;">+1.68%</span>
+          </div>
+          <div class="pos-row">
+            <span class="text-tui-textDim text-[10px]" style="width:40px;">中芯</span>
+            <span class="text-tui-text text-[10px] flex-1">1200股</span>
+            <span class="text-tui-green text-[10px]" style="width:52px;">+1.23%</span>
+          </div>
+          <div class="pos-row">
+            <span class="text-tui-textDim text-[10px]" style="width:40px;">平安</span>
+            <span class="text-tui-text text-[10px] flex-1">2000股</span>
+            <span class="text-tui-red text-[10px]" style="width:52px;">-0.45%</span>
+          </div>
+          <div class="pos-row">
+            <span class="text-tui-textDim text-[10px]" style="width:40px;">招行</span>
+            <span class="text-tui-text text-[10px] flex-1">3000股</span>
+            <span class="text-tui-red text-[10px]" style="width:52px;">-0.31%</span>
+          </div>
+          <div class="pos-row">
+            <span class="text-tui-textDim text-[10px]" style="width:40px;">长电</span>
+            <span class="text-tui-text text-[10px] flex-1">5000股</span>
+            <span class="text-tui-green text-[10px]" style="width:52px;">+0.18%</span>
+          </div>
+        </div>
+        <!-- Quick Nav -->
+        <div class="border-t border-tui-border p-2 flex gap-1">
+          <a href="32-portfolio-agent.html" class="cmd-btn text-[10px] flex-1 text-center" style="text-decoration:none;">→组合管理</a>
+          <a href="20-risk-management.html" class="cmd-btn text-[10px] flex-1 text-center" style="text-decoration:none;">→风险管理</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: Box 2 + Box 4 (flex-1) -->
+    <div class="flex flex-col overflow-hidden" style="flex:1; min-width:0;">
+
+      <!-- Box 2: KPI Cards + NAV Curve -->
+      <div class="tui-box focused border-0 border-b border-tui-border rounded-none" style="flex:0 0 58%;">
+        <div class="tui-box-title">
+          <span class="box-number">2</span>
+          <span>NAV Curve / 净值曲线</span>
+          <span class="flex-1"></span>
+          <div class="flex gap-1">
+            <button class="filter-btn active">1月</button>
+            <button class="filter-btn">3月</button>
+            <button class="filter-btn">6月</button>
+            <button class="filter-btn">1年</button>
+            <button class="filter-btn">YTD</button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-hidden p-2" style="min-height:0;">
+          <!-- KPI Cards Row -->
+          <div class="flex gap-2 mb-2">
+            <div class="kpi-card">
+              <div class="kpi-label">总资产</div>
+              <div class="kpi-value text-tui-text">¥12.86M</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">日盈亏</div>
+              <div class="kpi-value text-tui-green">+1.47%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">NAV</div>
+              <div class="kpi-value text-tui-accent">1.2856</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Sharpe</div>
+              <div class="kpi-value text-tui-cyan">2.31</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">MaxDD</div>
+              <div class="kpi-value text-tui-yellow">-6.82%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">累计收益</div>
+              <div class="kpi-value text-tui-green">+28.56%</div>
+            </div>
+          </div>
+          <!-- SVG NAV Curve Chart -->
+          <div style="flex:1; min-height:0; background:#0d1117; border:1px solid #21262d; border-radius:4px; position:relative; overflow:hidden;">
+            <!-- Y Axis Labels -->
+            <div style="position:absolute;left:4px;top:8px;bottom:8px;width:40px;display:flex;flex-direction:column;justify-content:space-between;">
+              <span class="text-tui-textDim" style="font-size:8px;">1.35</span>
+              <span class="text-tui-textDim" style="font-size:8px;">1.30</span>
+              <span class="text-tui-textDim" style="font-size:8px;">1.25</span>
+              <span class="text-tui-textDim" style="font-size:8px;">1.20</span>
+              <span class="text-tui-textDim" style="font-size:8px;">1.15</span>
+            </div>
+            <!-- Grid Lines -->
+            <svg width="100%" height="100%" style="position:absolute;top:0;left:48px;right:0;bottom:0;" preserveAspectRatio="none" viewBox="0 0 500 180">
+              <!-- Horizontal grid -->
+              <line x1="0" y1="10" x2="500" y2="10" stroke="#21262d" stroke-width="0.5" stroke-dasharray="4,4"/>
+              <line x1="0" y1="50" x2="500" y2="50" stroke="#21262d" stroke-width="0.5" stroke-dasharray="4,4"/>
+              <line x1="0" y1="90" x2="500" y2="90" stroke="#21262d" stroke-width="0.5" stroke-dasharray="4,4"/>
+              <line x1="0" y1="130" x2="500" y2="130" stroke="#21262d" stroke-width="0.5" stroke-dasharray="4,4"/>
+              <line x1="0" y1="170" x2="500" y2="170" stroke="#21262d" stroke-width="0.5" stroke-dasharray="4,4"/>
+
+              <!-- Benchmark line (沪深300) - gray -->
+              <polyline fill="none" stroke="#6e7681" stroke-width="1.5" stroke-dasharray="6,3"
+                points="0,140 20,136 40,132 60,128 80,130 100,126 120,122 140,124 160,118 180,115 200,112 220,108 240,105 260,102 280,98 300,95 320,92 340,90 360,88 380,86 400,82 420,80 440,78 460,75 480,73 500,70"/>
+
+              <!-- Portfolio NAV curve - blue fill -->
+              <defs>
+                <linearGradient id="navGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#58a6ff" stop-opacity="0.02"/>
+                </linearGradient>
+              </defs>
+              <polygon fill="url(#navGrad)"
+                points="0,145 20,140 40,130 60,125 80,120 100,115 120,108 140,105 160,98 180,92 200,88 220,82 240,78 260,72 280,68 300,60 320,55 340,50 360,45 380,40 400,35 420,28 440,24 460,20 480,15 500,10 500,180 0,180"/>
+
+              <!-- Portfolio NAV curve - blue line -->
+              <polyline fill="none" stroke="#58a6ff" stroke-width="2"
+                points="0,145 20,140 40,130 60,125 80,120 100,115 120,108 140,105 160,98 180,92 200,88 220,82 240,78 260,72 280,68 300,60 320,55 340,50 360,45 380,40 400,35 420,28 440,24 460,20 480,15 500,10"/>
+
+              <!-- Current value dot -->
+              <circle cx="500" cy="10" r="4" fill="#58a6ff" stroke="#0d1117" stroke-width="2"/>
+              <circle cx="500" cy="10" r="6" fill="none" stroke="#58a6ff" stroke-width="1" opacity="0.4">
+                <animate attributeName="r" values="6;10;6" dur="2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite"/>
+              </circle>
+
+              <!-- Legend -->
+              <line x1="350" y1="4" x2="370" y2="4" stroke="#58a6ff" stroke-width="2"/>
+              <text x="374" y="7" fill="#8b949e" font-size="8" font-family="JetBrains Mono">组合净值</text>
+              <line x1="420" y1="4" x2="440" y2="4" stroke="#6e7681" stroke-width="1.5" stroke-dasharray="4,3"/>
+              <text x="444" y="7" fill="#8b949e" font-size="8" font-family="JetBrains Mono">沪深300</text>
+            </svg>
+            <!-- X Axis Labels -->
+            <div style="position:absolute;left:48px;bottom:2px;right:8px;display:flex;justify-content:space-between;">
+              <span class="text-tui-textDim" style="font-size:8px;">04-13</span>
+              <span class="text-tui-textDim" style="font-size:8px;">04-18</span>
+              <span class="text-tui-textDim" style="font-size:8px;">04-23</span>
+              <span class="text-tui-textDim" style="font-size:8px;">04-28</span>
+              <span class="text-tui-textDim" style="font-size:8px;">05-05</span>
+              <span class="text-tui-textDim" style="font-size:8px;">05-13</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 4: Asset Allocation + Holdings P&L -->
+      <div class="tui-box border-0 rounded-none" style="flex:1; min-height:0;">
+        <div class="tui-box-title">
+          <span class="box-number">4</span>
+          <span>Analytics / 分析</span>
+          <span class="flex-1"></span>
+          <div class="flex gap-1">
+            <button class="filter-btn active">配置</button>
+            <button class="filter-btn">盈亏</button>
+            <button class="filter-btn">行业</button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-hidden flex gap-2 p-2" style="min-height:0;">
+          <!-- Left: Asset Allocation Donut -->
+          <div style="flex:0 0 45%; min-height:0; display:flex; flex-direction:column;">
+            <div class="text-tui-textMuted text-[10px] mb-1">资产配置</div>
+            <div style="flex:1; min-height:0; display:flex; align-items:center; justify-content:center;">
+              <svg viewBox="0 0 120 120" width="140" height="140">
+                <!-- Donut segments -->
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#3fb950" stroke-width="14" stroke-dasharray="98.91 183.09" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#58a6ff" stroke-width="14" stroke-dasharray="70.65 211.35" stroke-dashoffset="-98.91" transform="rotate(-90 60 60)"/>
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#bc8cff" stroke-width="14" stroke-dasharray="42.39 239.61" stroke-dashoffset="-169.56" transform="rotate(-90 60 60)"/>
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#d29922" stroke-width="14" stroke-dasharray="35.33 246.67" stroke-dashoffset="-211.95" transform="rotate(-90 60 60)"/>
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#6e7681" stroke-width="14" stroke-dasharray="35.33 246.67" stroke-dashoffset="-247.28" transform="rotate(-90 60 60)"/>
+                <!-- Center text -->
+                <text x="60" y="55" text-anchor="middle" fill="#c9d1d9" font-size="11" font-weight="600" font-family="JetBrains Mono">¥12.86M</text>
+                <text x="60" y="70" text-anchor="middle" fill="#8b949e" font-size="8" font-family="JetBrains Mono">总资产</text>
+              </svg>
+            </div>
+            <!-- Legend below donut -->
+            <div class="grid grid-cols-3 gap-x-2 gap-y-0.5 text-[9px] mt-1">
+              <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span><span class="text-tui-textMuted">消费35%</span></div>
+              <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-accent"></span><span class="text-tui-textMuted">科技25%</span></div>
+              <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-purple"></span><span class="text-tui-textMuted">金融15%</span></div>
+              <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-yellow"></span><span class="text-tui-textMuted">能源12.5%</span></div>
+              <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-textDim"></span><span class="text-tui-textMuted">现金12.5%</span></div>
+            </div>
+          </div>
+
+          <!-- Right: Holdings P&L Bar Chart -->
+          <div style="flex:1; min-height:0; display:flex; flex-direction:column;">
+            <div class="text-tui-textMuted text-[10px] mb-1">持仓盈亏</div>
+            <div style="flex:1; min-height:0;">
+              <svg width="100%" height="100%" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid meet">
+                <!-- Center axis -->
+                <line x1="20" y1="75" x2="280" y2="75" stroke="#30363d" stroke-width="0.5"/>
+                <text x="10" y="78" fill="#6e7681" font-size="7" font-family="JetBrains Mono">0</text>
+                <text x="0" y="28" fill="#6e7681" font-size="7" font-family="JetBrains Mono">+6%</text>
+                <text x="0" y="128" fill="#6e7681" font-size="7" font-family="JetBrains Mono">-2%</text>
+
+                <!-- Bars (positive=up green, negative=down red) -->
+                <!-- 茅台 +5.82% -->
+                <rect x="30" y="24" width="24" height="51" rx="2" fill="#3fb950" opacity="0.85"/>
+                <text x="42" y="20" text-anchor="middle" fill="#3fb950" font-size="7" font-family="JetBrains Mono">+5.82%</text>
+                <text x="42" y="145" text-anchor="middle" fill="#8b949e" font-size="7" font-family="JetBrains Mono">茅台</text>
+
+                <!-- 宁德 +3.21% -->
+                <rect x="62" y="46" width="24" height="29" rx="2" fill="#3fb950" opacity="0.85"/>
+                <text x="74" y="42" text-anchor="middle" fill="#3fb950" font-size="7" font-family="JetBrains Mono">+3.21%</text>
+                <text x="74" y="145" text-anchor="middle" fill="#8b949e" font-size="7" font-family="JetBrains Mono">宁德</text>
+
+                <!-- 比亚迪 +2.15% -->
+                <rect x="94" y="56" width="24" height="19" rx="2" fill="#3fb950" opacity="0.85"/>
+                <text x="106" y="52" text-anchor="middle" fill="#3fb950" font-size="7" font-family="JetBrains Mono">+2.15%</text>
+                <text x="106" y="145" text-anchor="middle" fill="#8b949e" font-size="7" font-family="JetBrains Mono">比亚</text>
+
+                <!-- 五粮液 +1.68% -->
+                <rect x="126" y="60" width="24" height="15" rx="2" fill="#3fb950" opacity="0.85"/>
+                <text x="138" y="56" text-anchor="middle" fill="#3fb950" font-size="7" font-family="JetBrains Mono">+1.68%</text>
+                <text x="138" y="145" text-anchor="middle" fill="#8b949e" font-size="7" font-family="JetBrains Mono">五粮</text>
+
+                <!-- 中芯 +1.23% -->
+                <rect x="158" y="64" width="24" height="11" rx="2" fill="#3fb950" opacity="0.85"/>
+                <text x="170" y="60" text-anchor="middle" fill="#3fb950" font-size="7" font-family="JetBrains Mono">+1.23%</text>
+                <text x="170" y="145" text-anchor="middle" fill="#8b949e" font-size="7" font-family="JetBrains Mono">中芯</text>
+
+                <!-- 长电 +0.18% -->
+                <rect x="190" y="73" width="24" height="2" rx="1" fill="#3fb950" opacity="0.85"/>
+                <text x="202" y="69" text-anchor="middle" fill="#3fb950" font-size="7" font-family="JetBrains Mono">+0.18%</text>
+                <text x="202" y="145" text-anchor="middle" fill="#8b949e" font-size="7" font-family="JetBrains Mono">长电</text>
+
+                <!-- 平安 -0.45% -->
+                <rect x="222" y="75" width="24" height="4" rx="2" fill="#f85149" opacity="0.85"/>
+                <text x="234" y="88" text-anchor="middle" fill="#f85149" font-size="7" font-family="JetBrains Mono">-0.45%</text>
+                <text x="234" y="145" text-anchor="middle" fill="#8b949e" font-size="7" font-family="JetBrains Mono">平安</text>
+
+                <!-- 招行 -0.31% -->
+                <rect x="254" y="75" width="24" height="3" rx="2" fill="#f85149" opacity="0.85"/>
+                <text x="266" y="87" text-anchor="middle" fill="#f85149" font-size="7" font-family="JetBrains Mono">-0.31%</text>
+                <text x="266" y="145" text-anchor="middle" fill="#8b949e" font-size="7" font-family="JetBrains Mono">招行</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR: Box 5 Center Agent Chat (320px) -->
+    <div class="flex flex-col overflow-hidden border-l border-tui-border" style="width:320px; flex-shrink:0;">
+      <div class="tui-box focused border-0 rounded-none h-full flex flex-col">
+        <div class="tui-box-title">
+          <span class="box-number">5</span>
+          <span>Center Agent / 通用助手</span>
+          <span class="flex-1"></span>
+          <span class="w-2 h-2 rounded-full bg-tui-green animate-pulse-slow"></span>
+        </div>
+        <!-- Chat Messages -->
+        <div class="flex-1 overflow-y-auto scrollbar-thin p-3" style="min-height:0;">
+          <div class="chat-agent">
+            <div class="text-tui-accent text-[10px] font-semibold mb-1">Center Agent</div>
+            <div>欢迎来到组合监控！当前组合净值 <span class="text-tui-accent">1.2856</span>，今日收益 <span class="text-tui-green">+1.47%</span>，跑赢沪深300基准 0.89个百分点。</div>
+            <div class="text-tui-textDim text-[9px] mt-1">09:30:00</div>
+          </div>
+
+          <div class="chat-agent">
+            <div class="text-tui-accent text-[10px] font-semibold mb-1">Center Agent</div>
+            <div>📊 组合分析摘要：</div>
+            <div class="mt-1">• 消费板块贡献最大收益 (+0.82%)</div>
+            <div>• 金融板块微亏 (-0.12%)</div>
+            <div>• Sharpe Ratio <span class="text-tui-cyan">2.31</span> 优于目标2.0</div>
+            <div>• Max Drawdown <span class="text-tui-yellow">-6.82%</span> 在可控范围</div>
+            <div class="mt-1 text-tui-textDim">建议维持当前仓位配置。</div>
+            <div class="text-tui-textDim text-[9px] mt-1">09:35:00</div>
+          </div>
+
+          <div class="chat-user">
+            <div class="text-tui-purple text-[10px] font-semibold mb-1">User</div>
+            <div>帮我看看比亚迪的持仓风险</div>
+            <div class="text-tui-textDim text-[9px] mt-1">10:15:00</div>
+          </div>
+
+          <div class="chat-agent">
+            <div class="text-tui-accent text-[10px] font-semibold mb-1">Center Agent</div>
+            <div>比亚迪 (002594) 持仓分析：</div>
+            <div class="mt-1">• 持仓 600股，市值 ¥179,100</div>
+            <div>• 占比 <span class="text-tui-accent">1.39%</span>（权重适中）</div>
+            <div>• 今日涨幅 <span class="text-tui-green">+1.95%</span></div>
+            <div>• 20日波动率 <span class="text-tui-yellow">28.5%</span>（偏高）</div>
+            <div>• Beta <span class="text-tui-accent">1.35</span>（系统敏感度高）</div>
+            <div class="mt-1">⚠️ 波动率偏高，建议关注新能源汽车政策变化。</div>
+            <div class="text-tui-textDim text-[9px] mt-1">10:15:05</div>
+          </div>
+
+          <div class="chat-agent">
+            <div class="text-tui-accent text-[10px] font-semibold mb-1">Center Agent</div>
+            <div>🔔 风险提示：招商银行近期受地产信贷风险影响，建议密切跟踪其资产质量报告。</div>
+            <div class="text-tui-textDim text-[9px] mt-1">10:30:00</div>
+          </div>
+        </div>
+        <!-- Chat Input -->
+        <div class="p-3 border-t border-tui-border" style="background:#161b22;">
+          <div class="flex items-center gap-2">
+            <input type="text" placeholder="输入指令或问题... (Enter)" class="flex-1 bg-tui-bg border border-tui-border rounded px-2 py-1.5 text-xs text-tui-text focus:outline-none focus:border-tui-accent">
+            <button class="cmd-btn-blue px-3 py-1.5 text-xs">发送</button>
+          </div>
+          <div class="flex gap-1 mt-2">
+            <button class="cmd-btn text-[10px]">/portfolio</button>
+            <button class="cmd-btn text-[10px]">/nav</button>
+            <button class="cmd-btn text-[10px]">/risk</button>
+            <button class="cmd-btn text-[10px]">/rebalance</button>
+            <button class="cmd-btn text-[10px]">/report</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Status Bar -->
+  <div class="flex items-center justify-between px-4 py-1.5 bg-tui-surface border-t border-tui-border text-[10px] text-tui-textMuted flex-shrink-0" style="height:28px;">
+    <div class="flex items-center gap-3">
+      <span class="text-tui-accent font-semibold">组合监控</span>
+      <span>|</span>
+      <span class="flex items-center gap-1">
+        <span class="key">1</span><span>概览</span>
+        <span class="key">2</span><span>曲线</span>
+        <span class="key">3</span><span>持仓</span>
+        <span class="key">4</span><span>分析</span>
+        <span class="key">5</span><span>对话</span>
+      </span>
+      <span>|</span>
+      <span class="key">Tab</span><span>切换</span>
+      <span class="key">/</span><span>命令</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span>投后管理组</span>
+      <span>|</span>
+      <span>Pipeline: <span class="text-tui-accent font-semibold">Stage F</span></span>
+      <span>|</span>
+      <span>市场: <span class="text-tui-green">A股开盘中</span></span>
+      <span>|</span>
+      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span> Connected</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -287,8 +287,8 @@ tailwind.config = {
             <button class="filter-btn">回归测试</button>
           </div>
           <div class="flex-1"></div>
-          <a href="26-static-backtest.html" class="cmd-btn text-[10px]">📊 静态回测</a>
-          <a href="27-dynamic-simulation.html" class="cmd-btn text-[10px]">🎭 动态模拟</a>
+          <a href="30-backtest-agent.html" class="cmd-btn text-[10px]">📊 静态回测</a>
+          <a href="30-backtest-agent.html" class="cmd-btn text-[10px]">🎭 动态模拟</a>
           <button class="cmd-btn text-[10px]">📦 生成策略包</button>
         </div>
       </div>
@@ -525,18 +525,18 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- RIGHT COLUMN: Box 5 - HL Agent Chat -->
+    <!-- RIGHT COLUMN: Box 5 - Strategist Agent  Chat -->
     <div class="tui-box border-0 border-l border-tui-border rounded-none flex flex-col" style="width:340px; flex-shrink:0;">
       <div class="tui-box-title">
         <span class="box-number">5</span>
-        <span>HL Agent / 启发式优化助手</span>
+        <span>Strategist Agent / 策略助手</span>
         <span class="w-2 h-2 rounded-full bg-tui-orange ml-1 animate-pulse"></span>
       </div>
 
       <!-- Chat Messages -->
       <div class="flex-1 overflow-y-auto scrollbar-thin p-3" style="min-height:0;">
         <div class="chat-message chat-agent">
-          <div class="text-tui-accent text-[10px] font-semibold mb-1">HL Agent 🧠</div>
+          <div class="text-tui-accent text-[10px] font-semibold mb-1">Strategist Agent  🧠</div>
           <div>启发式优化已启动！当前目标：Sharpe ≥ 2.0, MaxDD ≤ 10%</div>
           <div class="mt-2 text-tui-textDim text-[10px]">已识别可优化对象：<span class="text-tui-accent">3个指标</span>, <span class="text-tui-yellow">2个阈值</span>, <span class="text-tui-green">1个条件</span></div>
         </div>
@@ -547,7 +547,7 @@ tailwind.config = {
         </div>
 
         <div class="chat-message chat-agent">
-          <div class="text-tui-accent text-[10px] font-semibold mb-1">HL Agent 🧠</div>
+          <div class="text-tui-accent text-[10px] font-semibold mb-1">Strategist Agent  🧠</div>
           <div>好的，我将通过多轮迭代来优化策略。计划优化路径：</div>
           <div class="mt-2 text-xs space-y-1">
             <div>1. <span class="text-tui-yellow">添加RSI过滤</span> - 减少假信号</div>
@@ -561,12 +561,12 @@ tailwind.config = {
 
         <div class="chat-message chat-system">
           <div class="text-tui-cyan text-[10px] font-semibold mb-1">System</div>
-          <div>迭代 #5 完成 | 从 <span class="26-static-backtest.html text-tui-accent">静态回测</span> 获取报告</div>
+          <div>迭代 #5 完成 | 从 <span class="30-backtest-agent.html text-tui-accent">静态回测</span> 获取报告</div>
           <div class="text-tui-textDim text-[10px]">Sharpe: 1.45 → 1.58 | 改进: +8.9%</div>
         </div>
 
         <div class="chat-message chat-agent">
-          <div class="text-tui-accent text-[10px] font-semibold mb-1">HL Agent 🧠</div>
+          <div class="text-tui-accent text-[10px] font-semibold mb-1">Strategist Agent  🧠</div>
           <div>迭代 #5 结果分析：</div>
           <div class="mt-2 text-xs">
             <div class="text-tui-green">✓ 添加RSI>50过滤有效</div>
@@ -577,12 +577,12 @@ tailwind.config = {
 
         <div class="chat-message chat-system">
           <div class="text-tui-cyan text-[10px] font-semibold mb-1">System</div>
-          <div>迭代 #23 进行中 | 调用 <a href="27-dynamic-simulation.html" class="text-tui-accent">动态模拟</a> 验证</div>
+          <div>迭代 #23 进行中 | 调用 <a href="30-backtest-agent.html" class="text-tui-accent">动态模拟</a> 验证</div>
           <div class="text-tui-textDim text-[10px]">当前最优: Sharpe 1.92 | 距目标 4%</div>
         </div>
 
         <div class="chat-message chat-agent">
-          <div class="text-tui-accent text-[10px] font-semibold mb-1">HL Agent 🧠</div>
+          <div class="text-tui-accent text-[10px] font-semibold mb-1">Strategist Agent  🧠</div>
           <div>接近目标！当前夏普 1.92，距目标差 0.08。</div>
           <div class="mt-2 text-xs">
             <div>建议微调：<span class="text-tui-accent">MA_slow: 20→25</span></div>
@@ -600,7 +600,7 @@ tailwind.config = {
         </div>
 
         <div class="chat-message chat-agent">
-          <div class="text-tui-accent text-[10px] font-semibold mb-1">HL Agent 🧠</div>
+          <div class="text-tui-accent text-[10px] font-semibold mb-1">Strategist Agent  🧠</div>
           <div>明白！达到目标后将自动：</div>
           <div class="mt-2 text-xs space-y-1">
             <div>1. 运行<span class="text-tui-cyan">回归测试</span>确保旧能力不丢失</div>

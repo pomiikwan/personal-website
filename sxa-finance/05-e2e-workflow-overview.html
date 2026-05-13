@@ -299,15 +299,16 @@ tailwind.config = {
                   <span>进度 75%</span>
                   <span>3 策略</span>
                 </div>
-                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-blue">Strategy Agent</span></div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-cyan">情报监控</span> (投前分析组)</div>
                 <div class="text-xs space-y-0.5">
-                  <div class="text-tui-text">- VolBreakout V2 参数优化中</div>
-                  <div class="text-tui-text">- ESG-Alpha 新策略设计</div>
-                  <div class="text-tui-text">- MacroRotation 升级评估</div>
+                  <div class="text-tui-text">- VolBreakout V2 信号聚合完成</div>
+                  <div class="text-tui-text">- ESG-Alpha 情报收集进行中</div>
+                  <div class="text-tui-text">- MacroRotation 宏观数据已就绪</div>
                 </div>
                 <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border">
+                  <a href="29-intel-agent.html" class="cmd-btn text-xs text-tui-cyan">29 Intel</a>
                   <a href="08-strategy-management.html" class="cmd-btn text-xs text-tui-blue">08 策略</a>
-                  <a href="09-market-overview.html" class="cmd-btn text-xs text-tui-cyan">04 行情</a>
+                  <a href="29-intel-agent.html" class="cmd-btn text-xs text-tui-cyan">04 行情</a>
                 </div>
               </div>
 
@@ -327,14 +328,14 @@ tailwind.config = {
                   <span>进度 50%</span>
                   <span>2 策略</span>
                 </div>
-                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-purple">Compliance Agent</span></div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-purple">Compliance Agent</span> (全局组)</div>
                 <div class="text-xs space-y-0.5">
                   <div class="text-tui-text">- ESG-Alpha 合规预审中</div>
                   <div class="text-tui-text">- MacroRotation 监管检查</div>
                 </div>
                 <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border">
+                  <a href="03-compliance-dashboard.html" class="cmd-btn text-xs text-tui-purple">03 合规</a>
                   <a href="01-approval-center.html" class="cmd-btn text-xs text-tui-blue">01 审批</a>
-                  <a href="02-agent-collaboration.html" class="cmd-btn text-xs text-tui-purple">02 协作</a>
                 </div>
               </div>
 
@@ -354,14 +355,15 @@ tailwind.config = {
                   <span>进度 30%</span>
                   <span>1 策略</span>
                 </div>
-                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-cyan">Quant Agent</span></div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-cyan">回测调试</span> (投前策略组)</div>
                 <div class="text-xs space-y-0.5">
                   <div class="text-tui-text">- VolBreakout V2 回测运行中</div>
-                  <div class="text-tui-muted">Sharpe: 1.85 | MaxDD: -6.2%</div>
+                  <div class="text-tui-muted">Sharpe: 2.34 | MaxDD: -8.7% | Gate: 4/4 PASS</div>
                 </div>
                 <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border">
-                  <a href="10-trading-execution.html" class="cmd-btn text-xs text-tui-green">10 交易</a>
-                  <a href="11-risk-management.html" class="cmd-btn text-xs text-tui-red">11 风控</a>
+                  <a href="30-backtest-agent.html" class="cmd-btn text-xs text-tui-cyan">30 Backtest</a>
+                  <a href="30-backtest-agent.html" class="cmd-btn text-xs text-tui-blue">26 静态</a>
+                  <a href="30-backtest-agent.html" class="cmd-btn text-xs text-tui-purple">27 动态</a>
                 </div>
               </div>
             </div>
@@ -382,7 +384,7 @@ tailwind.config = {
                   <span>进度 15%</span>
                   <span>2 待审</span>
                 </div>
-                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-yellow">Approval Agent</span></div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-yellow">Compliance Agent</span> (审批模块)</div>
                 <div class="text-xs space-y-0.5">
                   <div class="text-tui-yellow">- VolBreakout 参数变更待批</div>
                   <div class="text-tui-text">- ESG-Alpha 上线审批排队</div>
@@ -409,7 +411,7 @@ tailwind.config = {
                   <span>进度 90%</span>
                   <span>4 策略运行</span>
                 </div>
-                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-green">Monitor Agent</span></div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-green">净值管理</span> (投中决策组)</div>
                 <div class="text-xs space-y-0.5">
                   <div class="text-tui-green">- AlphaMomentum 运行正常</div>
                   <div class="text-tui-green">- MeanRevertV3 运行正常</div>
@@ -417,9 +419,9 @@ tailwind.config = {
                   <div class="text-tui-green">- PairTrade-I 运行正常</div>
                 </div>
                 <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border flex-wrap">
+                  <a href="31-capital-agent.html" class="cmd-btn text-xs text-tui-green">31 Capital</a>
                   <a href="10-trading-execution.html" class="cmd-btn text-xs text-tui-green">10 交易</a>
                   <a href="11-risk-management.html" class="cmd-btn text-xs text-tui-red">11 风控</a>
-                  <a href="15-system-monitor.html" class="cmd-btn text-xs">15 监控</a>
                 </div>
               </div>
 
@@ -440,7 +442,7 @@ tailwind.config = {
                   <span>进度 60%</span>
                   <span>4 组合</span>
                 </div>
-                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-cyan">Portfolio Agent</span></div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-cyan">组合管理</span> (投后管理组)</div>
                 <div class="text-xs space-y-0.5">
                   <div class="text-tui-green">- 量化Alpha组合 +12.3%</div>
                   <div class="text-tui-green">- 固收增强组合 +4.2%</div>
@@ -448,10 +450,9 @@ tailwind.config = {
                   <div class="text-tui-green">- 宏观轮动组合 +8.7%</div>
                 </div>
                 <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border flex-wrap">
-                  <a href="19-portfolio-management.html" class="cmd-btn text-xs text-tui-cyan">19 组合</a>
-                  <a href="20-performance-attribution.html" class="cmd-btn text-xs text-tui-blue">20 归因</a>
-                  <a href="21-sensitivity-analysis.html" class="cmd-btn text-xs text-tui-purple">21 敏感</a>
-                  <a href="22-strategy-runtime.html" class="cmd-btn text-xs">22 策略</a>
+                  <a href="32-portfolio-agent.html" class="cmd-btn text-xs text-tui-cyan">32 组合管理</a>
+                  <a href="19-portfolio-monitor.html" class="cmd-btn text-xs text-tui-cyan">19 监控</a>
+                  <a href="32-portfolio-agent.html" class="cmd-btn text-xs text-tui-blue">20 归因</a>
                 </div>
               </div>
             </div>
@@ -473,14 +474,14 @@ tailwind.config = {
                   <span>进度 40%</span>
                   <span>2 待交付</span>
                 </div>
-                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-green">Report Agent</span></div>
+                <div class="text-tui-muted text-xs mb-1">Lead: <span class="text-tui-green">组合管理</span> (报告模块)</div>
                 <div class="text-xs space-y-0.5">
                   <div class="text-tui-green">- 量化Alpha周报W19 已生成</div>
                   <div class="text-tui-yellow">- Q1投后总结 待生成</div>
                   <div class="text-tui-muted">- 15份历史报告已完成</div>
                 </div>
                 <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border flex-wrap">
-                  <a href="23-delivery-report.html" class="cmd-btn text-xs text-tui-green">23 交付</a>
+                  <a href="32-portfolio-agent.html" class="cmd-btn text-xs text-tui-green">23 交付</a>
                   <a href="04-document-viewer.html" class="cmd-btn text-xs text-tui-purple">04 文档</a>
                 </div>
               </div>
@@ -496,7 +497,7 @@ tailwind.config = {
                 <div class="text-tui-text text-xs font-semibold mb-1">反馈循环 Feedback Loop</div>
                 <div class="text-xs space-y-1 mt-2 text-tui-textMuted">
                   <div>投后管理 → <a href="17-logic-analysis.html" class="text-tui-purple">逻辑分析</a>(重新评估)</div>
-                  <div>业绩归因 → <a href="18-signal-monitor.html" class="text-tui-cyan">信号监测</a>(调整监测点)</div>
+                  <div>业绩归因 → <a href="29-intel-agent.html" class="text-tui-cyan">信号监测</a>(调整监测点)</div>
                   <div>敏感度分析 → <a href="08-strategy-management.html" class="text-tui-blue">策略管理</a>(参数优化)</div>
                   <div>交付报告 → <a href="00-home.html" class="text-tui-text">Home</a>(新周期)</div>
                 </div>
@@ -668,7 +669,7 @@ tailwind.config = {
       <a href="01-approval-center.html" class="nav-item hover:text-tui-text">01 Approval</a>
       <a href="02-agent-collaboration.html" class="nav-item hover:text-tui-text">02 Agents</a>
       <a href="03-compliance-dashboard.html" class="nav-item hover:text-tui-text">03 Compliance</a>
-      <a href="09-market-overview.html" class="nav-item hover:text-tui-text">04 Market</a>
+      <a href="29-intel-agent.html" class="nav-item hover:text-tui-text">04 Market</a>
       <a href="06-categorized-workflows.html" class="nav-item hover:text-tui-text">06 Workflows</a>
       <a href="08-strategy-management.html" class="nav-item hover:text-tui-text">08 Strategy</a>
       <a href="10-trading-execution.html" class="nav-item hover:text-tui-text">10 Trading</a>
