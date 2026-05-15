@@ -96,6 +96,8 @@ body { background:#0d1117; color:#c9d1d9; font-family:'Noto Sans SC','JetBrains 
 .pulse { animation:pulse 2s ease-in-out infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 .blink-cursor { animation:blink 1s step-end infinite; }
+.agent-notification { position: fixed; right: 20px; width: 320px; z-index: 1000; animation: slideIn 0.3s ease-out; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 </style>
 </head>
 <body>
@@ -131,7 +133,9 @@ body { background:#0d1117; color:#c9d1d9; font-family:'Noto Sans SC','JetBrains 
     <div style="width:1px;height:16px;background:#30363d;margin:0 4px;"></div>
     <a href="10-trading-execution.html" class="nav-tab">💹 交易执行</a>
     <a href="11-risk-management.html" class="nav-tab">⚠️ 风险管理</a>
-    <div style="flex:1;"></div>
+    <div class="flex-1"></div>
+<span style="color:#484f58; font-size:9px; font-family:'JetBrains Mono',monospace;">投中决策组 | Trader Agent | Phase E</span>
+<span style="width:1px;height:14px;background:#30363d;margin:0 6px;"></span>
     <a href="00-home.html" class="cmd-btn">← 返回主页</a>
   </div>
 
@@ -631,5 +635,29 @@ function syncInterval() {
 window.addEventListener('storage', syncInterval);
 syncInterval();
 </script>
+
+<!-- Agent Notification Cards -->
+<div class="agent-notification" id="notif-1" style="top:100px;">
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; margin-bottom:8px; border-left:3px solid #db6d28;">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+      <span style="color:#db6d28; font-size:11px; font-weight:600;">Capital Agent</span>
+      <span style="color:#484f58; font-size:9px;">投中决策组</span>
+      <span style="margin-left:auto; color:#484f58; font-size:9px; cursor:pointer;" onclick="document.getElementById('notif-1').style.display='none'">✕</span>
+    </div>
+    <div style="color:#c9d1d9; font-size:11px; margin-bottom:4px;">NVDA 拆单执行进度 27.9%（22.3万/80.0万），资金充足，建议继续执行。</div>
+    <div style="color:#8b949e; font-size:10px;">[推理: 盈亏比2.8:1表现优异，维持执行] · 15:10</div>
+  </div>
+</div>
+<div class="agent-notification" id="notif-2" style="top:210px;">
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; margin-bottom:8px; border-left:3px solid #f85149;">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+      <span style="color:#f85149; font-size:11px; font-weight:600;">Risk Agent</span>
+      <span style="color:#484f58; font-size:9px;">投中决策组</span>
+      <span style="margin-left:auto; color:#484f58; font-size:9px; cursor:pointer;" onclick="document.getElementById('notif-2').style.display='none'">✕</span>
+    </div>
+    <div style="color:#c9d1d9; font-size:11px; margin-bottom:4px;">⚠️ AAPL止损位 168.50 距离当前价仅 -3.95%，盈亏比降至 1.38:1，建议密切关注。</div>
+    <div style="color:#8b949e; font-size:10px;">[推理: 止损距离收窄，风险收益比恶化] · 15:08</div>
+  </div>
+</div>
 </body>
 </html>

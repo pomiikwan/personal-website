@@ -261,6 +261,9 @@
       font-size: 10px;
       font-weight: 500;
     }
+
+    .agent-notification { position: fixed; right: 20px; width: 320px; z-index: 1000; animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   </style>
 </head>
 <body>
@@ -279,6 +282,8 @@
         <span class="text-tui-textDim text-xs">|</span>
         <span class="text-xs text-tui-text font-mono">任务驱动工作面板</span>
         <span class="text-tui-textDim text-xs">Workflow Panel</span>
+        <span class="text-tui-textDim text-xs">|</span>
+        <span class="text-xs" style="color:#58a6ff;">全局管控组 工作流管理</span>
       </div>
       <div class="flex items-center gap-2">
         <a href="16-workflow-panel.html" class="px-2 py-0.5 bg-tui-accentDim text-white text-[10px] rounded hover:bg-tui-accent transition-colors font-mono">
@@ -1248,5 +1253,19 @@
     // Initialize
     updateBreadcrumb('B');
   </script>
+
+<!-- Agent Notification Cards -->
+<div class="agent-notification" id="notif-1" style="top:60px;">
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; margin-bottom:8px; border-left:3px solid #58a6ff;">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+      <span style="color:#58a6ff; font-size:11px; font-weight:600;">CA Agent</span>
+      <span style="color:#6e7681; font-size:9px;">全局管控组</span>
+      <span style="margin-left:auto; color:#6e7681; font-size:9px; cursor:pointer;" onclick="document.getElementById('notif-1').style.display='none'">✕</span>
+    </div>
+    <div style="color:#e6edf3; font-size:11px; margin-bottom:4px;">当前有 3 个活跃任务：回测验证(APR-0042)、参数修订审核、新策略准入评估。</div>
+    <div style="color:#8b949e; font-size:10px;">[任务队列概览] · 刚刚</div>
+  </div>
+</div>
+
 </body>
 </html>

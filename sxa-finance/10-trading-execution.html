@@ -214,6 +214,9 @@ tailwind.config = {
 
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
   .animate-pulse-slow { animation: pulse 2s infinite; }
+
+  .agent-notification { position:fixed; right:20px; width:320px; z-index:1000; animation:slideIn 0.3s ease-out; }
+  @keyframes slideIn { from{transform:translateX(100%);opacity:0;} to{transform:translateX(0);opacity:1;} }
 </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -231,6 +234,10 @@ tailwind.config = {
     <span class="text-tui-text text-xs font-semibold ml-2">SXA Trading Execution</span>
     <span class="text-tui-muted text-xs">/</span>
     <span class="text-tui-cyan text-xs">交易执行面板</span>
+      <span style="color:#30363d">|</span>
+      <span style="color:#db6d28; font-size:10px;">投中决策组 Trader Agent</span>
+      <span style="color:#30363d">|</span>
+      <span style="color:#3fb950; font-size:10px;">子模块: [1] 订单簿 [2] 拆单策略 [3] 执行监控 [4] 成交记录</span>
     <span class="flex-1"></span>
     <span class="text-tui-muted text-xs">2026-05-10 09:31:42 CST</span>
     <span class="tag tag-green ml-2">LIVE</span>
@@ -587,6 +594,39 @@ tailwind.config = {
       <a href="16-workflow-panel.html" class="nav-item hover:text-tui-text">Workflow</a>
     </span>
     <span class="text-tui-green ml-2">12 orders | ¥12.86M</span>
+  </div>
+</div>
+
+<!-- Agent Notifications -->
+<div class="agent-notification" style="top:80px;">
+  <div style="background:#161b22; border:1px solid rgba(219,109,40,0.3); border-radius:8px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#db6d28;display:block;"></span>
+        <span style="font-size:10px; font-weight:600; color:#db6d28;">💰 Capital Agent</span>
+        <span style="font-size:9px; padding:1px 6px; border-radius:10px; background:rgba(219,109,40,0.15); color:#db6d28;">投中决策组</span>
+      </div>
+      <button onclick="this.closest('.agent-notification').remove()" style="background:none; border:none; color:#484f58; cursor:pointer; font-size:12px;">✕</button>
+    </div>
+    <div style="font-size:11px; color:#c9d1d9; margin-bottom:4px;">资金分配已确认 - AlphaMomentum 分配额度 ¥2000万，可执行买入</div>
+    <div style="font-size:10px; color:#6e7681;">[推理: 净值管理模块确认可用资金+策略权重分配+风控限额检查通过]</div>
+    <div style="font-size:9px; color:#6e7681; margin-top:4px;">09:32:15</div>
+  </div>
+</div>
+
+<div class="agent-notification" style="top:200px;">
+  <div style="background:#161b22; border:1px solid rgba(248,81,73,0.3); border-radius:8px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#f85149;display:block;"></span>
+        <span style="font-size:10px; font-weight:600; color:#f85149;">⚠️ Risk Agent</span>
+        <span style="font-size:9px; padding:1px 6px; border-radius:10px; background:rgba(219,109,40,0.15); color:#db6d28;">投中决策组</span>
+      </div>
+      <button onclick="this.closest('.agent-notification').remove()" style="background:none; border:none; color:#484f58; cursor:pointer; font-size:12px;">✕</button>
+    </div>
+    <div style="font-size:11px; color:#c9d1d9; margin-bottom:4px;">实时风控更新 - 组合VaR 当前1.8%，安全范围内</div>
+    <div style="font-size:10px; color:#6e7681;">[推理: 4个运行策略VaR贡献计算+相关性调整+压力测试通过]</div>
+    <div style="font-size:9px; color:#6e7681; margin-top:4px;">09:31:58</div>
   </div>
 </div>
 

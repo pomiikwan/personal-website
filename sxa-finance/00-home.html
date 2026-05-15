@@ -730,82 +730,265 @@
         </div>
       </div>
 
-      <!-- RIGHT: Box 5 - Agent Chat Box -->
-      <div class="flex-shrink-0 border-l border-tui-border bg-tui-surface flex flex-col" style="width:300px;">
+      <!-- RIGHT: Box 5 - CA Agent Chat Box (常驻面板，三种交互模式) -->
+      <div class="flex-shrink-0 border-l border-tui-border bg-tui-surface flex flex-col" style="width:320px;">
+        <!-- CA Agent Header -->
         <div class="px-3 py-2 border-b border-tui-border flex items-center gap-2">
           <span class="text-tui-accent font-mono text-xs font-bold">[5]</span>
           <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px]" style="background:rgba(88,166,255,0.15);">
             🤖
           </div>
-          <span class="text-xs font-semibold text-tui-text">Center Agent</span>
+          <span class="text-xs font-semibold text-tui-text">CA Agent</span>
           <span class="status-dot ml-1" style="background:#3fb950;"></span>
           <span class="text-[10px] text-tui-green">在线</span>
+          <span class="ml-auto flex items-center gap-1">
+            <span class="pending-badge" style="background:#d29922;">2</span>
+            <span class="text-[9px] text-tui-textDim">未读</span>
+          </span>
+        </div>
+
+        <!-- 交互模式切换 Tab -->
+        <div class="flex items-center gap-0 border-b border-tui-border bg-tui-bg">
+          <button class="flex-1 px-2 py-1.5 text-[10px] font-mono text-center transition-colors bg-tui-surface text-tui-accent border-b-2 border-tui-accent" id="mode-monitor" onclick="switchMode('monitor')">
+            📡 监控
+          </button>
+          <div class="w-px h-4 bg-tui-border"></div>
+          <button class="flex-1 px-2 py-1.5 text-[10px] font-mono text-center transition-colors text-tui-textMuted hover:text-tui-text" id="mode-brainstorm" onclick="switchMode('brainstorm')">
+            💡 头脑风暴
+          </button>
+          <div class="w-px h-4 bg-tui-border"></div>
+          <button class="flex-1 px-2 py-1.5 text-[10px] font-mono text-center transition-colors text-tui-textMuted hover:text-tui-text" id="mode-task" onclick="switchMode('task')">
+            🎯 任务
+          </button>
         </div>
 
         <!-- Chat Messages -->
-        <div class="flex-1 overflow-y-auto p-3 space-y-3" style="max-height: calc(100vh - 40px - 80px - 36px - 48px);">
-          <!-- Agent Message -->
-          <div>
-            <div class="flex items-center gap-1 mb-1">
-              <span class="text-[10px] text-tui-accent font-semibold">Center Agent</span>
-              <span class="text-[10px] text-tui-textDim">14:32</span>
-            </div>
-            <div class="text-xs text-tui-text bg-tui-bg rounded-lg p-2 border border-tui-border">
-              欢迎回来！当前系统运行正常。有 <span class="text-tui-yellow">3项待审批</span> 任务需要处理，其中 <span class="text-tui-red">QDII-2026-042</span> 为紧急事项，建议优先处理。
-            </div>
-          </div>
+        <div class="flex-1 overflow-y-auto p-3 space-y-2" style="max-height: calc(100vh - 40px - 80px - 36px - 48px - 32px);">
 
-          <!-- User Message -->
-          <div>
-            <div class="flex items-center gap-1 mb-1 justify-end">
-              <span class="text-[10px] text-tui-textDim">14:33</span>
-              <span class="text-[10px] text-tui-purple font-semibold">You</span>
-            </div>
-            <div class="text-xs text-tui-text rounded-lg p-2 border ml-6" style="background:rgba(188,140,255,0.08);border-color:rgba(188,140,255,0.2);">
-              帮我看看 QDII-2026-042 的详情
-            </div>
-          </div>
-
-          <!-- Agent Response -->
-          <div>
-            <div class="flex items-center gap-1 mb-1">
-              <span class="text-[10px] text-tui-accent font-semibold">Center Agent</span>
-              <span class="text-[10px] text-tui-textDim">14:33</span>
-            </div>
-            <div class="text-xs text-tui-text bg-tui-bg rounded-lg p-2 border border-tui-border">
-              <div class="mb-1">QDII-2026-042 策略审批摘要：</div>
-              <div class="text-[10px] space-y-0.5 text-tui-textMuted">
-                <div>• 策略类型: 跨境量化对冲</div>
-                <div>• 目标规模: ¥5,000万</div>
-                <div>• 风险等级: <span class="text-tui-orange">R3</span></div>
-                <div>• 合规评分: <span class="text-tui-green">96.2</span></div>
-                <div>• 当前阶段: <span class="text-tui-accent">Phase B - 审批</span></div>
+          <!-- ═══ 监控模式内容 (默认显示) ═══ -->
+          <div id="content-monitor">
+            <!-- 监控推送告警 -->
+            <div class="px-2 py-1.5 rounded text-[10px] border-l-2 border-tui-red bg-tui-bg mb-2">
+              <div class="flex items-center gap-1 mb-0.5">
+                <span class="text-tui-red font-semibold">⚠ VaR 超限</span>
+                <span class="text-tui-textDim ml-auto">13:45</span>
               </div>
-              <div class="mt-1.5 text-tui-textDim">建议直接前往 <a href="01-approval-center.html" class="text-tui-accent hover:underline">审批中心</a> 处理。</div>
+              <div class="text-tui-textMuted">策略 Alpha-7 触发止损线，当前 VaR 2.3%（阈值 2.0%）</div>
+              <div class="flex gap-1 mt-1">
+                <a href="11-risk-management.html" class="text-tui-accent hover:underline">查看风控面板</a>
+              </div>
             </div>
-          </div>
 
-          <!-- Suggestion -->
-          <div>
-            <div class="flex items-center gap-1 mb-1">
-              <span class="text-[10px] text-tui-accent font-semibold">Center Agent</span>
-              <span class="text-[10px] text-tui-textDim">14:33</span>
+            <div class="px-2 py-1.5 rounded text-[10px] border-l-2 border-tui-yellow bg-tui-bg mb-2">
+              <div class="flex items-center gap-1 mb-0.5">
+                <span class="text-tui-yellow font-semibold">⚡ 策略进度</span>
+                <span class="text-tui-textDim ml-auto">14:15</span>
+              </div>
+              <div class="text-tui-textMuted">VolBreakout V2 回测完成，Sharpe 2.34，待审批</div>
+              <div class="flex gap-1 mt-1">
+                <a href="01-approval-center.html" class="text-tui-accent hover:underline">去审批</a>
+              </div>
             </div>
-            <div class="text-xs text-tui-text bg-tui-bg rounded-lg p-2 border border-tui-border">
-              <div class="text-[10px] text-tui-textDim mb-1.5">快捷操作建议：</div>
+
+            <!-- 日常消息 -->
+            <div>
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-[10px] text-tui-accent font-semibold">CA Agent</span>
+                <span class="text-[10px] text-tui-textDim">14:32</span>
+              </div>
+              <div class="text-xs text-tui-text bg-tui-bg rounded-lg p-2 border border-tui-border">
+                欢迎回来！系统运行正常。有 <span class="text-tui-yellow">3项待审批</span>，其中 <span class="text-tui-red">QDII-2026-042</span> 为紧急事项。
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-1 mb-1 justify-end">
+                <span class="text-[10px] text-tui-textDim">14:33</span>
+                <span class="text-[10px] text-tui-purple font-semibold">You</span>
+              </div>
+              <div class="text-xs text-tui-text rounded-lg p-2 border ml-6" style="background:rgba(188,140,255,0.08);border-color:rgba(188,140,255,0.2);">
+                帮我看看 QDII-2026-042 的详情
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-[10px] text-tui-accent font-semibold">CA Agent</span>
+                <span class="text-[10px] text-tui-textDim">14:33</span>
+              </div>
+              <div class="text-xs text-tui-text bg-tui-bg rounded-lg p-2 border border-tui-border">
+                <div class="mb-1">QDII-2026-042 审批摘要：</div>
+                <div class="text-[10px] space-y-0.5 text-tui-textMuted">
+                  <div>• 策略: 跨境量化对冲 | 规模 ¥5,000万</div>
+                  <div>• 风险: <span class="text-tui-orange">R3</span> | 合规: <span class="text-tui-green">96.2</span></div>
+                  <div>• 阶段: <span class="text-tui-accent">Phase B - 审批</span></div>
+                </div>
+                <div class="mt-1"><a href="01-approval-center.html" class="text-tui-accent hover:underline">前往审批中心 →</a></div>
+              </div>
+            </div>
+
+            <!-- 运行中策略状态 -->
+            <div class="mt-2 px-2 py-1.5 rounded bg-tui-bg border border-tui-border">
+              <div class="text-[10px] text-tui-textDim mb-1">📊 运行中策略 (4/12)</div>
               <div class="space-y-1">
-                <a href="01-approval-center.html" class="block text-[10px] px-2 py-1 rounded bg-tui-surface border border-tui-border hover:border-tui-accent text-tui-textMuted hover:text-tui-accent transition-colors">
-                  → 审批 QDII-2026-042
-                </a>
-                <a href="08-strategy-management.html" class="block text-[10px] px-2 py-1 rounded bg-tui-surface border border-tui-border hover:border-tui-accent text-tui-textMuted hover:text-tui-accent transition-colors">
-                  → 查看策略详情
-                </a>
-                <a href="16-workflow-panel.html" class="block text-[10px] px-2 py-1 rounded bg-tui-surface border border-tui-border hover:border-tui-accent text-tui-textMuted hover:text-tui-accent transition-colors">
-                  → 进入工作面板
-                </a>
+                <div class="flex items-center justify-between text-[10px]">
+                  <span class="text-tui-green">● AlphaMomentum</span>
+                  <span class="text-tui-textMuted">+8.2%</span>
+                </div>
+                <div class="flex items-center justify-between text-[10px]">
+                  <span class="text-tui-green">● MeanRevertV3</span>
+                  <span class="text-tui-textMuted">+3.1%</span>
+                </div>
+                <div class="flex items-center justify-between text-[10px]">
+                  <span class="text-tui-yellow">● VolBreakout</span>
+                  <span class="text-tui-textMuted">-1.4%</span>
+                </div>
+                <div class="flex items-center justify-between text-[10px]">
+                  <span class="text-tui-green">● PairTrade-I</span>
+                  <span class="text-tui-textMuted">+5.7%</span>
+                </div>
               </div>
             </div>
           </div>
+
+          <!-- ═══ 头脑风暴模式内容 (隐藏) ═══ -->
+          <div id="content-brainstorm" style="display:none;">
+            <div class="px-2 py-1.5 rounded text-[10px] border border-tui-accent bg-tui-bg mb-2" style="border-color:rgba(88,166,255,0.3);">
+              <span class="text-tui-accent">💡 头脑风暴模式</span>
+              <span class="text-tui-textDim"> — 探讨要点将被记入记忆</span>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-[10px] text-tui-accent font-semibold">CA Agent</span>
+                <span class="text-[10px] text-tui-textDim">14:35</span>
+              </div>
+              <div class="text-xs text-tui-text bg-tui-bg rounded-lg p-2 border border-tui-border">
+                好的，让我们来探讨这个思路。当前市场环境下，你提到的「多因子轮动策略」有几个关键问题需要厘清：
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-1 mb-1 justify-end">
+                <span class="text-[10px] text-tui-textDim">14:36</span>
+                <span class="text-[10px] text-tui-purple font-semibold">You</span>
+              </div>
+              <div class="text-xs text-tui-text rounded-lg p-2 border ml-6" style="background:rgba(188,140,255,0.08);border-color:rgba(188,140,255,0.2);">
+                我担心的是因子暴露在小盘股上的集中度，怎么控制？
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-[10px] text-tui-accent font-semibold">CA Agent</span>
+                <span class="text-[10px] text-tui-textDim">14:36</span>
+              </div>
+              <div class="text-xs text-tui-text bg-tui-bg rounded-lg p-2 border border-tui-border">
+                <div class="mb-1">很好的关注点。根据 <span class="text-tui-cyan">Macro Agent</span> 最新的宏观分析：</div>
+                <div class="text-[10px] space-y-0.5 text-tui-textMuted">
+                  <div>• 小盘因子暴露度: 当前 32%（行业均值 28%）</div>
+                  <div>• 建议: 添加市值中性化约束，目标因子暴露 ≤25%</div>
+                </div>
+                <div class="mt-1.5 text-[10px] text-tui-textDim">📝 已记录: 「因子暴露集中度控制 → 市值中性化约束方案」</div>
+              </div>
+            </div>
+
+            <!-- 头脑风暴要点卡片 -->
+            <div class="mt-2 px-2 py-1.5 rounded bg-tui-bg border border-tui-accent" style="border-color:rgba(88,166,255,0.3);">
+              <div class="text-[10px] text-tui-accent font-semibold mb-1">📋 已提炼要点</div>
+              <div class="text-[10px] space-y-0.5 text-tui-textMuted">
+                <div>1. 多因子轮动策略 — 核心思路确认</div>
+                <div>2. 因子暴露控制 — 市值中性化约束</div>
+                <div>3. 待讨论: 轮动频率和交易成本</div>
+              </div>
+              <div class="mt-1.5">
+                <button class="text-[10px] px-2 py-1 rounded bg-tui-accentDim text-white hover:bg-tui-accent transition-colors">
+                  🎯 转为任务执行 →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══ 任务模式内容 (隐藏) ═══ -->
+          <div id="content-task" style="display:none;">
+            <div class="px-2 py-1.5 rounded text-[10px] border border-tui-green bg-tui-bg mb-2" style="border-color:rgba(63,185,80,0.3);">
+              <span class="text-tui-green">🎯 任务模式</span>
+              <span class="text-tui-textDim"> — 多Agent群聊会议</span>
+            </div>
+
+            <!-- 任务群聊: 多Agent讨论 -->
+            <div>
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-[10px] text-tui-accent font-semibold">CA Agent (主持)</span>
+                <span class="text-[10px] text-tui-textDim">14:40</span>
+              </div>
+              <div class="text-xs text-tui-text bg-tui-bg rounded-lg p-2 border border-tui-border">
+                📋 任务: 「VolBreakout V2 策略上线」<br>
+                <span class="text-tui-textMuted">参与 Agent: Intel, Strategist, Backtest, Compliance</span>
+              </div>
+            </div>
+
+            <!-- Intel Agent 发言 -->
+            <div>
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-[10px] font-semibold" style="color:#39d2c0;">🔍 Intel Agent</span>
+                <span class="text-[10px] text-tui-textDim">14:41</span>
+                <span class="text-[9px] px-1 py-0.5 rounded bg-tui-cyan bg-opacity-15 text-tui-cyan">投前分析组</span>
+              </div>
+              <div class="text-xs text-tui-text rounded-lg p-2 border-l-2" style="background:rgba(57,210,192,0.05);border-color:#39d2c0;">
+                信号评分 85，偏多<br>
+                <span class="text-[10px] text-tui-textDim">[推理: 3个技术指标看涨 + 资金连续3日净流入 + 波动率收敛至突破位]</span>
+              </div>
+            </div>
+
+            <!-- Strategist Agent 发言 -->
+            <div>
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-[10px] font-semibold" style="color:#58a6ff;">📋 Strategist Agent</span>
+                <span class="text-[10px] text-tui-textDim">14:41</span>
+                <span class="text-[9px] px-1 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">投前策略组</span>
+              </div>
+              <div class="text-xs text-tui-text rounded-lg p-2 border-l-2" style="background:rgba(88,166,255,0.05);border-color:#58a6ff;">
+                基于 Intel 信号评分，策略参数已优化<br>
+                <span class="text-[10px] text-tui-textDim">[推理: HL优化后 Sharpe 2.34, MaxDD -8.7%, WinRate 61%]</span>
+              </div>
+            </div>
+
+            <!-- Backtest Agent 发言 -->
+            <div>
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-[10px] font-semibold" style="color:#bc8cff;">🔬 Backtest Agent</span>
+                <span class="text-[10px] text-tui-textDim">14:42</span>
+                <span class="text-[9px] px-1 py-0.5 rounded bg-tui-purple bg-opacity-15 text-tui-purple">投前策略组</span>
+              </div>
+              <div class="text-xs text-tui-text rounded-lg p-2 border-l-2" style="background:rgba(188,140,255,0.05);border-color:#bc8cff;">
+                回测通过 G4-Gate 全部门禁<br>
+                <span class="text-[10px] text-tui-textDim">[推理: 静态回测+动态模拟均达标，4/4 PASS]</span>
+              </div>
+            </div>
+
+            <!-- CA Agent 汇总 -->
+            <div>
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-[10px] text-tui-accent font-semibold">CA Agent (主持)</span>
+                <span class="text-[10px] text-tui-textDim">14:42</span>
+              </div>
+              <div class="text-xs text-tui-text bg-tui-bg rounded-lg p-2 border border-tui-accent" style="border-color:rgba(88,166,255,0.3);">
+                <div class="mb-1">📊 会议汇总：</div>
+                <div class="text-[10px] space-y-0.5 text-tui-textMuted">
+                  <div>✅ Intel: 信号偏多 (85分)</div>
+                  <div>✅ Strategist: 参数已优化 (Sharpe 2.34)</div>
+                  <div>✅ Backtest: 4/4 Gate 通过</div>
+                  <div>⏳ Compliance: 待合规审查 (下一环节)</div>
+                </div>
+                <div class="mt-1.5 text-[10px]">
+                  <button class="px-2 py-1 rounded bg-tui-greenDim text-white hover:bg-tui-green transition-colors mr-1">确认方案，指派执行</button>
+                  <button class="px-2 py-1 rounded bg-tui-surface border border-tui-border text-tui-textMuted hover:text-tui-text transition-colors">补充讨论</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- Chat Input -->
@@ -846,6 +1029,27 @@
   </div>
 
   <script>
+    // Mode switching
+    function switchMode(mode) {
+      // Hide all content panels
+      document.getElementById('content-monitor').style.display = 'none';
+      document.getElementById('content-brainstorm').style.display = 'none';
+      document.getElementById('content-task').style.display = 'none';
+
+      // Show selected content
+      document.getElementById('content-' + mode).style.display = '';
+
+      // Update tab styles
+      ['monitor', 'brainstorm', 'task'].forEach(m => {
+        const tab = document.getElementById('mode-' + m);
+        if (m === mode) {
+          tab.className = 'flex-1 px-2 py-1.5 text-[10px] font-mono text-center transition-colors bg-tui-surface text-tui-accent border-b-2 border-tui-accent';
+        } else {
+          tab.className = 'flex-1 px-2 py-1.5 text-[10px] font-mono text-center transition-colors text-tui-textMuted hover:text-tui-text';
+        }
+      });
+    }
+
     // Clock
     function updateClock() {
       const now = new Date();

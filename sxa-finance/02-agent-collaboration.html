@@ -297,6 +297,9 @@ tailwind.config = {
   .comm-entry.comm-warning { border-left-color: #d29922; }
   .comm-entry.comm-success { border-left-color: #3fb950; }
   .comm-entry.comm-error { border-left-color: #f85149; }
+
+  .agent-notification { position: fixed; right: 20px; width: 320px; z-index: 1000; animation: slideIn 0.3s ease-out; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 </style>
 </head>
 <body>
@@ -311,7 +314,7 @@ tailwind.config = {
       <span class="dot-green"></span>
     </div>
     <span class="text-tui-muted text-xs font-mono">SXA v2.4.0</span>
-    <span class="text-tui-text text-xs font-sans font-medium ml-1">Agent协作可视化 / Agent Collaboration Panel</span>
+    <span class="text-tui-text text-xs font-sans font-medium ml-1">Agent协作可视化 / Agent Collaboration Panel</span> <span class="text-tui-muted mx-1">|</span><span class="text-tui-purple text-xs font-sans">全局管控组 CAHub 可视化</span>
     <div class="flex-1"></div>
     <span class="key">ESC</span>
     <a href="00-home.html" class="nav-item text-xs">返回主页</a>
@@ -861,6 +864,30 @@ tailwind.config = {
     <span class="text-tui-muted">L3 → L4 · 7/8 Agent在线</span>
     <span class="text-tui-muted mx-1">|</span>
     <span class="text-tui-muted">2026-05-10 10:45:33 CST</span>
+  </div>
+</div>
+
+<!-- Agent Notification Cards -->
+<div class="agent-notification" id="notif-1" style="top:60px;">
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; margin-bottom:8px; border-left:3px solid #388bfd;">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+      <span style="color:#388bfd; font-size:11px; font-weight:600;">CAHub</span>
+      <span style="color:#484f58; font-size:9px;">全局管控</span>
+      <span style="margin-left:auto; color:#484f58; font-size:9px; cursor:pointer;" onclick="document.getElementById('notif-1').style.display='none'">✕</span>
+    </div>
+    <div style="color:#c9d1d9; font-size:11px; margin-bottom:4px;">跨组通信：Risk Agent 向 Portfolio Monitor 转发风控预警（MaxDD接近-8%），已记录通信日志。</div>
+    <div style="color:#8b949e; font-size:10px;">[跨组转发: 投中决策组 → 投后管理组] · 刚刚</div>
+  </div>
+</div>
+<div class="agent-notification" id="notif-2" style="top:170px;">
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; margin-bottom:8px; border-left:3px solid #3fb950;">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+      <span style="color:#3fb950; font-size:11px; font-weight:600;">Intel Agent</span>
+      <span style="color:#484f58; font-size:9px;">投前分析组</span>
+      <span style="margin-left:auto; color:#484f58; font-size:9px; cursor:pointer;" onclick="document.getElementById('notif-2').style.display='none'">✕</span>
+    </div>
+    <div style="color:#c9d1d9; font-size:11px; margin-bottom:4px;">组内共享更新：市场情绪指数更新至72（偏贪婪），已推送至 Sentiment/Macro/Logic Agent。</div>
+    <div style="color:#8b949e; font-size:10px;">[组内广播: 摘要+推理链共享] · 14:30</div>
   </div>
 </div>
 

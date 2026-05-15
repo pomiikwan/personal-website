@@ -377,6 +377,9 @@ tailwind.config = {
   /* Cursor blink animation */
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
   .cursor-blink { animation: blink 1s infinite; }
+
+  .agent-notification { position: fixed; right: 20px; width: 320px; z-index: 1000; animation: slideIn 0.3s ease-out; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 </style>
 </head>
 <body>
@@ -389,7 +392,7 @@ tailwind.config = {
         <div class="dot dot-yellow"></div>
         <div class="dot dot-green"></div>
       </div>
-      <span class="title">SXA v2.6.0 // 策略文档编辑器 / Document Editor Panel</span>
+      <span class="title">SXA v2.6.0 // 策略文档编辑器 / Document Editor Panel</span><span style="color:#484f58; margin:0 6px;">|</span><span style="color:#bc8cff; font-size:11px;">全局管控组 工具面板</span>
     </div>
     <div class="nav-links">
       <a href="00-home.html"><span class="key" style="margin-right:2px">ESC</span> 主页</a>
@@ -908,5 +911,18 @@ tailwind.config = {
     </div>
   </div>
 </div>
+<!-- Agent Notification Cards -->
+<div class="agent-notification" id="notif-1" style="top:60px;">
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; margin-bottom:8px; border-left:3px solid #388bfd;">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+      <span style="color:#388bfd; font-size:11px; font-weight:600;">Strategist Agent</span>
+      <span style="color:#484f58; font-size:9px;">投前策略组</span>
+      <span style="margin-left:auto; color:#484f58; font-size:9px; cursor:pointer;" onclick="document.getElementById('notif-1').style.display='none'">✕</span>
+    </div>
+    <div style="color:#c9d1d9; font-size:11px; margin-bottom:4px;">策略文档"量化对冲策略v3.2"已更新参数修订版本，建议查阅变更对比部分。</div>
+    <div style="color:#8b949e; font-size:10px;">[关联文档同步] · 10分钟前</div>
+  </div>
+</div>
+
 </body>
 </html>

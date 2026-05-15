@@ -149,6 +149,18 @@
       100% { opacity: 0.4; }
     }
     .flow-pulse { animation: flowPulse 2s ease-in-out infinite; }
+
+    .agent-notification {
+      position: fixed;
+      right: 20px;
+      width: 320px;
+      z-index: 1000;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
   </style>
 </head>
 <body class="bg-tui-bg text-tui-text">
@@ -194,6 +206,12 @@
       <a href="29-intel-agent.html" class="text-[10px] text-tui-accent hover:underline">← 信号聚合</a>
       <a href="29-intel-agent.html" class="text-[10px] text-tui-cyan hover:underline">信号监测 →</a>
     </div>
+  </div>
+  <div class="h-6 bg-tui-bg border-b border-tui-border flex items-center px-3 gap-2" style="min-height:24px;">
+    <span class="text-tui-textDim text-[10px]">投前分析组 Logic Agent</span>
+    <span class="text-tui-border">|</span>
+    <span class="text-tui-purple text-[10px]">子模块: [1] 因果推理 [2] 情景模拟 [3] 标的池 [4] 逻辑验证</span>
+    <span class="text-tui-textDim text-[9px]">(数字键聚焦)</span>
   </div>
 
   <!-- ========== MAIN CONTENT ========== -->
@@ -885,5 +903,38 @@
       }
     });
   </script>
+
+  <!-- 按需通知卡片: 投前分析组 Agent 消息 -->
+  <div class="agent-notification" style="top:100px;">
+    <div style="background:#161b22; border:1px solid rgba(57,210,192,0.3); border-radius:8px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="width:6px;height:6px;border-radius:50%;background:#39d2c0;display:block;"></span>
+          <span style="font-size:10px; font-weight:600; color:#39d2c0;">🔍 Intel Agent</span>
+          <span style="font-size:9px; padding:1px 6px; border-radius:10px; background:rgba(57,210,192,0.15); color:#39d2c0;">投前分析组</span>
+        </div>
+        <button onclick="this.closest('.agent-notification').remove()" style="background:none; border:none; color:#484f58; cursor:pointer; font-size:12px;">✕</button>
+      </div>
+      <div style="font-size:11px; color:#c9d1d9; margin-bottom:4px;">3个新标的池候选 - 基于信号聚合推荐</div>
+      <div style="font-size:10px; color:#6e7681;">[推理: 600519茅台+300750宁德+002594比亚迪 信号评分>80]</div>
+      <div style="font-size:9px; color:#6e7681; margin-top:4px;">1分钟前</div>
+    </div>
+  </div>
+
+  <div class="agent-notification" style="top:220px;">
+    <div style="background:#161b22; border:1px solid rgba(63,185,80,0.3); border-radius:8px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="width:6px;height:6px;border-radius:50%;background:#3fb950;display:block;"></span>
+          <span style="font-size:10px; font-weight:600; color:#3fb950;">🧠 Sentiment Agent</span>
+          <span style="font-size:9px; padding:1px 6px; border-radius:10px; background:rgba(57,210,192,0.15); color:#39d2c0;">投前分析组</span>
+        </div>
+        <button onclick="this.closest('.agent-notification').remove()" style="background:none; border:none; color:#484f58; cursor:pointer; font-size:12px;">✕</button>
+      </div>
+      <div style="font-size:11px; color:#c9d1d9; margin-bottom:4px;">情绪交叉验证完成 - 恐惧贪婪指数72偏多确认</div>
+      <div style="font-size:10px; color:#6e7681;">[推理: 看涨期权比例上升12%+融资余额连续5日增加+社交媒体正向情绪占比68%]</div>
+      <div style="font-size:9px; color:#6e7681; margin-top:4px;">4分钟前</div>
+    </div>
+  </div>
 </body>
 </html>

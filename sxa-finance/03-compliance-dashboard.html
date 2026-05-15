@@ -334,6 +334,18 @@ tailwind.config = {
     padding: 8px;
     margin-bottom: 6px;
   }
+
+  .agent-notification {
+    position: fixed;
+    right: 20px;
+    width: 320px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -357,6 +369,10 @@ tailwind.config = {
     <a href="02-agent-collaboration.html" class="nav-item text-xs">Agent协作</a>
     <a href="05-e2e-workflow-overview.html" class="nav-item text-xs">端到端流程</a>
     <a href="15-system-monitor.html" class="nav-item text-xs">系统监控</a>
+    <span class="text-tui-muted mx-1">|</span>
+    <span class="text-tui-purple text-[10px]">全局管控组 Compliance Agent</span>
+    <span class="text-tui-muted mx-1">|</span>
+    <span class="text-tui-blue text-[10px]">子模块: [1] 筛选 [2] 合规评分 [3] 监管检查 [4] 风控报告 [5] 事件流</span>
   </div>
 
   <!-- Main Content: 5-Box Grid -->
@@ -862,6 +878,39 @@ tailwind.config = {
     <span class="text-tui-muted">合规评分: <span class="text-tui-green glow-green">88</span></span>
     <span class="text-tui-muted mx-1">|</span>
     <span class="text-tui-muted">2026-05-10 10:45:33 CST</span>
+  </div>
+</div>
+
+<!-- 按需通知卡片: 全局管控组 Agent 消息 -->
+<div class="agent-notification" style="top:80px;">
+  <div style="background:#161b22; border:1px solid rgba(57,210,192,0.3); border-radius:8px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#39d2c0;display:block;"></span>
+        <span style="font-size:10px; font-weight:600; color:#39d2c0;">🔍 Intel Agent</span>
+        <span style="font-size:9px; padding:1px 6px; border-radius:10px; background:rgba(56,139,253,0.15); color:#388bfd;">跨组通知</span>
+      </div>
+      <button onclick="this.closest('.agent-notification').remove()" style="background:none; border:none; color:#484f58; cursor:pointer; font-size:12px;">✕</button>
+    </div>
+    <div style="font-size:11px; color:#c9d1d9; margin-bottom:4px;">ESG-Alpha 策略信号聚合完成，合规预审就绪</div>
+    <div style="font-size:10px; color:#6e7681;">[推理: ESG评分AA+ 信号评分82 已通过投前分析组全链验证]</div>
+    <div style="font-size:9px; color:#39d2c0; margin-top:4px;">📡 跨组转发 3分钟前</div>
+  </div>
+</div>
+
+<div class="agent-notification" style="top:200px;">
+  <div style="background:#161b22; border:1px solid rgba(56,139,253,0.3); border-radius:8px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#388bfd;display:block;"></span>
+        <span style="font-size:10px; font-weight:600; color:#388bfd;">✅ Approval Agent</span>
+        <span style="font-size:9px; padding:1px 6px; border-radius:10px; background:rgba(56,139,253,0.15); color:#388bfd;">全局管控组</span>
+      </div>
+      <button onclick="this.closest('.agent-notification').remove()" style="background:none; border:none; color:#484f58; cursor:pointer; font-size:12px;">✕</button>
+    </div>
+    <div style="font-size:11px; color:#c9d1d9; margin-bottom:4px;">VolBreakout G3审批已通过，可进入Phase D</div>
+    <div style="font-size:10px; color:#6e7681;">[推理: G1模型审查PASS + G2参数验证PASS + G3人工审核APPROVED]</div>
+    <div style="font-size:9px; color:#6e7681; margin-top:4px;">刚刚</div>
   </div>
 </div>
 

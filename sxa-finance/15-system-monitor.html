@@ -126,6 +126,9 @@ tailwind.config = {
   .animate-pulse-slow { animation: pulse 2s infinite; }
   @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
   .animate-blink { animation: blink 1s infinite; }
+
+  .agent-notification { position: fixed; right: 20px; width: 320px; z-index: 1000; animation: slideIn 0.3s ease-out; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -139,7 +142,7 @@ tailwind.config = {
     <span class="text-tui-muted text-xs ml-2"><a href="00-home.html" class="nav-item hover:text-tui-text">ESC</a></span>
     <span class="text-tui-text text-xs font-semibold ml-2">SXA System Monitor</span>
     <span class="text-tui-muted text-xs">/</span>
-    <span class="text-tui-cyan text-xs">系统监控面板</span>
+    <span class="text-tui-cyan text-xs">系统监控面板</span> <span style="color:#484f58; margin:0 6px;">|</span><span style="color:#38d3d7; font-size:11px;">全局管控组 系统运维</span>
     <span class="flex-1"></span>
     <span class="text-tui-muted text-xs">2026-05-10 09:31:42 CST</span>
     <span class="tag tag-green ml-2">HEALTHY</span>
@@ -650,6 +653,19 @@ tailwind.config = {
       <a href="05-e2e-workflow-overview.html" class="nav-item hover:text-tui-text">E2E</a>
     </span>
     <span class="text-tui-yellow ml-2">7/8 Agents OK | 42d uptime</span>
+  </div>
+</div>
+
+<!-- Agent Notification Cards -->
+<div class="agent-notification" id="notif-1" style="top:60px;">
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; margin-bottom:8px; border-left:3px solid #d29922;">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+      <span style="color:#d29922; font-size:11px; font-weight:600;">System Health</span>
+      <span style="color:#484f58; font-size:9px;">全局管控组</span>
+      <span style="margin-left:auto; color:#484f58; font-size:9px; cursor:pointer;" onclick="document.getElementById('notif-1').style.display='none'">✕</span>
+    </div>
+    <div style="color:#c9d1d9; font-size:11px; margin-bottom:4px;">⚠️ Agent 内存使用率：Backtest Agent 达到 78%，建议关注。所有 Agent 连接状态正常 (11/11 在线)。</div>
+    <div style="color:#8b949e; font-size:10px;">[资源监控预警] · 1分钟前</div>
   </div>
 </div>
 

@@ -106,6 +106,19 @@ tailwind.config = {
 
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
   .animate-pulse-slow { animation: pulse 2s infinite; }
+
+  /* Agent Notification Cards */
+  .agent-notification {
+    position: fixed;
+    right: 20px;
+    width: 320px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
 </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -151,6 +164,9 @@ tailwind.config = {
     <span class="chain-step">G 报告</span>
     <div class="flex-1"></div>
     <span class="text-tui-textDim text-[10px]">投前分析组 (4 Agents: Intel / Macro / Sentiment / Logic)</span>
+    <span class="text-tui-border mx-1">|</span>
+    <span class="text-tui-cyan text-[10px]">Intel 子模块: [1] 市场概览 [2] 信号情报 [3] 宏观情绪 [4] 事件监测</span>
+    <span class="text-tui-textDim text-[9px] ml-1">(数字键聚焦)</span>
   </div>
 
   <!-- Main Content: Three-Column Layout -->
@@ -900,5 +916,38 @@ function switchTab(tab) {
   }
 }
 </script>
+
+<!-- Agent Notification Cards: 按需通知机制示例 -->
+<div class="agent-notification" id="notify-macro" style="top:100px;">
+  <div class="bg-tui-surface border rounded-lg p-3 shadow-lg" style="border-color:rgba(188,140,255,0.3);">
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-tui-purple"></span>
+        <span class="text-[10px] font-semibold" style="color:#bc8cff;">&#127758; Macro Agent</span>
+        <span class="text-[9px] px-1 py-0.5 rounded bg-tui-cyan bg-opacity-15 text-tui-cyan">投前分析组</span>
+      </div>
+      <button onclick="this.closest('.agent-notification').remove()" class="text-tui-muted hover:text-tui-text text-xs">&#10005;</button>
+    </div>
+    <div class="text-xs text-tui-text mb-1">宏观更新 - PMI回升至51.2，制造业扩张信号</div>
+    <div class="text-[10px] text-tui-textDim">[推理: 连续3月回升 + 新订单指数改善 + 生产端扩张]</div>
+    <div class="text-[9px] text-tui-textDim mt-1">2分钟前</div>
+  </div>
+</div>
+
+<div class="agent-notification" id="notify-sentiment" style="top:220px;">
+  <div class="bg-tui-surface border rounded-lg p-3 shadow-lg" style="border-color:rgba(63,185,80,0.3);">
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-tui-green"></span>
+        <span class="text-[10px] font-semibold" style="color:#3fb950;">&#128202; Sentiment Agent</span>
+        <span class="text-[9px] px-1 py-0.5 rounded bg-tui-cyan bg-opacity-15 text-tui-cyan">投前分析组</span>
+      </div>
+      <button onclick="this.closest('.agent-notification').remove()" class="text-tui-muted hover:text-tui-text text-xs">&#10005;</button>
+    </div>
+    <div class="text-xs text-tui-text mb-1">情绪评分更新 - 恐惧贪婪指数72，偏多</div>
+    <div class="text-[10px] text-tui-textDim">[推理: 看涨期权比例上升 + 社交媒体情绪偏多 + 融资余额增加]</div>
+    <div class="text-[9px] text-tui-textDim mt-1">5分钟前</div>
+  </div>
+</div>
 </body>
 </html>

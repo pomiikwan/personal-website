@@ -92,6 +92,9 @@ tailwind.config = {
 
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
   .animate-pulse-slow { animation: pulse 2s infinite; }
+
+  .agent-notification { position: fixed; right: 20px; width: 320px; z-index: 1000; animation: slideIn 0.3s ease-out; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -137,6 +140,20 @@ tailwind.config = {
     <span class="chain-step">G 报告</span>
     <div class="flex-1"></div>
     <span class="text-tui-textDim text-[10px]">投前分析组 | 市场概览</span>
+  </div>
+  <!-- Sub-module Labels -->
+  <div class="flex items-center gap-2 px-4 py-1 border-b border-tui-border bg-tui-bg text-[10px]">
+    <span class="text-tui-accent font-semibold">Intel 子模块:</span>
+    <span class="text-tui-textMuted">[1] 自选股</span>
+    <span class="text-tui-textDim">|</span>
+    <span class="text-tui-textMuted">[2] 行情面板</span>
+    <span class="text-tui-textDim">|</span>
+    <span class="text-tui-textMuted">[3] 快捷统计</span>
+    <span class="text-tui-textDim">|</span>
+    <span class="text-tui-textMuted">[4] 资讯板块</span>
+    <span class="text-tui-textDim">|</span>
+    <span class="text-tui-textMuted">[5] CA Agent</span>
+    <span class="text-tui-textDim">(数字键聚焦)</span>
   </div>
 
   <!-- Main Content: Three-Column Layout -->
@@ -624,6 +641,30 @@ tailwind.config = {
       <span>|</span>
       <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span> Connected</span>
     </div>
+  </div>
+</div>
+
+<!-- Agent Notification Cards -->
+<div class="agent-notification" id="notif-1" style="top:100px;">
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; margin-bottom:8px; border-left:3px solid #bc8cff;">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+      <span style="color:#bc8cff; font-size:11px; font-weight:600;">Macro Agent</span>
+      <span style="color:#484f58; font-size:9px;">投前分析组</span>
+      <span style="margin-left:auto; color:#484f58; font-size:9px; cursor:pointer;" onclick="document.getElementById('notif-1').style.display='none'">✕</span>
+    </div>
+    <div style="color:#c9d1d9; font-size:11px; margin-bottom:4px;">CPI数据低于预期（0.3% vs 0.5%），政策宽松预期升温，消费板块可能受益。</div>
+    <div style="color:#8b949e; font-size:10px;">[推理: 通胀走弱→政策宽松→消费受益] · 14:30</div>
+  </div>
+</div>
+<div class="agent-notification" id="notif-2" style="top:210px;">
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:10px; margin-bottom:8px; border-left:3px solid #3fb950;">
+    <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+      <span style="color:#3fb950; font-size:11px; font-weight:600;">Sentiment Agent</span>
+      <span style="color:#484f58; font-size:9px;">投前分析组</span>
+      <span style="margin-left:auto; color:#484f58; font-size:9px; cursor:pointer;" onclick="document.getElementById('notif-2').style.display='none'">✕</span>
+    </div>
+    <div style="color:#c9d1d9; font-size:11px; margin-bottom:4px;">市场情绪指数升至72（偏贪婪），北向资金连续5日净流入，短线做多情绪强烈。</div>
+    <div style="color:#8b949e; font-size:10px;">[推理: 资金面+情绪面共振偏多] · 14:15</div>
   </div>
 </div>
 

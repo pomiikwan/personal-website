@@ -86,6 +86,17 @@ tailwind.config = {
   .decision-section:hover { border-color: #484f58; }
   .alloc-bar { height: 18px; border-radius: 3px; display: flex; overflow: hidden; background: #21262d; }
   .alloc-bar > div { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: #0d1117; }
+  .agent-notification {
+    position: fixed;
+    right: 20px;
+    width: 320px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
 </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -131,6 +142,9 @@ tailwind.config = {
     <span class="chain-step">G 报告</span>
     <div class="flex-1"></div>
     <span class="text-tui-textDim text-[10px]">投中决策组 (3 Agents: Capital / Trader / Risk)</span>
+    <span class="text-tui-border mx-1">|</span>
+    <span class="text-tui-orange text-[10px]">Capital 子模块: [1] 策略轮动 [2] 资金决策 [3] 风控约束 [4] 净值曲线</span>
+    <span class="text-tui-textDim text-[9px] ml-1">(数字键聚焦)</span>
   </div>
 
   <!-- Main Content: Three-Column Layout -->
@@ -689,6 +703,39 @@ tailwind.config = {
       <span>|</span>
       <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span> Connected</span>
     </div>
+  </div>
+</div>
+
+<!-- 按需通知卡片: 投中决策组 Agent 消息 -->
+<div class="agent-notification" style="top:100px;">
+  <div style="background:#161b22; border:1px solid rgba(88,166,255,0.3); border-radius:8px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#58a6ff;display:block;"></span>
+        <span style="font-size:10px; font-weight:600; color:#58a6ff;">💹 Trader Agent</span>
+        <span style="font-size:9px; padding:1px 6px; border-radius:10px; background:rgba(219,109,40,0.15); color:#db6d28;">投中决策组</span>
+      </div>
+      <button onclick="this.closest('.agent-notification').remove()" style="background:none; border:none; color:#484f58; cursor:pointer; font-size:12px;">✕</button>
+    </div>
+    <div style="font-size:11px; color:#c9d1d9; margin-bottom:4px;">订单执行完成 - AlphaMomentum 卖出 600519.SH 75%成交</div>
+    <div style="font-size:10px; color:#6e7681;">[推理: TWAP拆单执行，均价1812.5，滑点0.03%，剩余25%挂单中]</div>
+    <div style="font-size:9px; color:#6e7681; margin-top:4px;">1分钟前</div>
+  </div>
+</div>
+
+<div class="agent-notification" style="top:220px;">
+  <div style="background:#161b22; border:1px solid rgba(248,81,73,0.3); border-radius:8px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#f85149;display:block;"></span>
+        <span style="font-size:10px; font-weight:600; color:#f85149;">⚠️ Risk Agent</span>
+        <span style="font-size:9px; padding:1px 6px; border-radius:10px; background:rgba(219,109,40,0.15); color:#db6d28;">投中决策组</span>
+      </div>
+      <button onclick="this.closest('.agent-notification').remove()" style="background:none; border:none; color:#484f58; cursor:pointer; font-size:12px;">✕</button>
+    </div>
+    <div style="font-size:11px; color:#c9d1d9; margin-bottom:4px;">风控预警 - VolBreakout 回撤 -8.2%，接近止损线 -10%</div>
+    <div style="font-size:10px; color:#6e7681;">[推理: 连续3日回撤扩大+波动率指数升高，建议减仓至50%或收紧止损]</div>
+    <div style="font-size:9px; color:#f85149; margin-top:4px;">⚠ 紧急 30秒前</div>
   </div>
 </div>
 

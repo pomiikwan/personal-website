@@ -290,6 +290,7 @@ tailwind.config = {
                 <div class="flex items-center gap-2 mb-2">
                   <span class="text-tui-green font-bold text-sm">Phase A</span>
                   <span class="tag tag-green">Active</span>
+                  <span class="ml-auto cursor-pointer text-tui-muted hover:text-tui-text text-xs" onclick="toggleDrill('drill-a')">▼ 展开</span>
                 </div>
                 <div class="text-tui-text text-xs font-semibold mb-1">策略构思 Ideation</div>
                 <div class="progress-bar mb-2">
@@ -310,6 +311,108 @@ tailwind.config = {
                   <a href="08-strategy-management.html" class="cmd-btn text-xs text-tui-blue">08 策略</a>
                   <a href="29-intel-agent.html" class="cmd-btn text-xs text-tui-cyan">04 行情</a>
                 </div>
+
+                <!-- ▼ 四层下钻面板 (投前分析组) -->
+                <div id="drill-a" style="display:none;" class="mt-2 pt-2 border-t border-tui-border">
+                  <div class="text-[10px] text-tui-green font-semibold mb-2">▼ 工作组: 投前分析组 (PreAnalysis)</div>
+
+                  <!-- Agent 状态 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Agent 状态</div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="29-intel-agent.html" class="text-tui-cyan hover:underline">Intel</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="14-macro-analysis.html" class="text-tui-purple hover:underline">Macro</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-yellow"></span>
+                        <a href="12-sentiment-analysis.html" class="text-tui-green hover:underline">Sentiment</a>
+                        <span class="text-tui-textDim ml-auto">⏳ 等待</span>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-muted"></span>
+                        <a href="17-logic-analysis.html" class="text-tui-purple hover:underline">Logic</a>
+                        <span class="text-tui-textDim ml-auto">💤 空闲</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent 间通信流 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">通信流</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-cyan">Intel</span>
+                        <span class="text-tui-muted">→</span>
+                        <span class="text-tui-purple">Macro</span>
+                        <span class="text-tui-textDim ml-auto">行情数据 (5s前)</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-cyan">Intel</span>
+                        <span class="text-tui-muted">→</span>
+                        <span class="text-tui-green">Sentiment</span>
+                        <span class="text-tui-textDim ml-auto">信号评分 (10s前)</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-cyan">Intel</span>
+                        <span class="text-tui-muted">→</span>
+                        <span class="text-tui-purple">Logic</span>
+                        <span class="text-tui-textDim ml-auto">预警信号 (排队中)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent → Panel 映射 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Panel 面板映射</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-cyan">Intel</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="29-intel-agent.html" class="text-tui-text hover:text-tui-accent">29 情报监控面板</a>
+                        <span class="text-tui-green ml-auto">3 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-purple">Macro</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="14-macro-analysis.html" class="text-tui-text hover:text-tui-accent">14 宏观分析面板</a>
+                        <span class="text-tui-green ml-auto">4 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-green">Sentiment</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="12-sentiment-analysis.html" class="text-tui-text hover:text-tui-accent">12 情绪分析面板</a>
+                        <span class="text-tui-green ml-auto">3 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-purple">Logic</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="17-logic-analysis.html" class="text-tui-text hover:text-tui-accent">17 逻辑分析面板</a>
+                        <span class="text-tui-green ml-auto">4 Box</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 工作流步骤进度 -->
+                  <div class="bg-tui-bg rounded p-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">工作流步骤</div>
+                    <div class="flex items-center gap-1 text-[10px] flex-wrap">
+                      <span class="px-1.5 py-0.5 rounded bg-tui-green text-tui-bg">✓ 信号采集</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-green text-tui-bg">✓ 趋势分析</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded" style="background:rgba(63,185,80,0.2);color:#3fb950;border:1px solid rgba(63,185,80,0.3);">🔄 情绪交叉验证</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-surface text-tui-muted border border-tui-border">逻辑确认</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="phase-arrow">-></div>
@@ -319,6 +422,7 @@ tailwind.config = {
                 <div class="flex items-center gap-2 mb-2">
                   <span class="text-tui-blue font-bold text-sm">Phase B</span>
                   <span class="tag tag-blue">Review</span>
+                  <span class="ml-auto cursor-pointer text-tui-muted hover:text-tui-text text-xs" onclick="toggleDrill('drill-b')">▼ 展开</span>
                 </div>
                 <div class="text-tui-text text-xs font-semibold mb-1">合规审查 Compliance</div>
                 <div class="progress-bar mb-2">
@@ -337,6 +441,74 @@ tailwind.config = {
                   <a href="03-compliance-dashboard.html" class="cmd-btn text-xs text-tui-purple">03 合规</a>
                   <a href="01-approval-center.html" class="cmd-btn text-xs text-tui-blue">01 审批</a>
                 </div>
+
+                <!-- ▼ 四层下钻面板 (全局管控组) -->
+                <div id="drill-b" style="display:none;" class="mt-2 pt-2 border-t border-tui-border">
+                  <div class="text-[10px] text-tui-blue font-semibold mb-2">▼ 工作组: 全局管控组 (GlobalControl)</div>
+
+                  <!-- Agent 状态 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Agent 状态</div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="03-compliance-dashboard.html" class="text-tui-blue hover:underline">Compliance</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-muted"></span>
+                        <a href="01-approval-center.html" class="text-tui-purple hover:underline">Approval</a>
+                        <span class="text-tui-textDim ml-auto">💤 空闲</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent 间通信流 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">通信流</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-blue">Compliance</span>
+                        <span class="text-tui-muted">→</span>
+                        <span class="text-tui-purple">Approval</span>
+                        <span class="text-tui-textDim ml-auto">审查结果</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent → Panel 映射 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Panel 面板映射</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-blue">Compliance</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="03-compliance-dashboard.html" class="text-tui-text hover:text-tui-accent">03 合规仪表盘</a>
+                        <span class="text-tui-green ml-auto">4 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-purple">Approval</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="01-approval-center.html" class="text-tui-text hover:text-tui-accent">01 审批中心</a>
+                        <span class="text-tui-green ml-auto">3 Box</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 工作流步骤进度 -->
+                  <div class="bg-tui-bg rounded p-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">工作流步骤</div>
+                    <div class="flex items-center gap-1 text-[10px] flex-wrap">
+                      <span class="px-1.5 py-0.5 rounded bg-tui-blue text-tui-bg">✓ 合规预审</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-blue text-tui-bg">✓ 监管检查</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded" style="background:rgba(56,139,253,0.2);color:#388bfd;border:1px solid rgba(56,139,253,0.3);">🔄 人工复核</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-surface text-tui-muted border border-tui-border">等待签字</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="phase-arrow">-></div>
@@ -346,6 +518,7 @@ tailwind.config = {
                 <div class="flex items-center gap-2 mb-2">
                   <span class="text-tui-cyan font-bold text-sm">Phase C</span>
                   <span class="tag tag-cyan">Testing</span>
+                  <span class="ml-auto cursor-pointer text-tui-muted hover:text-tui-text text-xs" onclick="toggleDrill('drill-c')">▼ 展开</span>
                 </div>
                 <div class="text-tui-text text-xs font-semibold mb-1">回测验证 Backtest</div>
                 <div class="progress-bar mb-2">
@@ -365,6 +538,80 @@ tailwind.config = {
                   <a href="30-backtest-agent.html" class="cmd-btn text-xs text-tui-blue">26 静态</a>
                   <a href="30-backtest-agent.html" class="cmd-btn text-xs text-tui-purple">27 动态</a>
                 </div>
+
+                <!-- ▼ 四层下钻面板 (投前策略组) -->
+                <div id="drill-c" style="display:none;" class="mt-2 pt-2 border-t border-tui-border">
+                  <div class="text-[10px] text-tui-cyan font-semibold mb-2">▼ 工作组: 投前策略组 (PreStrategy)</div>
+
+                  <!-- Agent 状态 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Agent 状态</div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="08-strategy-management.html" class="text-tui-blue hover:underline">Strategist</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="30-backtest-agent.html" class="text-tui-cyan hover:underline">Backtest</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent 间通信流 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">通信流</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-blue">Strategist</span>
+                        <span class="text-tui-muted">→</span>
+                        <span class="text-tui-cyan">Backtest</span>
+                        <span class="text-tui-textDim ml-auto">策略参数</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent → Panel 映射 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Panel 面板映射</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-blue">Strategist</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="08-strategy-management.html" class="text-tui-text hover:text-tui-accent">08 策略管理</a>
+                        <span class="text-tui-green ml-auto">5 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-cyan">Backtest</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="30-backtest-agent.html" class="text-tui-text hover:text-tui-accent">30 回测面板</a>
+                        <span class="text-tui-green ml-auto">4 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-cyan">HL</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="28-heuristic-optimization.html" class="text-tui-text hover:text-tui-accent">28 启发式优化</a>
+                        <span class="text-tui-green ml-auto">3 Box</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 工作流步骤进度 -->
+                  <div class="bg-tui-bg rounded p-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">工作流步骤</div>
+                    <div class="flex items-center gap-1 text-[10px] flex-wrap">
+                      <span class="px-1.5 py-0.5 rounded bg-tui-cyan text-tui-bg">✓ 参数提交</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-cyan text-tui-bg">✓ 静态回测</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded" style="background:rgba(56,211,215,0.2);color:#38d3d7;border:1px solid rgba(56,211,215,0.3);">🔄 动态模拟</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-surface text-tui-muted border border-tui-border">Gate检查</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -375,6 +622,7 @@ tailwind.config = {
                 <div class="flex items-center gap-2 mb-2">
                   <span class="text-tui-yellow font-bold text-sm">Phase D</span>
                   <span class="tag tag-yellow">Pending</span>
+                  <span class="ml-auto cursor-pointer text-tui-muted hover:text-tui-text text-xs" onclick="toggleDrill('drill-d')">▼ 展开</span>
                 </div>
                 <div class="text-tui-text text-xs font-semibold mb-1">审批上线 Approval</div>
                 <div class="progress-bar mb-2">
@@ -393,6 +641,74 @@ tailwind.config = {
                   <a href="01-approval-center.html" class="cmd-btn text-xs text-tui-blue">01 审批</a>
                   <a href="03-compliance-dashboard.html" class="cmd-btn text-xs text-tui-purple">03 合规</a>
                 </div>
+
+                <!-- ▼ 四层下钻面板 (全局管控组-审批模块) -->
+                <div id="drill-d" style="display:none;" class="mt-2 pt-2 border-t border-tui-border">
+                  <div class="text-[10px] text-tui-yellow font-semibold mb-2">▼ 工作组: 全局管控组 (审批模块)</div>
+
+                  <!-- Agent 状态 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Agent 状态</div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-yellow"></span>
+                        <a href="03-compliance-dashboard.html" class="text-tui-yellow hover:underline">Compliance</a>
+                        <span class="text-tui-textDim ml-auto">⏳ 等待</span>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-muted"></span>
+                        <a href="10-trading-execution.html" class="text-tui-green hover:underline">Trader</a>
+                        <span class="text-tui-textDim ml-auto">💤 空闲</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent 间通信流 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">通信流</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-yellow">Compliance</span>
+                        <span class="text-tui-muted">→</span>
+                        <span class="text-tui-green">Trader</span>
+                        <span class="text-tui-textDim ml-auto">上线指令</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent → Panel 映射 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Panel 面板映射</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-yellow">Compliance</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="01-approval-center.html" class="text-tui-text hover:text-tui-accent">01 审批中心</a>
+                        <span class="text-tui-green ml-auto">3 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-green">Trader</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="10-trading-execution.html" class="text-tui-text hover:text-tui-accent">10 交易执行</a>
+                        <span class="text-tui-green ml-auto">4 Box</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 工作流步骤进度 -->
+                  <div class="bg-tui-bg rounded p-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">工作流步骤</div>
+                    <div class="flex items-center gap-1 text-[10px] flex-wrap">
+                      <span class="px-1.5 py-0.5 rounded bg-tui-yellow text-tui-bg">✓ G1门禁</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-yellow text-tui-bg">✓ G2门禁</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded" style="background:rgba(210,153,34,0.2);color:#d29922;border:1px solid rgba(210,153,34,0.3);">🔄 G3审批</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-surface text-tui-muted border border-tui-border">等待上线</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="phase-arrow">-></div>
@@ -402,6 +718,7 @@ tailwind.config = {
                 <div class="flex items-center gap-2 mb-2">
                   <span class="text-tui-purple font-bold text-sm">Phase E</span>
                   <span class="tag tag-purple">Running</span>
+                  <span class="ml-auto cursor-pointer text-tui-muted hover:text-tui-text text-xs" onclick="toggleDrill('drill-e')">▼ 展开</span>
                 </div>
                 <div class="text-tui-text text-xs font-semibold mb-1">运行监控 Operations</div>
                 <div class="progress-bar mb-2">
@@ -423,6 +740,91 @@ tailwind.config = {
                   <a href="10-trading-execution.html" class="cmd-btn text-xs text-tui-green">10 交易</a>
                   <a href="11-risk-management.html" class="cmd-btn text-xs text-tui-red">11 风控</a>
                 </div>
+
+                <!-- ▼ 四层下钻面板 (投中决策组) -->
+                <div id="drill-e" style="display:none;" class="mt-2 pt-2 border-t border-tui-border">
+                  <div class="text-[10px] text-tui-purple font-semibold mb-2">▼ 工作组: 投中决策组 (ExecutionRisk)</div>
+
+                  <!-- Agent 状态 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Agent 状态</div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="31-capital-agent.html" class="text-tui-green hover:underline">Capital</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="10-trading-execution.html" class="text-tui-green hover:underline">Trader</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="11-risk-management.html" class="text-tui-red hover:underline">Risk</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent 间通信流 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">通信流</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-green">Capital</span>
+                        <span class="text-tui-muted">→</span>
+                        <span class="text-tui-green">Trader</span>
+                        <span class="text-tui-textDim ml-auto">资金分配</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-red">Risk</span>
+                        <span class="text-tui-muted">→</span>
+                        <span class="text-tui-green">Capital</span>
+                        <span class="text-tui-textDim ml-auto">风控限制</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent → Panel 映射 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Panel 面板映射</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-green">Capital</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="31-capital-agent.html" class="text-tui-text hover:text-tui-accent">31 净值管理</a>
+                        <span class="text-tui-green ml-auto">5 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-green">Trader</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="10-trading-execution.html" class="text-tui-text hover:text-tui-accent">10 交易执行</a>
+                        <span class="text-tui-green ml-auto">4 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-red">Risk</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="11-risk-management.html" class="text-tui-text hover:text-tui-accent">11 风控管理</a>
+                        <span class="text-tui-green ml-auto">4 Box</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 工作流步骤进度 -->
+                  <div class="bg-tui-bg rounded p-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">工作流步骤</div>
+                    <div class="flex items-center gap-1 text-[10px] flex-wrap">
+                      <span class="px-1.5 py-0.5 rounded bg-tui-purple text-tui-bg">✓ 策略启动</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-purple text-tui-bg">✓ 资金分配</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded" style="background:rgba(188,140,255,0.2);color:#bc8cff;border:1px solid rgba(188,140,255,0.3);">🔄 实时监控</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-surface text-tui-muted border border-tui-border">定期评估</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="phase-arrow">-></div>
@@ -433,6 +835,7 @@ tailwind.config = {
                   <span class="text-tui-cyan font-bold text-sm">Phase F</span>
                   <span class="tag tag-cyan">Post-trade</span>
                   <span class="tag tag-green" style="font-size:9px;">NEW</span>
+                  <span class="ml-auto cursor-pointer text-tui-muted hover:text-tui-text text-xs" onclick="toggleDrill('drill-f')">▼ 展开</span>
                 </div>
                 <div class="text-tui-text text-xs font-semibold mb-1">投后管理 Post-trade</div>
                 <div class="progress-bar mb-2">
@@ -454,6 +857,74 @@ tailwind.config = {
                   <a href="19-portfolio-monitor.html" class="cmd-btn text-xs text-tui-cyan">19 监控</a>
                   <a href="32-portfolio-agent.html" class="cmd-btn text-xs text-tui-blue">20 归因</a>
                 </div>
+
+                <!-- ▼ 四层下钻面板 (投后管理组) -->
+                <div id="drill-f" style="display:none;" class="mt-2 pt-2 border-t border-tui-border">
+                  <div class="text-[10px] text-tui-cyan font-semibold mb-2">▼ 工作组: 投后管理组 (PostTrade)</div>
+
+                  <!-- Agent 状态 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Agent 状态</div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="32-portfolio-agent.html" class="text-tui-cyan hover:underline">Portfolio</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="19-portfolio-monitor.html" class="text-tui-cyan hover:underline">Monitor</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent 间通信流 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">通信流</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-cyan">Monitor</span>
+                        <span class="text-tui-muted">→</span>
+                        <span class="text-tui-cyan">Portfolio</span>
+                        <span class="text-tui-textDim ml-auto">归因分析</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent → Panel 映射 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Panel 面板映射</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-cyan">Portfolio</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="32-portfolio-agent.html" class="text-tui-text hover:text-tui-accent">32 组合管理</a>
+                        <span class="text-tui-green ml-auto">5 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-cyan">Monitor</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="19-portfolio-monitor.html" class="text-tui-text hover:text-tui-accent">19 组合监控</a>
+                        <span class="text-tui-green ml-auto">4 Box</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 工作流步骤进度 -->
+                  <div class="bg-tui-bg rounded p-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">工作流步骤</div>
+                    <div class="flex items-center gap-1 text-[10px] flex-wrap">
+                      <span class="px-1.5 py-0.5 rounded bg-tui-cyan text-tui-bg">✓ 业绩统计</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded" style="background:rgba(56,211,215,0.2);color:#38d3d7;border:1px solid rgba(56,211,215,0.3);">🔄 归因分析</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-surface text-tui-muted border border-tui-border">风险评估</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-surface text-tui-muted border border-tui-border">调仓建议</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -465,6 +936,7 @@ tailwind.config = {
                   <span class="text-tui-green font-bold text-sm">Phase G</span>
                   <span class="tag tag-green">Delivery</span>
                   <span class="tag tag-green" style="font-size:9px;">NEW</span>
+                  <span class="ml-auto cursor-pointer text-tui-muted hover:text-tui-text text-xs" onclick="toggleDrill('drill-g')">▼ 展开</span>
                 </div>
                 <div class="text-tui-text text-xs font-semibold mb-1">交付报告 Delivery & Reports</div>
                 <div class="progress-bar mb-2">
@@ -483,6 +955,74 @@ tailwind.config = {
                 <div class="flex gap-1 mt-2 pt-2 border-t border-tui-border flex-wrap">
                   <a href="32-portfolio-agent.html" class="cmd-btn text-xs text-tui-green">23 交付</a>
                   <a href="04-document-viewer.html" class="cmd-btn text-xs text-tui-purple">04 文档</a>
+                </div>
+
+                <!-- ▼ 四层下钻面板 (投后管理组-报告模块) -->
+                <div id="drill-g" style="display:none;" class="mt-2 pt-2 border-t border-tui-border">
+                  <div class="text-[10px] text-tui-green font-semibold mb-2">▼ 工作组: 投后管理组 (报告模块)</div>
+
+                  <!-- Agent 状态 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Agent 状态</div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-green"></span>
+                        <a href="32-portfolio-agent.html" class="text-tui-green hover:underline">Portfolio</a>
+                        <span class="text-tui-textDim ml-auto">🔄 工作中</span>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-tui-muted"></span>
+                        <a href="04-document-viewer.html" class="text-tui-purple hover:underline">Document</a>
+                        <span class="text-tui-textDim ml-auto">💤 空闲</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent 间通信流 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">通信流</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-green">Portfolio</span>
+                        <span class="text-tui-muted">→</span>
+                        <span class="text-tui-purple">Document</span>
+                        <span class="text-tui-textDim ml-auto">报告文件</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Agent → Panel 映射 -->
+                  <div class="bg-tui-bg rounded p-2 mb-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">Panel 面板映射</div>
+                    <div class="text-[10px] space-y-1">
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-green">Portfolio</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="32-portfolio-agent.html" class="text-tui-text hover:text-tui-accent">32 组合管理/交付子模块</a>
+                        <span class="text-tui-green ml-auto">2 Box</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-tui-purple">Document</span>
+                        <span class="text-tui-muted">→</span>
+                        <a href="04-document-viewer.html" class="text-tui-text hover:text-tui-accent">04 文档查看</a>
+                        <span class="text-tui-green ml-auto">3 Box</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 工作流步骤进度 -->
+                  <div class="bg-tui-bg rounded p-2 border border-tui-border">
+                    <div class="text-[10px] text-tui-muted font-semibold mb-1.5">工作流步骤</div>
+                    <div class="flex items-center gap-1 text-[10px] flex-wrap">
+                      <span class="px-1.5 py-0.5 rounded bg-tui-green text-tui-bg">✓ 数据采集</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded" style="background:rgba(63,185,80,0.2);color:#3fb950;border:1px solid rgba(63,185,80,0.3);">🔄 报告生成</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-surface text-tui-muted border border-tui-border">审核确认</span>
+                      <span class="text-tui-muted">→</span>
+                      <span class="px-1.5 py-0.5 rounded bg-tui-surface text-tui-muted border border-tui-border">交付存档</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -576,61 +1116,136 @@ tailwind.config = {
     <div class="flex flex-col overflow-hidden" style="width:320px;min-width:320px;border-left:1px solid #30363d;">
       <div class="tui-box-title border-t-0">
         <span class="box-number">5</span>
-        <span>System Agent / 系统助手</span>
+        <span>CA Agent / 协作助手</span>
         <span class="flex-1"></span>
         <span class="w-2 h-2 rounded-full bg-tui-green animate-pulse-slow"></span>
         <span class="text-tui-green text-xs">Online</span>
       </div>
+      <div class="flex items-center gap-0 border-b border-tui-border bg-tui-bg">
+        <button class="flex-1 px-2 py-1.5 text-[10px] font-mono text-center transition-colors bg-tui-surface text-tui-accent border-b-2 border-tui-accent" id="e2e-mode-monitor" onclick="e2eSwitchMode('monitor')">
+          📡 监控
+        </button>
+        <div class="w-px h-4 bg-tui-border"></div>
+        <button class="flex-1 px-2 py-1.5 text-[10px] font-mono text-center transition-colors text-tui-textMuted hover:text-tui-text" id="e2e-mode-brainstorm" onclick="e2eSwitchMode('brainstorm')">
+          💡 头脑风暴
+        </button>
+        <div class="w-px h-4 bg-tui-border"></div>
+        <button class="flex-1 px-2 py-1.5 text-[10px] font-mono text-center transition-colors text-tui-textMuted hover:text-tui-text" id="e2e-mode-task" onclick="e2eSwitchMode('task')">
+          🎯 任务
+        </button>
+      </div>
       <div class="flex-1 overflow-auto p-3 space-y-3 scrollbar-thin">
-        <div class="chat-agent">
-          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
-          <div>今日 E2E 流程概览：</div>
-          <div class="mt-1 text-xs">
-            <span class="text-tui-green">5</span> 个活跃阶段<br>
-            <span class="text-tui-blue">13</span> 个运行中的工作流<br>
-            <span class="text-tui-yellow">2</span> 个待审批项<br>
-            <span class="text-tui-red">1</span> 个阻塞项 (VolBreakout G3)
+        <!-- Monitor Mode -->
+        <div id="e2e-content-monitor">
+          <div class="chat-agent">
+            <div class="text-tui-accent text-xs font-semibold mb-1">CA Agent</div>
+            <div>今日 E2E 流程概览：</div>
+            <div class="mt-1 text-xs">
+              <span class="text-tui-green">5</span> 个活跃阶段<br>
+              <span class="text-tui-blue">13</span> 个运行中的工作流<br>
+              <span class="text-tui-yellow">2</span> 个待审批项<br>
+              <span class="text-tui-red">1</span> 个阻塞项 (VolBreakout G3)
+            </div>
+            <div class="text-tui-muted text-xs mt-1">09:00:00</div>
           </div>
-          <div class="text-tui-muted text-xs mt-1">09:00:00</div>
-        </div>
-        <div class="chat-user">
-          <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
-          <div>VolBreakout V2 当前的完整流程状态？</div>
-          <div class="text-tui-muted text-xs mt-1">09:20:00</div>
-        </div>
-        <div class="chat-agent">
-          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
-          <div>VolBreakout V2 全流程追踪：</div>
-          <div class="mt-1 text-xs">
-            Phase A 构思 <span class="text-tui-green">DONE</span> (05/06)<br>
-            Phase B 合规 <span class="text-tui-green">DONE</span> (05/07)<br>
-            Phase C 回测 <span class="text-tui-cyan">RUNNING</span> (05/08~)<br>
-            Phase D 审批 <span class="text-tui-yellow">PENDING</span><br>
-            Phase E 运行 <span class="text-tui-muted">BLOCKED</span><br>
-            Phase F 评估 <span class="text-tui-muted">BLOCKED</span>
+          <div class="chat-user">
+            <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+            <div>VolBreakout V2 当前的完整流程状态？</div>
+            <div class="text-tui-muted text-xs mt-1">09:20:00</div>
           </div>
-          <div class="text-tui-cyan text-xs mt-1">当前在 Phase C: 回测进度 30%，预计 05/12 完成。</div>
-          <div class="text-tui-muted text-xs mt-1">09:20:03</div>
-        </div>
-        <div class="chat-user">
-          <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
-          <div>哪些策略需要关注？</div>
-          <div class="text-tui-muted text-xs mt-1">09:25:00</div>
-        </div>
-        <div class="chat-agent">
-          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
-          <div>需要关注的策略：</div>
-          <div class="mt-1 text-xs">
-            1. <span class="text-tui-red">VolBreakout</span> - 回撤 -8.2%，接近止损线<br>
-            2. <span class="text-tui-yellow">AlphaMomentum</span> - VaR 贡献最高 (36.8%)<br>
-            3. <span class="text-tui-yellow">StatArb-FX</span> - EUR/USD 浮亏中 (-3.6%)
+          <div class="chat-agent">
+            <div class="text-tui-accent text-xs font-semibold mb-1">CA Agent</div>
+            <div>VolBreakout V2 全流程追踪：</div>
+            <div class="mt-1 text-xs">
+              Phase A 构思 <span class="text-tui-green">DONE</span> (05/06)<br>
+              Phase B 合规 <span class="text-tui-green">DONE</span> (05/07)<br>
+              Phase C 回测 <span class="text-tui-cyan">RUNNING</span> (05/08~)<br>
+              Phase D 审批 <span class="text-tui-yellow">PENDING</span><br>
+              Phase E 运行 <span class="text-tui-muted">BLOCKED</span><br>
+              Phase F 评估 <span class="text-tui-muted">BLOCKED</span>
+            </div>
+            <div class="text-tui-cyan text-xs mt-1">当前在 Phase C: 回测进度 30%，预计 05/12 完成。</div>
+            <div class="text-tui-muted text-xs mt-1">09:20:03</div>
           </div>
-          <div class="text-tui-muted text-xs mt-1">09:25:05</div>
+          <div class="chat-user">
+            <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+            <div>哪些策略需要关注？</div>
+            <div class="text-tui-muted text-xs mt-1">09:25:00</div>
+          </div>
+          <div class="chat-agent">
+            <div class="text-tui-accent text-xs font-semibold mb-1">CA Agent</div>
+            <div>需要关注的策略：</div>
+            <div class="mt-1 text-xs">
+              1. <span class="text-tui-red">VolBreakout</span> - 回撤 -8.2%，接近止损线<br>
+              2. <span class="text-tui-yellow">AlphaMomentum</span> - VaR 贡献最高 (36.8%)<br>
+              3. <span class="text-tui-yellow">StatArb-FX</span> - EUR/USD 浮亏中 (-3.6%)
+            </div>
+            <div class="text-tui-muted text-xs mt-1">09:25:05</div>
+          </div>
+          <div class="chat-agent">
+            <div class="text-tui-accent text-xs font-semibold mb-1">CA Agent</div>
+            <div>ESG-Alpha 新策略已于 09:15 通过 Phase B 合规审查，已自动进入 Phase C 回测验证。预计 2 个工作日内完成。</div>
+            <div class="text-tui-muted text-xs mt-1">09:15:05</div>
+          </div>
         </div>
-        <div class="chat-agent">
-          <div class="text-tui-blue text-xs font-semibold mb-1">System Agent</div>
-          <div>ESG-Alpha 新策略已于 09:15 通过 Phase B 合规审查，已自动进入 Phase C 回测验证。预计 2 个工作日内完成。</div>
-          <div class="text-tui-muted text-xs mt-1">09:15:05</div>
+
+        <!-- Brainstorm Mode -->
+        <div id="e2e-content-brainstorm" style="display:none;">
+          <div class="px-2 py-1.5 rounded text-[10px] border border-tui-accent bg-tui-bg mb-2" style="border-color:rgba(88,166,255,0.3);">
+            <span class="text-tui-accent">💡 头脑风暴模式</span>
+            <span class="text-tui-textDim"> — 探讨要点将被记入记忆</span>
+          </div>
+          <div class="chat-agent">
+            <div class="text-tui-accent text-xs font-semibold mb-1">CA Agent</div>
+            <div>关于 E2E 流程，目前 Phase C→D 的转换周期较长（平均2.3天），你觉得瓶颈在哪里？</div>
+            <div class="text-tui-muted text-xs mt-1">14:50</div>
+          </div>
+          <div class="chat-user">
+            <div class="text-tui-purple text-xs font-semibold mb-1">You</div>
+            <div>我观察到回测报告生成后到合规审查之间有明显的等待时间，可能是 G3 Gate 审批卡住了</div>
+            <div class="text-tui-muted text-xs mt-1">14:51</div>
+          </div>
+          <div class="chat-agent">
+            <div class="text-tui-accent text-xs font-semibold mb-1">CA Agent</div>
+            <div>很好的观察。<span class="text-tui-cyan">Backtest Agent</span> 数据显示 G3 平均耗时 1.8 天，占总周期的 78%。建议：<br>1. G3 审批增加自动预审通道<br>2. 低风险策略走快速通道</div>
+            <div class="text-tui-textDim text-[10px] mt-1">📝 已记录: 「C→D瓶颈 → G3审批优化方案」</div>
+            <div class="text-tui-muted text-xs mt-1">14:51</div>
+          </div>
+        </div>
+
+        <!-- Task Mode -->
+        <div id="e2e-content-task" style="display:none;">
+          <div class="px-2 py-1.5 rounded text-[10px] border border-tui-green bg-tui-bg mb-2" style="border-color:rgba(63,185,80,0.3);">
+            <span class="text-tui-green">🎯 任务模式</span>
+            <span class="text-tui-textDim"> — 多Agent群聊会议</span>
+          </div>
+          <div class="chat-agent">
+            <div class="text-tui-accent text-xs font-semibold mb-1">CA Agent (主持)</div>
+            <div>📋 任务: 「VolBreakout V2 Phase C→D 流转」</div>
+            <div class="text-tui-muted text-xs mt-1">参与: Backtest, Compliance</div>
+            <div class="text-tui-muted text-xs mt-1">14:55</div>
+          </div>
+          <div class="px-3 py-2 rounded border-l-2 text-xs" style="background:rgba(188,140,255,0.05);border-color:#bc8cff;">
+            <div class="text-xs font-semibold mb-1" style="color:#bc8cff;">🔬 Backtest Agent</div>
+            <div>VolBreakout V2 回测已完成，G4-Gate 4/4 PASS</div>
+            <div class="text-tui-textDim text-[10px]">[推理: 静态Sharpe 2.34 + 动态MaxDD -8.7% + 胜率61% + 稳定性通过]</div>
+            <div class="text-tui-muted text-xs mt-1">14:56</div>
+          </div>
+          <div class="px-3 py-2 rounded border-l-2 text-xs" style="background:rgba(56,139,253,0.05);border-color:#388bfd;">
+            <div class="text-xs font-semibold mb-1" style="color:#388bfd;">📋 Compliance Agent</div>
+            <div>基于 Backtest 结果，合规评分 96.2，建议进入 Phase D 审批</div>
+            <div class="text-tui-textDim text-[10px]">[推理: 风险等级R3可控 + 无监管冲突 + 投资者适当性匹配]</div>
+            <div class="text-tui-muted text-xs mt-1">14:56</div>
+          </div>
+          <div class="chat-agent">
+            <div class="text-tui-accent text-xs font-semibold mb-1">CA Agent (主持)</div>
+            <div>📊 会议决议：VolBreakout V2 可进入 Phase D</div>
+            <div class="text-tui-green text-[10px] mt-1">✅ Backtest: 4/4 PASS | ✅ Compliance: 96.2分</div>
+            <div class="mt-1.5">
+              <button class="cmd-btn text-xs" style="background:#238636;color:white;border-color:#238636;">确认，推入 Phase D</button>
+            </div>
+            <div class="text-tui-muted text-xs mt-1">14:56</div>
+          </div>
         </div>
       </div>
       <div class="p-3 border-t border-tui-border" style="background:#161b22;">
@@ -679,5 +1294,26 @@ tailwind.config = {
   </div>
 </div>
 
+<script>
+  function toggleDrill(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = el.style.display === 'none' ? '' : 'none';
+    }
+  }
+
+  function e2eSwitchMode(mode) {
+    ['monitor','brainstorm','task'].forEach(m => {
+      const el = document.getElementById('e2e-content-' + m);
+      const tab = document.getElementById('e2e-mode-' + m);
+      if (el) el.style.display = m === mode ? '' : 'none';
+      if (tab) {
+        tab.className = m === mode
+          ? 'flex-1 px-2 py-1.5 text-[10px] font-mono text-center transition-colors bg-tui-surface text-tui-accent border-b-2 border-tui-accent'
+          : 'flex-1 px-2 py-1.5 text-[10px] font-mono text-center transition-colors text-tui-textMuted hover:text-tui-text';
+      }
+    });
+  }
+</script>
 </body>
 </html>

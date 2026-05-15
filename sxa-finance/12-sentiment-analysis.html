@@ -89,6 +89,17 @@ tailwind.config = {
   .sentiment-bar { height:6px; border-radius:3px; transition:width 0.5s ease; }
   @keyframes pulse-slow { 0%,100%{opacity:1} 50%{opacity:0.7} }
   .pulse-slow { animation: pulse-slow 2s ease-in-out infinite; }
+  .agent-notification {
+    position: fixed;
+    right: 20px;
+    width: 320px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -126,6 +137,12 @@ tailwind.config = {
       <a href="14-macro-analysis.html" class="cmd-btn" style="border-color:#484f58; color:#484f58;">← 上一步: 宏观分析</a>
       <a href="29-intel-agent.html" class="cmd-btn" style="border-color:#3fb950; color:#3fb950;">下一步: 信号聚合 →</a>
     </div>
+  </div>
+  <div style="display:flex; align-items:center; gap:4px; margin-top:2px; padding:0 16px 4px; background:#161b22;">
+    <span style="color:#8b949e; font-size:10px;">投前分析组 Sentiment Agent</span>
+    <span style="color:#30363d;">|</span>
+    <span style="color:#3fb950; font-size:10px;">子模块: [1] 情绪筛选 [2] NLP分析 [3] 舆情监控 [4] 情绪评分</span>
+    <span style="color:#484f58; font-size:9px;">(数字键聚焦)</span>
   </div>
 
   <!-- Main Content -->
@@ -528,6 +545,39 @@ tailwind.config = {
       <span>09:42:18 CST</span>
       <span style="color:#484f58;">SXA v2.1.0</span>
     </div>
+  </div>
+</div>
+
+<!-- 按需通知卡片: 投前分析组 Agent 消息 -->
+<div class="agent-notification" style="top:100px;">
+  <div style="background:#161b22; border:1px solid rgba(57,210,192,0.3); border-radius:8px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#39d2c0;display:block;"></span>
+        <span style="font-size:10px; font-weight:600; color:#39d2c0;">🔍 Intel Agent</span>
+        <span style="font-size:9px; padding:1px 6px; border-radius:10px; background:rgba(57,210,192,0.15); color:#39d2c0;">投前分析组</span>
+      </div>
+      <button onclick="this.closest('.agent-notification').remove()" style="background:none; border:none; color:#484f58; cursor:pointer; font-size:12px;">✕</button>
+    </div>
+    <div style="font-size:11px; color:#c9d1d9; margin-bottom:4px;">信号评分已更新 - 3个新信号触发情绪交叉验证</div>
+    <div style="font-size:10px; color:#6e7681;">[推理: 半导体板块资金流入+北向资金连续净买入+技术突破信号]</div>
+    <div style="font-size:9px; color:#6e7681; margin-top:4px;">2分钟前</div>
+  </div>
+</div>
+
+<div class="agent-notification" style="top:220px;">
+  <div style="background:#161b22; border:1px solid rgba(188,140,255,0.3); border-radius:8px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#bc8cff;display:block;"></span>
+        <span style="font-size:10px; font-weight:600; color:#bc8cff;">🌍 Macro Agent</span>
+        <span style="font-size:9px; padding:1px 6px; border-radius:10px; background:rgba(57,210,192,0.15); color:#39d2c0;">投前分析组</span>
+      </div>
+      <button onclick="this.closest('.agent-notification').remove()" style="background:none; border:none; color:#484f58; cursor:pointer; font-size:12px;">✕</button>
+    </div>
+    <div style="font-size:11px; color:#c9d1d9; margin-bottom:4px;">宏观环境更新 - PMI 50.8 制造业扩张确认</div>
+    <div style="font-size:10px; color:#6e7681;">[推理: PMI连续3月>50+新订单指数51.2+出口订单回升，利好情绪面]</div>
+    <div style="font-size:9px; color:#6e7681; margin-top:4px;">5分钟前</div>
   </div>
 </div>
 </body>
